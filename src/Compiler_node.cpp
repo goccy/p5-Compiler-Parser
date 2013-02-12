@@ -222,6 +222,10 @@ OperatorNode::OperatorNode(Token *tk) : BranchNode(tk)
 {
 }
 
+SingleTermOperatorNode::SingleTermOperatorNode(Token *op, Token *tk) : OperatorNode(tk)
+{
+}
+
 IfStmtNode::IfStmtNode(Token *tk) : Node(tk)
 {
 	this->expr = NULL;
