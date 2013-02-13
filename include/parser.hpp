@@ -1,3 +1,5 @@
+#include <typeinfo>
+
 class Node {
 public:
 	Token *tk;
@@ -78,7 +80,7 @@ public:
 
 class SingleTermOperatorNode : public OperatorNode {
 public:
-	SingleTermOperatorNode(Token *op);
+	SingleTermOperatorNode(Token *op, Token *term);
 };
 
 class DoubleTermOperatorNode : public OperatorNode {
@@ -153,6 +155,7 @@ public:
 	void completeExpr(Token *root);
 	AST *parse(Token *root);
 	Node *_parse(Token *root);
+	bool isSingleTermOperator(ParseContext *pctx, Token *tk);
 	void parseStmt(ParseContext *pctx, Node *stmt);
 	void parseExpr(ParseContext *pctx, Node *expr);
 	void parseToken(ParseContext *pctx, Token *tk);

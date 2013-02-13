@@ -45,7 +45,7 @@ Token *ParseContext::token(Token *base, int offset)
 			break;
 		}
 	}
-	return (0 < wanted_idx && wanted_idx < n) ? tks[wanted_idx] : NULL;
+	return (0 <= wanted_idx && wanted_idx < n) ? tks[wanted_idx] : NULL;
 }
 
 Token *ParseContext::nextToken(void)
@@ -162,7 +162,7 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 		DBG_PL("OTHER");
 		break;
 	}
-	DBG_PL("%s", cstr(tk->data));
+	//DBG_PL("%s", cstr(tk->data));
 }
 
 void Parser::parseStmt(ParseContext *pctx, Node *stmt)
@@ -274,21 +274,61 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 
 void Parser::parseSingleTermOperator(ParseContext *pctx, Token *tk)
 {
-	asm("int3");
+	using namespace TokenType;
+	Token *prev_tk = pctx->token(tk, -1);
+	Token *next_tk = pctx->token(tk, 1);
+	TokenType::Type type = tk->info.type;
+	SingleTermOperatorNode *op_node = NULL;
+	/* right associativity */
+	if (type == IsNot || type == Ref || type == Add || type == Sub) {
+		assert(next_tk && "syntax error near by single term operator");
+		op_node = new SingleTermOperatorNode(tk, next_tk);
+		pctx->next();
+	} else if (type == Inc || type == Dec) {
+		if (next_tk && (next_tk->info.kind == TokenKind::Term || next_tk->stype == SyntaxType::Expr)) {
+			op_node = new SingleTermOperatorNode(tk, next_tk);
+			pctx->next();
+		} else if (prev_tk && (prev_tk->info.kind == TokenKind::Term || prev_tk->stype == SyntaxType::Expr)) {
+			op_node = new SingleTermOperatorNode(tk, prev_tk);
+		}
+	}
+	assert(op_node && "syntax error!");
 	Nodes *nodes = pctx->nodes;
-	BranchNode *single = new BranchNode(tk);
-	nodes->push(single);
+	BranchNode *node = dynamic_cast<BranchNode *>(nodes->lastNode());
+	if (!node) {
+		nodes->push(op_node);
+		return;
+	}
+	//node->link(op_node);//TODO swap from previous node to op_node
+}
+
+bool Parser::isSingleTermOperator(ParseContext *pctx, Token *tk)
+{
+	using namespace TokenType;
+	if (tk->info.kind != TokenKind::Operator) return false;
+	TokenType::Type type = tk->info.type;
+	Token *prev_tk = pctx->token(tk, -1);
+	if (type == IsNot || type == Ref || type == Inc || type == Dec) return true;
+	if (!prev_tk) return true;
+	if ((type == Add || type == Sub) &&
+		(prev_tk->info.kind != TokenKind::Term &&
+		 prev_tk->stype != SyntaxType::Expr)) return true;
+	return false;
 }
 
 void Parser::parseBranchType(ParseContext *pctx, Token *tk)
 {
 	Nodes *nodes = pctx->nodes;
 	Node *node = nodes->lastNode();
-	assert(node && "syntax error!: nothing value before xxx");
-	BranchNode *branch = new BranchNode(tk);
-	branch->left = node;
-	node->parent = branch;
-	nodes->swapLastNode(branch);
+	if (isSingleTermOperator(pctx, tk)) {
+		parseSingleTermOperator(pctx, tk);
+	} else {
+		assert(node && "syntax error!: nothing value before xxx");
+		BranchNode *branch = new BranchNode(tk);
+		branch->left = node;
+		node->parent = branch;
+		nodes->swapLastNode(branch);
+	}
 }
 
 void Parser::parseFunction(ParseContext *pctx, Token *tk)

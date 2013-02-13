@@ -1,4 +1,4 @@
-CC = g++-4.2
+CC = g++
 CFLAGS = -O0 -g3 -Wall -W -I./include/ -DDEBUG_MODE
 LDLIBS =
 target = parser
