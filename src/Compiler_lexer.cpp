@@ -1346,7 +1346,10 @@ void Lexer::parseSpecificStmt(Token *syntax)
 				tks[i+2]->stype == SyntaxType::BlockStmt) {
 				/* if Expr BlockStmt */
 				Token *expr = tks[i+1];
-				if (expr->tks[3]->stype != SyntaxType::Stmt &&
+				if (expr->token_num > 3 && tk->info.type == ForStmt &&
+					expr->tks[1]->stype == SyntaxType::Stmt &&
+					expr->tks[2]->stype == SyntaxType::Stmt &&
+					expr->tks[3]->stype != SyntaxType::Stmt &&
 					expr->tks[3]->info.type != RightParenthesis) {
 					insertStmt(expr, 3, expr->token_num - 4);
 				}
@@ -1521,6 +1524,11 @@ void Lexer::dumpSyntax(Token *syntax, int indent)
 			fprintf(stdout, "----------------");
 		}
 		switch (tk->stype) {
+		case Term:
+			fprintf(stdout, "Term |\n");
+			dumpSyntax(tk, ++indent);
+			indent--;
+			break;
 		case Expr:
 			fprintf(stdout, "Expr |\n");
 			dumpSyntax(tk, ++indent);

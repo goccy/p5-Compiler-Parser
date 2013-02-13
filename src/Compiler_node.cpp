@@ -207,6 +207,9 @@ void BranchNode::link(Node *child)
 		} else if (typeid(*right) == typeid(HashNode)) {
 			HashNode *hash = dynamic_cast<HashNode *>(right);
 			hash->key = child;
+		} else if (typeid(*right) == typeid(FunctionCallNode)) {
+			FunctionCallNode *func = dynamic_cast<FunctionCallNode *>(right);
+			if (child) func->setArgs(child);
 		} else {
 			assert(0 && "syntax error!\n");
 		}
@@ -215,7 +218,7 @@ void BranchNode::link(Node *child)
 	} else {
 		left = child;
 	}
-	child->parent = this;
+	if (child) child->parent = this;
 }
 
 OperatorNode::OperatorNode(Token *tk) : BranchNode(tk)

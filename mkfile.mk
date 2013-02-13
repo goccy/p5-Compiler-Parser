@@ -7,6 +7,7 @@ objs = build/main.o \
 	build/Compiler_gen_token_decl.o \
 	build/Compiler_lexer.o \
 	build/Compiler_parser.o \
+	build/Compiler_completer.o \
 	build/Compiler_node.o \
 	build/Compiler_util.o \
 
@@ -23,6 +24,9 @@ build/Compiler_gen_token_decl.o : src/Compiler_gen_token_decl.cpp
 	$(CC) $(CFLAGS) -o $@ -c $^
 
 build/Compiler_lexer.o : src/Compiler_lexer.cpp
+	$(CC) $(CFLAGS) -o $@ -c $^
+
+build/Compiler_completer.o : src/Compiler_completer.cpp
 	$(CC) $(CFLAGS) -o $@ -c $^
 
 build/Compiler_parser.o : src/Compiler_parser.cpp

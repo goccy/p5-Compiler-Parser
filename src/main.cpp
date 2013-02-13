@@ -35,7 +35,10 @@ int main(int argc, char **argv)
 	lexer->setIndent(root, 0);
 	size_t block_id = 0;
 	lexer->setBlockIDWithDepthFirst(root, &block_id);
-	Parser *parser = new Parser();
-	AST *ast = parser->parse(root);
-	ast->dump();
+	Completer completer;
+	completer.complete(root);
+	lexer->dumpSyntax(root, 0);
+	//Parser *parser = new Parser();
+	//AST *ast = parser->parse(root);
+	//ast->dump();
 }

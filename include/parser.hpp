@@ -150,6 +150,7 @@ class Parser {
 public:
 	Node *_prev_stmt;
 	Parser(void);
+	void completeExpr(Token *root);
 	AST *parse(Token *root);
 	Node *_parse(Token *root);
 	void parseStmt(ParseContext *pctx, Node *stmt);
@@ -162,4 +163,38 @@ public:
 	void parseDecl(ParseContext *pctx, Token *comma);
 	void parseFunction(ParseContext *pctx, Token *func);
 	void parseFunctionCall(ParseContext *pctx, Token *func);
+};
+
+class Completer {
+public:
+	std::vector<std::string> *named_unary_keywords;
+
+	Completer(void);
+	bool isUnaryKeyword(std::string target);
+	void complete(Token *root);
+	void completeTerm(Token *root);
+	void insertExpr(Token *syntax, int idx, size_t grouping_num);
+	void insertTerm(Token *syntax, int idx, size_t grouping_num);
+	void completeExprFromLeft(Token *root, Enum::Lexer::Token::Type type);
+	void completeExprFromRight(Token *root, Enum::Lexer::Token::Type type);
+	void completeExprFromRight(Token *root, Enum::Lexer::Kind kind);
+	void completePointerExpr(Token *root);
+	void completeIncDecExpr(Token *root);
+	void completePowerExpr(Token *root);
+	void completeSingleTermOperatorExpr(Token *root);
+	void completeRegexpMatchExpr(Token *root);
+	void completeHighPriorityDoubleOperatorExpr(Token *root);
+	void completeLowPriorityDoubleOperatorExpr(Token *root);
+	void completeShiftOperatorExpr(Token *root);
+	void completeHighPriorityCompareOperatorExpr(Token *root);
+	void completeLowPriorityCompareOperatorExpr(Token *root);
+	void completeNamedUnaryOperators(Token *root);
+	void completeBitOperatorExpr(Token *root);
+	void completeAndOrOperatorExpr(Token *root);
+	void completeAssignExpr(Token *root);
+	void completeCommaArrowExpr(Token *root);
+	void completeFunctionListExpr(Token *root);
+	void completeAlphabetBitOperatorExpr(Token *root);
+	void recoveryFunctionArgument(Token *root);
+	void recoveryNamedUnaryOperatorsArgument(Token *root);
 };

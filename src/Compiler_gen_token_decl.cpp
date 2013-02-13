@@ -345,7 +345,7 @@ TokenInfo decl_tokens[] = {
 	{Enum::Lexer::Token::NamespaceResolver, Enum::Lexer::Operator, "NamespaceResolver", "::"},
 	{Enum::Lexer::Token::Namespace, Enum::Lexer::Namespace, "Namespace", ""},
 	{Enum::Lexer::Token::Package, Enum::Lexer::Stmt, "Package", "package"},
-	{Enum::Lexer::Token::Class, Enum::Lexer::Stmt, "Class", ""},
+	{Enum::Lexer::Token::Class, Enum::Lexer::Term, "Class", ""},
 	{Enum::Lexer::Token::CallDecl, Enum::Lexer::Decl, "CallDecl", "&"},
 	{Enum::Lexer::Token::CodeRef, Enum::Lexer::SingleTerm, "CodeRef", "\\&"},
 	{Enum::Lexer::Token::WhileStmt, Enum::Lexer::Stmt, "WhileStmt", "while"},
