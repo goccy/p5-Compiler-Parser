@@ -141,14 +141,18 @@ public:
 	Token *token(void);
 	Token *token(Token *base, int offset);
 	Token *nextToken(void);
+	Node *lastNode(void);
+	void pushNode(Node *node);
 	bool end(void);
 	void next(void);
+	void next(int progress);
 };
 
 class Parser {
 public:
 	Node *_prev_stmt;
 	Parser(void);
+	void link(Node *from, Node *to);
 	void completeExpr(Token *root);
 	AST *parse(Token *root);
 	Node *_parse(Token *root);

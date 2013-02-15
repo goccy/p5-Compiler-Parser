@@ -34,6 +34,16 @@ Token *ParseContext::token(void)
 	return tks[idx];
 }
 
+void ParseContext::pushNode(Node *node)
+{
+	nodes->push(node);
+}
+
+Node *ParseContext::lastNode(void)
+{
+	return nodes->lastNode();
+}
+
 Token *ParseContext::token(Token *base, int offset)
 {
 	Token **tks = this->tks;
@@ -61,6 +71,11 @@ bool ParseContext::end(void)
 void ParseContext::next(void)
 {
 	idx++;
+}
+
+void ParseContext::next(int progress)
+{
+	idx += progress;
 }
 
 Parser::Parser(void)
@@ -115,7 +130,7 @@ Node *Parser::_parse(Token *root)
 			}
 		}
 	}
-	Node *node = pctx->nodes->lastNode();
+	Node *node = pctx->lastNode();
 	if (pctx->returnToken) {
 		ReturnNode *ret = new ReturnNode(pctx->returnToken);
 		ret->body = node;
@@ -178,37 +193,36 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 void Parser::parseStmt(ParseContext *pctx, Node *stmt)
 {
 	if (!stmt) return;
-	Nodes *nodes = pctx->nodes;
-	Node *prev_stmt = nodes->lastNode();
+	Node *prev_stmt = pctx->lastNode();
 	if (!prev_stmt) {
-		nodes->push(stmt);
+		pctx->pushNode(stmt);
 		return;
 	}
 	prev_stmt->next = stmt;
 	stmt->parent = prev_stmt;
-	nodes->swapLastNode(stmt);
+	pctx->nodes->swapLastNode(stmt);
 }
 
 void Parser::parseExpr(ParseContext *pctx, Node *expr)
 {
-	Nodes *nodes = pctx->nodes;
-	Node *node = nodes->lastNode();
-	if (!node) {
-		nodes->push_back(expr);
-		return;
-	}
-	if (typeid(*node) == typeid(BranchNode)) {
-		BranchNode *branch = dynamic_cast<BranchNode *>(node);
-		branch->link(expr);
-	} else if (typeid(*node) == typeid(FunctionCallNode)) {
-		FunctionCallNode *func = dynamic_cast<FunctionCallNode *>(node);
-		if (expr) func->setArgs(expr);
-	} else if (typeid(*node) == typeid(ArrayNode)) {
-		ArrayNode *array = dynamic_cast<ArrayNode *>(node);
-		array->idx = expr;
-	} else if (typeid(*node) == typeid(HashNode)) {
-		HashNode *hash = dynamic_cast<HashNode *>(node);
-		hash->key = expr;
+	Node *node = pctx->lastNode();
+	return (!node) ? pctx->pushNode(expr) : link(node, expr);
+}
+
+void Parser::link(Node *from_node, Node *to_node)
+{
+	if (typeid(*from_node) == typeid(BranchNode)) {
+		BranchNode *branch = dynamic_cast<BranchNode *>(from_node);
+		branch->link(to_node);
+	} else if (typeid(*from_node) == typeid(FunctionCallNode)) {
+		FunctionCallNode *func = dynamic_cast<FunctionCallNode *>(from_node);
+		if (to_node) func->setArgs(to_node);
+	} else if (typeid(*from_node) == typeid(ArrayNode)) {
+		ArrayNode *array = dynamic_cast<ArrayNode *>(from_node);
+		array->idx = to_node;
+	} else if (typeid(*from_node) == typeid(HashNode)) {
+		HashNode *hash = dynamic_cast<HashNode *>(from_node);
+		hash->key = to_node;
 	}
 }
 
@@ -233,22 +247,27 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 	using namespace TokenType;
 	switch (tk->info.type) {
 	case TokenType::IfStmt:
-	case TokenType::ElsifStmt:
 	case TokenType::UnlessStmt: {
 		IfStmtNode *if_stmt = new IfStmtNode(tk);
-		if (tk->info.type == TokenType::ElsifStmt) {
-			IfStmtNode *node = dynamic_cast<IfStmtNode *>(_prev_stmt);
-			node->false_stmt = if_stmt->getRoot();
-		} else {
-			pctx->nodes->push(if_stmt);
-		}
+		pctx->pushNode(if_stmt);
 		_prev_stmt = if_stmt;
 		Node *expr_node = _parse(pctx->token(tk, 1))->getRoot();
 		Node *block_stmt_node = _parse(pctx->token(tk, 2));
 		if_stmt->expr = expr_node;
 		if_stmt->true_stmt = block_stmt_node->getRoot();
-		pctx->next();
-		pctx->next();
+		pctx->next(2);
+		break;
+	}
+	case TokenType::ElsifStmt: {
+		IfStmtNode *if_stmt = new IfStmtNode(tk);
+		IfStmtNode *node = dynamic_cast<IfStmtNode *>(_prev_stmt);
+		node->false_stmt = if_stmt->getRoot();
+		_prev_stmt = if_stmt;
+		Node *expr_node = _parse(pctx->token(tk, 1))->getRoot();
+		Node *block_stmt_node = _parse(pctx->token(tk, 2));
+		if_stmt->expr = expr_node;
+		if_stmt->true_stmt = block_stmt_node->getRoot();
+		pctx->next(2);
 		break;
 	}
 	case TokenType::ElseStmt: {
@@ -268,9 +287,8 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 		Node *block_stmt_node = _parse(pctx->token(tk, 2));
 		for_stmt->true_stmt = block_stmt_node->getRoot();
 		_prev_stmt = for_stmt;
-		pctx->nodes->push(for_stmt);
-		pctx->next();
-		pctx->next();
+		pctx->pushNode(for_stmt);
+		pctx->next(2);
 		break;
 	}
 	case TokenType::ForeachStmt:
@@ -288,7 +306,6 @@ void Parser::parseSingleTermOperator(ParseContext *pctx, Token *tk)
 	Token *next_tk = pctx->token(tk, 1);
 	TokenType::Type type = tk->info.type;
 	SingleTermOperatorNode *op_node = NULL;
-	/* right associativity */
 	if ((type == IsNot || type == Ref || type == Add || type == Sub) ||
 		((type == Inc || type == Dec) && pctx->idx == 0)) {
 		assert(next_tk && "syntax error near by single term operator");
@@ -333,58 +350,41 @@ bool Parser::isSingleTermOperator(ParseContext *pctx, Token *tk)
 
 void Parser::parseBranchType(ParseContext *pctx, Token *tk)
 {
-	Nodes *nodes = pctx->nodes;
-	Node *node = nodes->lastNode();
 	if (isSingleTermOperator(pctx, tk)) {
 		parseSingleTermOperator(pctx, tk);
 	} else {
+		Node *node = pctx->lastNode();
 		assert(node && "syntax error!: nothing value before xxx");
 		BranchNode *branch = new BranchNode(tk);
 		branch->left = node;
 		node->parent = branch;
-		nodes->swapLastNode(branch);
+		pctx->nodes->swapLastNode(branch);
 	}
 }
 
 void Parser::parseFunction(ParseContext *pctx, Token *tk)
 {
-	Nodes *nodes = pctx->nodes;
+	using namespace SyntaxType;
 	FunctionNode *f = new FunctionNode(tk);
-	Node *block_stmt_node = NULL;
-	if (tk->stype == SyntaxType::BlockStmt) {
-		/* Nameless Function */
-		block_stmt_node = _parse(tk);
-	} else {
-		block_stmt_node = _parse(pctx->nextToken());
-	}
+	Node *block_stmt_node = (tk->stype == BlockStmt) ? _parse(tk) : _parse(pctx->nextToken());
 	f->body = block_stmt_node->getRoot();
 	pctx->next();
-	BranchNode *node = dynamic_cast<BranchNode *>(nodes->lastNode());
-	if (!node) {
-		nodes->push(f);
-		return;
-	}
-	node->link(f);
+	BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
+	return (!node) ? pctx->pushNode(f) : node->link(f);
 }
 
 void Parser::parseFunctionCall(ParseContext *pctx, Token *tk)
 {
-	Nodes *nodes = pctx->nodes;
 	FunctionCallNode *f = new FunctionCallNode(tk);
-	BranchNode *node = dynamic_cast<BranchNode *>(nodes->lastNode());
-	if (!node) {
-		nodes->push(f);
-		return;
-	}
-	node->link(f);
+	BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
+	return (!node) ? pctx->pushNode(f) : node->link(f);
 }
 
 void Parser::parseTerm(ParseContext *pctx, Token *tk)
 {
 	using namespace SyntaxType;
-	Nodes *nodes = pctx->nodes;
 	Token *next_tk = pctx->nextToken();
-	Node *term;
+	Node *term = NULL;
 	if (next_tk && next_tk->stype == Expr) {
 		if (next_tk->tks[0]->info.type == TokenType::LeftBracket) {
 			term = new ArrayNode(tk);
@@ -394,22 +394,7 @@ void Parser::parseTerm(ParseContext *pctx, Token *tk)
 	} else {
 		term = new LeafNode(tk);
 	}
-	Node *node = nodes->lastNode();
-	if (!node) {
-		nodes->push(term);
-		return;
-	}
-	if (typeid(*node) == typeid(BranchNode)) {
-		BranchNode *branch = dynamic_cast<BranchNode *>(node);
-		branch->link(term);
-	} else if (typeid(*node) == typeid(FunctionCallNode)) {
-		FunctionCallNode *func = dynamic_cast<FunctionCallNode *>(node);
-		func->setArgs(term);
-	} else if (typeid(*node) == typeid(ArrayNode)) {
-		ArrayNode *array = dynamic_cast<ArrayNode *>(node);
-		array->idx = term;
-	} else if (typeid(*node) == typeid(HashNode)) {
-		HashNode *hash = dynamic_cast<HashNode *>(node);
-		hash->key = term;
-	}
+	assert(term && "syntax error!: near by term");
+	Node *node = pctx->lastNode();
+	return (!node) ? pctx->pushNode(term) : link(node, term);
 }
