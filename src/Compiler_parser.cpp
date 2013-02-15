@@ -210,18 +210,20 @@ void Parser::parseExpr(ParseContext *pctx, Node *expr)
 
 void Parser::link(Node *from_node, Node *to_node)
 {
-	if (typeid(*from_node) == typeid(BranchNode)) {
+	if (TYPE_match(from_node, BranchNode)) {
 		BranchNode *branch = dynamic_cast<BranchNode *>(from_node);
 		branch->link(to_node);
-	} else if (typeid(*from_node) == typeid(FunctionCallNode)) {
+	} else if (TYPE_match(from_node, FunctionCallNode)) {
 		FunctionCallNode *func = dynamic_cast<FunctionCallNode *>(from_node);
 		if (to_node) func->setArgs(to_node);
-	} else if (typeid(*from_node) == typeid(ArrayNode)) {
+	} else if (TYPE_match(from_node, ArrayNode)) {
 		ArrayNode *array = dynamic_cast<ArrayNode *>(from_node);
 		array->idx = to_node;
-	} else if (typeid(*from_node) == typeid(HashNode)) {
+	} else if (TYPE_match(from_node, HashNode)) {
 		HashNode *hash = dynamic_cast<HashNode *>(from_node);
 		hash->key = to_node;
+	} else {
+		assert(0 && "syntax error!\n");
 	}
 }
 
