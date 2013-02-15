@@ -342,7 +342,7 @@ Token *Lexer::scanCurSymbol(LexContext *ctx, char symbol)
 		ret = new Token(string(tmp), finfo);
 		ret->info = getTokenInfo(TokenType::RegDelim);
 		clearToken(ctx, token);
-	} else if (symbol == '@' || symbol == '$' || symbol == '%') {
+	} else if (symbol == '@' || symbol == '$' || symbol == '%' || symbol == '&') {
 		//for array value
 		writeChar(ctx, token, symbol);
 	} else if (symbol == ';') {

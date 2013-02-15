@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 	Completer completer;
 	completer.complete(root);
 	lexer->dumpSyntax(root, 0);
-	//Parser *parser = new Parser();
-	//AST *ast = parser->parse(root);
-	//ast->dump();
+	Parser *parser = new Parser();
+	AST *ast = parser->parse(root);
+	ast->dump();
 }

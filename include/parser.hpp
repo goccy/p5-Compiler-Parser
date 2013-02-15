@@ -78,9 +78,11 @@ public:
 	OperatorNode(Token *op);
 };
 
-class SingleTermOperatorNode : public OperatorNode {
+class SingleTermOperatorNode : public Node {
 public:
-	SingleTermOperatorNode(Token *op, Token *term);
+	Node *expr;
+	SingleTermOperatorNode(Token *op);
+	void dump(size_t depth);
 };
 
 class DoubleTermOperatorNode : public OperatorNode {
@@ -201,3 +203,16 @@ public:
 	void recoveryFunctionArgument(Token *root);
 	void recoveryNamedUnaryOperatorsArgument(Token *root);
 };
+
+#define Node_dump(node, msg, depth) {									\
+		if (node) {														\
+			for (size_t i = 0; i < depth; i++) {						\
+				fprintf(stdout, "----------------");					\
+			}															\
+			fprintf(stdout, "%s ", msg);									\
+			Node *traverse_ptr = node;									\
+			for (; traverse_ptr != NULL; traverse_ptr = traverse_ptr->next) { \
+				traverse_ptr->dump(depth+1);							\
+			}															\
+		}																\
+	} while(0)

@@ -9,14 +9,9 @@ Node::Node(Token *tk_)
 	this->next = NULL;
 }
 
-void Node::dump(size_t depth)
+void Node::dump(size_t)
 {
-	string prefix = "";
-	for (size_t i = 0; i < depth; i++) {
-		prefix += "----";
-	}
-	DBG_P("%s", cstr(prefix));
-	DBG_PL("[%s]", cstr(tk->data));
+	fprintf(stdout, "%-12s\n", cstr(tk->data));
 }
 
 Node *Node::getRoot(void)
@@ -59,8 +54,8 @@ Node *Nodes::lastNode(void)
 void Nodes::dump(size_t depth)
 {
 	size_t n = size();
-	for (size_t i = 0; i < n; i++) {
-		at(i)->dump(depth);
+	for (size_t idx = 0; idx < n; idx++) {
+		Node_dump(at(idx), "", depth);
 	}
 }
 
@@ -76,20 +71,12 @@ BranchNode::BranchNode(Token *tk_) : Node(tk_)
 
 void BranchNode::dump(size_t depth)
 {
-	string prefix = "";
-	for (size_t i = 0; i < depth; i++) {
-		prefix += "----";
-	}
-	DBG_P("%s", cstr(prefix));
-	DBG_PL("[%s]", cstr(tk->data));
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 	if (right) {
-		DBG_P("left  : ");
-		left->dump(depth+1);
-		DBG_P("right : ");
-		right->dump(depth+1);
+		Node_dump(left,  "left  : ", depth+1);
+		Node_dump(right, "right : ", depth+1);
 	} else {
-		DBG_P("left  : ");
-		left->dump(depth+1);
+		Node_dump(left,  "left  : ", depth+1);
 	}
 }
 
@@ -100,16 +87,8 @@ ArrayNode::ArrayNode(Token *tk_) : Node(tk_)
 
 void ArrayNode::dump(size_t depth)
 {
-	string prefix = "";
-	for (size_t i = 0; i < depth; i++) {
-		prefix += "----";
-	}
-	DBG_P("%s", cstr(prefix));
-	DBG_PL("array");
-	if (idx) {
-		DBG_P("idx  : ");
-		idx->dump(depth+1);
-	}
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(idx, "idx  : ", depth+1);
 }
 
 HashNode::HashNode(Token *tk_) : Node(tk_)
@@ -119,16 +98,8 @@ HashNode::HashNode(Token *tk_) : Node(tk_)
 
 void HashNode::dump(size_t depth)
 {
-	string prefix = "";
-	for (size_t i = 0; i < depth; i++) {
-		prefix += "----";
-	}
-	DBG_P("%s", cstr(prefix));
-	DBG_PL("hash");
-	if (key) {
-		DBG_P("key  : ");
-		key->dump(depth+1);
-	}
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(key, "key  : ", depth+1);
 }
 
 FunctionCallNode::FunctionCallNode(Token *tk_) : Node(tk_)
@@ -144,12 +115,10 @@ void FunctionCallNode::setArgs(Node *expr)
 void FunctionCallNode::dump(size_t depth)
 {
 	if (args->empty()) {
-		DBG_PL("call  : %s", cstr(tk->data));
+		fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 	} else {
-		DBG_PL("call  : %s", cstr(tk->data));
-		DBG_PL("args  : [");
+		fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 		args->dump(depth+1);
-		DBG_PL("]");
 	}
 }
 
@@ -160,12 +129,8 @@ FunctionNode::FunctionNode(Token *tk_) : Node(tk_)
 
 void FunctionNode::dump(size_t depth)
 {
-	DBG_PL("func  : %s", cstr(tk->data));
-	DBG_PL("body  : ");
-	Node *traverse_ptr = body;
-	for (; traverse_ptr != NULL; traverse_ptr = traverse_ptr->next) {
-		traverse_ptr->dump(depth+1);
-	}
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(body, "body  : ", depth+1);
 }
 
 BlockNode::BlockNode(Token *tk_) : Node(tk_)
@@ -175,12 +140,8 @@ BlockNode::BlockNode(Token *tk_) : Node(tk_)
 
 void BlockNode::dump(size_t depth)
 {
-	DBG_PL("block  : %s", cstr(tk->data));
-	DBG_PL("body  : ");
-	Node *traverse_ptr = body;
-	for (; traverse_ptr != NULL; traverse_ptr = traverse_ptr->next) {
-		traverse_ptr->dump(depth+1);
-	}
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(body, "body  : ", depth+1);
 }
 
 ReturnNode::ReturnNode(Token *tk_) : Node(tk_)
@@ -190,12 +151,8 @@ ReturnNode::ReturnNode(Token *tk_) : Node(tk_)
 
 void ReturnNode::dump(size_t depth)
 {
-	DBG_PL("return  : %s", cstr(tk->data));
-	DBG_PL("body  : ");
-	Node *traverse_ptr = body;
-	for (; traverse_ptr != NULL; traverse_ptr = traverse_ptr->next) {
-		traverse_ptr->dump(depth+1);
-	}
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(body, "body  : ", depth+1);
 }
 
 void BranchNode::link(Node *child)
@@ -225,8 +182,15 @@ OperatorNode::OperatorNode(Token *tk) : BranchNode(tk)
 {
 }
 
-SingleTermOperatorNode::SingleTermOperatorNode(Token *op, Token *tk) : OperatorNode(tk)
+SingleTermOperatorNode::SingleTermOperatorNode(Token *tk) : Node(tk)
 {
+	expr = NULL;
+}
+
+void SingleTermOperatorNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(expr, "expr  : ", depth+1);
 }
 
 IfStmtNode::IfStmtNode(Token *tk) : Node(tk)
@@ -238,30 +202,10 @@ IfStmtNode::IfStmtNode(Token *tk) : Node(tk)
 
 void IfStmtNode::dump(size_t depth)
 {
-	string prefix = "";
-	for (size_t i = 0; i < depth; i++) {
-		prefix += "----";
-	}
-	DBG_P("%s", cstr(prefix));
-	DBG_PL("ifstmt  : %s", cstr(tk->data));
-	if (expr) {
-		DBG_P("expr  : ");
-		expr->dump(depth+1);
-	}
-	if (true_stmt) {
-		DBG_PL("true  : ");
-		Node *traverse_ptr = true_stmt;
-		for (; traverse_ptr != NULL; traverse_ptr = traverse_ptr->next) {
-			traverse_ptr->dump(depth+1);
-		}
-	}
-	if (false_stmt) {
-		DBG_PL("false  : ");
-		Node *traverse_ptr = false_stmt;
-		for (; traverse_ptr != NULL; traverse_ptr = traverse_ptr->next) {
-			traverse_ptr->dump(depth+1);
-		}
-	}
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(expr, "expr  : ", depth+1);
+	Node_dump(true_stmt, "true  : ", depth+1);
+	Node_dump(false_stmt, "false  : ", depth+1);
 }
 
 ElseStmtNode::ElseStmtNode(Token *tk) : Node(tk)
@@ -271,12 +215,8 @@ ElseStmtNode::ElseStmtNode(Token *tk) : Node(tk)
 
 void ElseStmtNode::dump(size_t depth)
 {
-	string prefix = "";
-	for (size_t i = 0; i < depth; i++) {
-		prefix += "----";
-	}
-	DBG_P("%s", cstr(prefix));
-	if (stmt) stmt->dump(depth+1);
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(stmt, "", depth+1);
 }
 
 ForStmtNode::ForStmtNode(Token *tk) : Node(tk)
@@ -296,29 +236,9 @@ void ForStmtNode::setExpr(Node *expr)
 
 void ForStmtNode::dump(size_t depth)
 {
-	string prefix = "";
-	for (size_t i = 0; i < depth; i++) {
-		prefix += "----";
-	}
-	DBG_P("%s", cstr(prefix));
-	DBG_PL("forstmt  : %s", cstr(tk->data));
-	if (init) {
-		DBG_P("init  : ");
-		init->dump(depth+1);
-	}
-	if (cond) {
-		DBG_P("cond  : ");
-		cond->dump(depth+1);
-	}
-	if (progress) {
-		DBG_P("progress  : ");
-		progress->dump(depth+1);
-	}
-	if (true_stmt) {
-		DBG_PL("true  : ");
-		Node *traverse_ptr = true_stmt;
-		for (; traverse_ptr != NULL; traverse_ptr = traverse_ptr->next) {
-			traverse_ptr->dump(depth+1);
-		}
-	}
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(init, "init  : ", depth+1);
+	Node_dump(cond, "cond  : ", depth+1);
+	Node_dump(cond, "progress  : ", depth+1);
+	Node_dump(cond, "true  : ", depth+1);
 }

@@ -55,7 +55,7 @@ Token *ParseContext::nextToken(void)
 
 bool ParseContext::end(void)
 {
-	return idx < tk->token_num;
+	return idx >= tk->token_num;
 }
 
 void ParseContext::next(void)
@@ -78,32 +78,36 @@ Node *Parser::_parse(Token *root)
 {
 	using namespace SyntaxType;
 	ParseContext *pctx = new ParseContext(root);
-	for (; pctx->end(); pctx->next()) {
-		Token *tk = pctx->token();
-		switch (tk->stype) {
-		case BlockStmt: {
-			/* Nameless Block */
-			Node *stmt = _parse(tk);
-			BlockNode *block = new BlockNode(tk);
-			block->body = stmt->getRoot();
-			parseStmt(pctx, block);
-			break;
-		}
-		case Stmt: {
-			Node *stmt = _parse(tk);
-			parseStmt(pctx, stmt);
-			break;
-		}
-		case Expr: {
-			/* Nameless Expr */
-			Node *expr = _parse(tk);
-			//TODO: wrap expr node
-			parseExpr(pctx, expr);
-			break;
-		}
-		default:
-			parseToken(pctx, tk);
-			break;
+	if (pctx->end()) {
+		parseToken(pctx, root);
+	} else {
+		for (; !pctx->end(); pctx->next()) {
+			Token *tk = pctx->token();
+			switch (tk->stype) {
+			case BlockStmt: {
+				/* Nameless Block */
+				Node *stmt = _parse(tk);
+				BlockNode *block = new BlockNode(tk);
+				block->body = stmt->getRoot();
+				parseStmt(pctx, block);
+				break;
+			}
+			case Stmt: {
+				Node *stmt = _parse(tk);
+				parseStmt(pctx, stmt);
+				break;
+			}
+			case Expr: {
+				/* Nameless Expr */
+				Node *expr = _parse(tk);
+				//TODO: wrap expr node
+				parseExpr(pctx, expr);
+				break;
+			}
+			default:
+				parseToken(pctx, tk);
+				break;
+			}
 		}
 	}
 	Node *node = pctx->nodes->lastNode();
@@ -125,6 +129,7 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 		parseDecl(pctx, tk);
 		break;
 	case TokenKind::Term:
+	case TokenKind::Modifier:
 		DBG_PL("TERM");
 		parseTerm(pctx, tk);
 		break;
@@ -275,22 +280,32 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 void Parser::parseSingleTermOperator(ParseContext *pctx, Token *tk)
 {
 	using namespace TokenType;
-	Token *prev_tk = pctx->token(tk, -1);
 	Token *next_tk = pctx->token(tk, 1);
 	TokenType::Type type = tk->info.type;
 	SingleTermOperatorNode *op_node = NULL;
 	/* right associativity */
-	if (type == IsNot || type == Ref || type == Add || type == Sub) {
+	if ((type == IsNot || type == Ref || type == Add || type == Sub) ||
+		((type == Inc || type == Dec) && pctx->idx == 0)) {
 		assert(next_tk && "syntax error near by single term operator");
-		op_node = new SingleTermOperatorNode(tk, next_tk);
+		op_node = new SingleTermOperatorNode(tk);
+		if (next_tk->info.kind == TokenKind::Function) {
+			FunctionCallNode *func = new FunctionCallNode(next_tk);
+			Token *next_after_tk = pctx->token(tk, 2);
+			if (next_after_tk) {
+				Node *expr = _parse(next_after_tk);
+				if (expr) func->setArgs(expr);
+				pctx->next();
+			}
+			op_node->expr = func;
+		} else {
+			Node *node = _parse(next_tk);
+			assert(node && "syntax error near by single term operator");
+			op_node->expr = node->getRoot();
+		}
 		pctx->next();
 	} else if (type == Inc || type == Dec) {
-		if (next_tk && (next_tk->info.kind == TokenKind::Term || next_tk->stype == SyntaxType::Expr)) {
-			op_node = new SingleTermOperatorNode(tk, next_tk);
-			pctx->next();
-		} else if (prev_tk && (prev_tk->info.kind == TokenKind::Term || prev_tk->stype == SyntaxType::Expr)) {
-			op_node = new SingleTermOperatorNode(tk, prev_tk);
-		}
+		asm("int3");
+		op_node = new SingleTermOperatorNode(tk);
 	}
 	assert(op_node && "syntax error!");
 	Nodes *nodes = pctx->nodes;
@@ -305,14 +320,9 @@ void Parser::parseSingleTermOperator(ParseContext *pctx, Token *tk)
 bool Parser::isSingleTermOperator(ParseContext *pctx, Token *tk)
 {
 	using namespace TokenType;
-	if (tk->info.kind != TokenKind::Operator) return false;
 	TokenType::Type type = tk->info.type;
-	Token *prev_tk = pctx->token(tk, -1);
 	if (type == IsNot || type == Ref || type == Inc || type == Dec) return true;
-	if (!prev_tk) return true;
-	if ((type == Add || type == Sub) &&
-		(prev_tk->info.kind != TokenKind::Term &&
-		 prev_tk->stype != SyntaxType::Expr)) return true;
+	if ((type == Add || type == Sub) && pctx->idx == 0) return true;
 	return false;
 }
 
@@ -379,10 +389,22 @@ void Parser::parseTerm(ParseContext *pctx, Token *tk)
 	} else {
 		term = new LeafNode(tk);
 	}
-	BranchNode *node = dynamic_cast<BranchNode *>(nodes->lastNode());
+	Node *node = nodes->lastNode();
 	if (!node) {
 		nodes->push(term);
 		return;
 	}
-	node->link(term);
+	if (typeid(*node) == typeid(BranchNode)) {
+		BranchNode *branch = dynamic_cast<BranchNode *>(node);
+		branch->link(term);
+	} else if (typeid(*node) == typeid(FunctionCallNode)) {
+		FunctionCallNode *func = dynamic_cast<FunctionCallNode *>(node);
+		func->setArgs(term);
+	} else if (typeid(*node) == typeid(ArrayNode)) {
+		ArrayNode *array = dynamic_cast<ArrayNode *>(node);
+		array->idx = term;
+	} else if (typeid(*node) == typeid(HashNode)) {
+		HashNode *hash = dynamic_cast<HashNode *>(node);
+		hash->key = term;
+	}
 }
