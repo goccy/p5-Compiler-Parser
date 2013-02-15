@@ -178,10 +178,6 @@ void BranchNode::link(Node *child)
 	if (child) child->parent = this;
 }
 
-OperatorNode::OperatorNode(Token *tk) : BranchNode(tk)
-{
-}
-
 SingleTermOperatorNode::SingleTermOperatorNode(Token *tk) : Node(tk)
 {
 	expr = NULL;

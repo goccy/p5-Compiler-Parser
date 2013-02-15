@@ -73,11 +73,6 @@ public:
 	void dump(size_t depth);
 };
 
-class OperatorNode : public BranchNode {
-public:
-	OperatorNode(Token *op);
-};
-
 class SingleTermOperatorNode : public Node {
 public:
 	Node *expr;
@@ -85,12 +80,12 @@ public:
 	void dump(size_t depth);
 };
 
-class DoubleTermOperatorNode : public OperatorNode {
+class DoubleTermOperatorNode : public Node {
 public:
 	DoubleTermOperatorNode(Token *op);
 };
 
-class OtherTermOperatorNode : public OperatorNode {
+class OtherTermOperatorNode : public Node {
 public:
 	OtherTermOperatorNode(Token *op);
 };

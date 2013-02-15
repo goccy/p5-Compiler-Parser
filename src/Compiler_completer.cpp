@@ -384,7 +384,8 @@ RESTART:;
 			 tk->info.type == TokenType::LocalHashVar ||
 			 tk->info.type == TokenType::GlobalVar ||
 			 tk->info.type == TokenType::GlobalArrayVar ||
-			 tk->info.type == TokenType::GlobalHashVar) &&
+			 tk->info.type == TokenType::GlobalHashVar ||
+			 tk->info.kind == TokenKind::Function) &&
 			tks[i+1]->stype == SyntaxType::Expr) {
 			insertTerm(root, i, 2);
 			tk_n -= 1;
@@ -427,8 +428,9 @@ void Completer::recoveryNamedUnaryOperatorsArgument(Token *root)
 				tks[j] = recovery_tks->at(j);
 			}
 			root->token_num = size;
+			tk_n = size;
 		}
-		if (tks[i]->token_num > 0) {
+		if (tk->token_num > 0) {
 			recoveryNamedUnaryOperatorsArgument(tks[i]);
 		}
 	}
@@ -465,8 +467,9 @@ void Completer::recoveryFunctionArgument(Token *root)
 				tks[j] = recovery_tks->at(j);
 			}
 			root->token_num = size;
+			tk_n = size;
 		}
-		if (tks[i]->token_num > 0) {
+		if (tk->token_num > 0) {
 			recoveryFunctionArgument(tks[i]);
 		}
 	}

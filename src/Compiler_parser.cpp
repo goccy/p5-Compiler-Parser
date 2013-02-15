@@ -104,6 +104,11 @@ Node *Parser::_parse(Token *root)
 				parseExpr(pctx, expr);
 				break;
 			}
+			case Term: {
+				Node *term = _parse(tk);
+				parseExpr(pctx, term);
+				break;
+			}
 			default:
 				parseToken(pctx, tk);
 				break;
