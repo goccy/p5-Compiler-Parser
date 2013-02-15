@@ -142,45 +142,44 @@ Node *Parser::_parse(Token *root)
 void Parser::parseToken(ParseContext *pctx, Token *tk)
 {
 	using namespace TokenKind;
-	using namespace TokenType;
 	switch (tk->info.kind) {
-	case TokenKind::Decl:
+	case Decl:
 		DBG_PL("DECL");
 		parseDecl(pctx, tk);
 		break;
-	case TokenKind::Term:
-	case TokenKind::Modifier:
+	case Term:
+	case Modifier:
 		DBG_PL("TERM");
 		parseTerm(pctx, tk);
 		break;
-	case TokenKind::Operator:
-	case TokenKind::Assign:
-	case TokenKind::Comma:
+	case Operator:
+	case Assign:
+	case Comma:
 		DBG_PL("BRANCH");
 		parseBranchType(pctx, tk);
 		break;
-	case TokenKind::Function:
+	case Function:
 		DBG_PL("CALL");
 		parseFunctionCall(pctx, tk);
 		break;
-	case TokenKind::Stmt:
+	case Stmt:
 		DBG_PL("STMT");
 		parseSpecificStmt(pctx, tk);
 		break;
-	case TokenKind::Return:
+	case Return:
 		DBG_PL("RETURN");
 		pctx->returnToken = tk;
 		break;
-	case TokenKind::SpecificKeyword:
+	case SpecificKeyword:
 		DBG_PL("KEYWORD");
 		break;
-	case TokenKind::Handle:
+	case Handle:
 		DBG_PL("HANDLE");
 		break;
-	case TokenKind::StmtEnd:
+	case StmtEnd:
 		DBG_PL("STMT_END");
 		break;
-	case TokenKind::Symbol:
+	case Symbol:
 		DBG_PL("SYMBOL");
 		break;
 	default:
