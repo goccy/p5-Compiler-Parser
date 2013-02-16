@@ -71,7 +71,17 @@ public:
 	size_t max_token_size;
 	int token_idx;
 	Tokens *tokens;
+	Tokens *tks;
 	int progress;
+	TokenPos itr;
+
+	Enum::Lexer::Token::Type prev_type;
+	LexContext(void);
+	LexContext(Tokens *tokens);
+	Token *tk(void);
+	Token *nextToken(void);
+	void next(void);
+	bool end(void);
 };
 
 class Module {
@@ -138,7 +148,48 @@ private:
 	TokenInfo getTokenInfo(const char *data);
 	bool search(std::vector<std::string> list, std::string str);
 	void insertParenthesis(Tokens *tokens);
+};
+
+class Annotator {
+public:
+	AnnotateMethods *methods;
+	std::vector<std::string> vardecl_list;
+	std::vector<std::string> funcdecl_list;
+	std::vector<std::string> pkgdecl_list;
+	Annotator(void);
+	void annotate(LexContext *ctx, Token *tk);
+private:
+	TokenInfo getTokenInfo(Enum::Lexer::Token::Type type);
+	TokenInfo getTokenInfo(const char *data);
+	bool search(std::vector<std::string> list, std::string target);
+	void setAnnotateMethods(AnnotateMethods *methods);
 	bool isReservedKeyword(std::string word);
+	TokenInfo annotateRegOpt(LexContext *ctx, Token *tk);
+	TokenInfo annotateNamespace(LexContext *ctx, Token *tk);
+	TokenInfo annotateMethod(LexContext *ctx, Token *tk);
+	TokenInfo annotateKey(LexContext *ctx, Token *tk);
+	TokenInfo annotateShortScalarDereference(LexContext *ctx, Token *tk);
+	TokenInfo annotateReservedKeyword(LexContext *ctx, Token *tk);
+	TokenInfo annotateNamelessFunction(LexContext *ctx, Token *tk);
+	TokenInfo annotateLocalVariable(LexContext *ctx, Token *tk);
+	TokenInfo annotateVariable(LexContext *ctx, Token *tk);
+	TokenInfo annotateGlobalVariable(LexContext *ctx, Token *tk);
+	TokenInfo annotateFunction(LexContext *ctx, Token *tk);
+	TokenInfo annotateCall(LexContext *ctx, Token *tk);
+	TokenInfo annotateClass(LexContext *ctx, Token *tk);
+	TokenInfo annotateUsedName(LexContext *ctx, Token *tk);
+	TokenInfo annotateBareWord(LexContext *ctx, Token *tk);
+};
+
+typedef TokenInfo (Annotator::*AnnotateMethod)(LexContext *ctx, Token *tk);
+class AnnotateMethods : public std::vector<AnnotateMethod> {
+public:
+	Annotator *executor;
+
+	AnnotateMethods(void);
+	void add(AnnotateMethod method);
+	void setAnnotator(Annotator *executor);
+	std::vector<AnnotateMethod>::iterator iterator(void);
 };
 
 #define isSKIP() commentFlag

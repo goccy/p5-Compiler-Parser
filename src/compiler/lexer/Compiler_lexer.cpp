@@ -6,6 +6,38 @@ using namespace std;
 namespace TokenType = Enum::Lexer::Token;
 namespace SyntaxType = Enum::Lexer::Syntax;
 namespace TokenKind = Enum::Lexer;
+#define ITER_CAST(T, it) (T)*(it)
+
+LexContext::LexContext(void)
+{
+
+}
+
+LexContext::LexContext(Tokens *tks)
+{
+	this->tks = tks;
+	this->itr = tks->begin();
+}
+
+Token *LexContext::tk(void)
+{
+	return ITER_CAST(Token *, itr);
+}
+
+Token *LexContext::nextToken(void)
+{
+	return ITER_CAST(Token *, itr+1);
+}
+
+void LexContext::next(void)
+{
+	++itr;
+}
+
+bool LexContext::end(void)
+{
+	return itr == tks->end();
+}
 
 Token::Token(string data_, FileInfo finfo_) :
 	data(data_), token_num(0), total_token_num(0),
@@ -90,8 +122,14 @@ const char *Token::deparse(void)
 	if (isDeparsed) return cstr(deparsed_data);
 	isDeparsed = true;
 	if (this->token_num > 0) {
+		if (stype == SyntaxType::Expr) {
+			deparsed_data += "(";
+		}
 		for (size_t i = 0; i < this->token_num; i++) {
 			deparsed_data += string(this->tks[i]->deparse());
+		}
+		if (stype == SyntaxType::Expr) {
+			deparsed_data += ")";
 		}
 	} else {
 		switch (info.type) {
@@ -891,8 +929,6 @@ Tokens *Lexer::tokenize(char *script)
 	return tokens;
 }
 
-#define ITER_CAST(T, it) (T)*(it)
-
 void Lexer::dump(Tokens *tokens)
 {
 	TokenPos it = tokens->begin();
@@ -928,144 +964,13 @@ TokenInfo Lexer::getTokenInfo(const char *data)
 	return decl_tokens[i];
 }
 
-bool Lexer::isReservedKeyword(std::string word)
-{
-	for (int i = 0; decl_tokens[i].type != TokenType::Undefined; i++) {
-		if (word == decl_tokens[i].data) {
-			return true;
-		}
-	}
-	return false;
-}
-
 void Lexer::annotateTokens(Tokens *tokens)
 {
-	using namespace TokenType;
-	TokenPos it = tokens->begin();
-	vector<string> vardecl_list;
-	vector<string> funcdecl_list;
-	vector<string> pkgdecl_list;
-	int cur_type = 0;
-	while (it != tokens->end()) {
-		Token *t = ITER_CAST(Token *, it);
-		Token *next_token = ITER_CAST(Token *, it+1);
-		string data = t->data;
-		//fprintf(stdout, "TOKEN = [%s]\n", cstr(data));
-		if (t->info.type != Undefined) {
-			cur_type = t->info.type;
-		} else if (cur_type == RegDelim && isalpha(data[0]) &&
-				   data != "if"      && data != "while" &&
-				   data != "foreach" && data != "for") {
-			//(data == "g" || data == "m" || data == "s" || data == "x")) {
-			t->info = getTokenInfo(RegOpt);
-			cur_type = RegOpt;
-		} else if (it+1 != tokens->end() && next_token->data == "::" &&
-				   next_token->info.type != String && next_token->info.type != RawString) {
-			t->info = getTokenInfo(Namespace);
-			cur_type = Namespace;
-		} else if (cur_type == NamespaceResolver) {
-			t->info = getTokenInfo(Namespace);
-			cur_type = Namespace;
-		} else if (cur_type == Pointer && isalpha(data[0])) {
-			t->info = getTokenInfo(Method);
-		} else if (cur_type == LeftBrace && it+1 != tokens->end() &&
-				   (isalpha(data[0]) || data[0] == '_') &&
-				   next_token->data == "}") {
-			t->info = getTokenInfo(Key);
-			cur_type = Key;
-		} else if (it+1 != tokens->end() &&
-				   (isalpha(data[0]) || data[0] == '_') &&
-				   next_token->data == "=>") {
-			t->info = getTokenInfo(Key);
-			cur_type = Key;
-		} else if (it+1 != tokens->end() && data == "$$" &&
-				   (isalpha(next_token->data[0]) || next_token->data[0] == '_')) {
-			t->info = getTokenInfo(ShortScalarDereference);
-			cur_type = ShortScalarDereference;
-		} else if (isReservedKeyword(data) && cur_type != FunctionDecl) {
-			t->info = getTokenInfo(cstr(data));
-			cur_type = t->info.type;
-		} else if (cur_type == FunctionDecl && data == "{") {
-			t->info = getTokenInfo(cstr(data));
-			cur_type = t->info.type;
-		} else if (cur_type == VarDecl && t->data.find("$") != string::npos) {
-			t->info = getTokenInfo(LocalVar);
-			vardecl_list.push_back(t->data);
-			cur_type = LocalVar;
-		} else if (cur_type == VarDecl && t->data.find("@") != string::npos) {
-			t->info = getTokenInfo(LocalArrayVar);
-			vardecl_list.push_back(t->data);
-			cur_type = LocalArrayVar;
-		} else if (cur_type == VarDecl && t->data.find("%") != string::npos) {
-			t->info = getTokenInfo(LocalHashVar);
-			vardecl_list.push_back(t->data);
-			cur_type = LocalHashVar;
-		} else if (search(vardecl_list, t->data)) {
-			if (t->data.find("@") != string::npos) {
-				t->info = getTokenInfo(ArrayVar);
-				cur_type = ArrayVar;
-			} else if (t->data.find("%") != string::npos) {
-				t->info = getTokenInfo(HashVar);
-				cur_type = HashVar;
-			} else {
-				t->info = getTokenInfo(Var);
-				cur_type = Var;
-			}
-		} else if (t->data.find("$") != string::npos) {
-			t->info = getTokenInfo(GlobalVar);
-			vardecl_list.push_back(t->data);
-			cur_type = GlobalVar;
-		} else if (t->data.find("@") != string::npos) {
-			t->info = getTokenInfo(GlobalArrayVar);
-			vardecl_list.push_back(t->data);
-			cur_type = GlobalArrayVar;
-		} else if (t->data.find("%") != string::npos) {
-			t->info = getTokenInfo(GlobalHashVar);
-			vardecl_list.push_back(t->data);
-			cur_type = GlobalHashVar;
-		} else if (t->info.type == Double) {
-			cur_type = Double;
-		} else if (t->info.type == Int) {
-			cur_type = Int;
-		} else if (t->data == "0" || atoi(cstr(t->data)) != 0) {
-			if (t->info.type == String) {
-				cur_type = 0; it++;
-				continue;
-			}
-			if (t->data.find(".") != string::npos) {
-				t->info = getTokenInfo(Double);
-				cur_type = Double;
-			} else {
-				t->info = getTokenInfo(Int);
-				cur_type = Int;
-			}
-		} else if (cur_type == FunctionDecl) {
-			t->info = getTokenInfo(Function);
-			cur_type = Function;
-			funcdecl_list.push_back(t->data);
-		} else if (cur_type == RegDelim) {
-			t->info = getTokenInfo(RegOpt);
-			cur_type = RegOpt;
-		} else if (search(funcdecl_list, t->data)) {
-			t->info = getTokenInfo(Call);
-			cur_type = Call;
-		} else if (cur_type == Package) {
-			t->info = getTokenInfo(Class);
-			pkgdecl_list.push_back(t->data);
-		} else if (search(pkgdecl_list, t->data)) {
-			t->info = getTokenInfo(Class);
-		} else if (data == "\n") {
-			tokens->erase(it);
-			it--;
-		} else if (cur_type == UseDecl) {
-			t->info = getTokenInfo(UsedName);
-			cur_type = UsedName;
-		} else {
-			t->info = getTokenInfo(Key);//BareWord);
-			t->info.has_warnings = true;
-			cur_type = Key;//BareWord;
-		}
-		it++;
+	LexContext *ctx = new LexContext(tokens);
+	Annotator *annotator = new Annotator();
+	for (; !ctx->end(); ctx->next()) {
+		Token *tk = ctx->tk();
+		annotator->annotate(ctx, tk);
 	}
 }
 
@@ -1117,7 +1022,6 @@ void Lexer::grouping(Tokens *tokens)
 		case ShortHashDereference:   case ShortCodeDereference: {
 			Token *next_tk = ITER_CAST(Token *, pos+1);
 			if (!next_tk) break;
-			TokenType::Type type = next_tk->info.type;
 			Token *sp_token = tk;
 			sp_token->data += next_tk->data;
 			tokens->erase(pos+1);

@@ -205,7 +205,7 @@ public:
 
 #define TYPE_match(ptr, T) typeid(*ptr) == typeid(T)
 
-#define Node_dump(node, msg, depth) {									\
+#define Node_dump(node, msg, depth) do {								\
 		if (node) {														\
 			for (size_t i = 0; i < depth; i++) {						\
 				fprintf(stdout, "----------------");					\
