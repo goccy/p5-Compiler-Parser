@@ -403,6 +403,7 @@ void Completer::recoveryNamedUnaryOperatorsArgument(Token *root)
 	using namespace TokenType;
 	Token **tks = root->tks;
 	size_t tk_n = root->token_num;
+RESTART:;
 	for (size_t i = 0; i < tk_n; i++) {
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
@@ -430,6 +431,7 @@ void Completer::recoveryNamedUnaryOperatorsArgument(Token *root)
 			}
 			root->token_num = size;
 			tk_n = size;
+			goto RESTART;
 		}
 		if (tk->token_num > 0) {
 			recoveryNamedUnaryOperatorsArgument(tks[i]);
@@ -442,11 +444,17 @@ void Completer::recoveryFunctionArgument(Token *root)
 	using namespace TokenType;
 	Token **tks = root->tks;
 	size_t tk_n = root->token_num;
+RESTART:;
 	for (size_t i = 0; i < tk_n; i++) {
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
-			tk->stype == SyntaxType::Expr &&
-			(tks[i+1]->stype == SyntaxType::Expr || tks[i+1]->stype == SyntaxType::Term)) {
+			((tk->stype == SyntaxType::Expr &&
+			 (tks[i+1]->stype == SyntaxType::Expr ||
+			  tks[i+1]->stype == SyntaxType::Term ||
+			  tks[i+1]->info.type == TokenType::ArrayVar)) ||
+			 (tk->stype == SyntaxType::Term &&
+			  (tks[i+1]->stype == SyntaxType::Term ||
+			   tks[i+1]->info.type == TokenType::ArrayVar)))) {
 			Token *expr = tks[i+1];
 			Token *function_argument = expr;
 			Token **new_tks = (Token **)realloc(tk->tks, (tk->token_num + 1) * PTR_SIZE);
@@ -469,6 +477,7 @@ void Completer::recoveryFunctionArgument(Token *root)
 			}
 			root->token_num = size;
 			tk_n = size;
+			goto RESTART;
 		}
 		if (tk->token_num > 0) {
 			recoveryFunctionArgument(tks[i]);

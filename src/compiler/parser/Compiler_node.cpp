@@ -2,6 +2,25 @@
 #include <parser.hpp>
 
 using namespace std;
+static inline void Node_dump(Node *node, char *msg, size_t depth)
+{
+	if (node) {
+		for (size_t i = 0; i < depth; i++) {
+			fprintf(stdout, "----------------");
+		}
+		fprintf(stdout, "%s ", msg);
+		Node *traverse_ptr = node;
+		for (; traverse_ptr != NULL; traverse_ptr = traverse_ptr->next) {
+			traverse_ptr->dump(depth+1);
+			if (traverse_ptr->next != NULL) {
+				for (size_t i = 0; i < depth; i++) {
+					fprintf(stdout, "----------------");
+				}
+			}
+		}
+	}
+}
+
 Node::Node(Token *tk_)
 {
 	this->tk = tk_;
@@ -118,7 +137,9 @@ void FunctionCallNode::dump(size_t depth)
 		fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 	} else {
 		fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
-		args->dump(depth+1);
+		for (size_t idx = 0; idx < args->size(); idx++) {
+			Node_dump(args->at(idx),  "args  : ", depth+1);
+		}
 	}
 }
 

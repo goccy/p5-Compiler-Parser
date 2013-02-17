@@ -81,6 +81,7 @@ void ParseContext::next(int progress)
 Parser::Parser(void)
 {
 	this->_prev_stmt = NULL;
+	this->extra_node = NULL;
 }
 
 AST *Parser::parse(Token *root)
@@ -135,6 +136,11 @@ Node *Parser::_parse(Token *root)
 		ReturnNode *ret = new ReturnNode(pctx->returnToken);
 		ret->body = node;
 		return ret;
+	}
+	if (pctx->nodes->size() > 1) {
+		assert(pctx->nodes->size() == 2 && "parse error!! nodes too large size");
+		node = pctx->nodes->at(0);
+		extra_node = pctx->nodes->at(1);
 	}
 	return node;
 }
@@ -205,14 +211,15 @@ void Parser::parseStmt(ParseContext *pctx, Node *stmt)
 void Parser::parseExpr(ParseContext *pctx, Node *expr)
 {
 	Node *node = pctx->lastNode();
-	return (!node) ? pctx->pushNode(expr) : link(node, expr);
+	return (!node) ? pctx->pushNode(expr) : link(pctx, node, expr);
 }
 
-void Parser::link(Node *from_node, Node *to_node)
+void Parser::link(ParseContext *pctx, Node *from_node, Node *to_node)
 {
 	if (TYPE_match(from_node, BranchNode)) {
 		BranchNode *branch = dynamic_cast<BranchNode *>(from_node);
-		branch->link(to_node);
+		if (branch->right) pctx->pushNode(to_node);
+		else branch->link(to_node);
 	} else if (TYPE_match(from_node, FunctionCallNode)) {
 		FunctionCallNode *func = dynamic_cast<FunctionCallNode *>(from_node);
 		if (to_node) func->setArgs(to_node);
@@ -223,7 +230,8 @@ void Parser::link(Node *from_node, Node *to_node)
 		HashNode *hash = dynamic_cast<HashNode *>(from_node);
 		hash->key = to_node;
 	} else {
-		assert(0 && "syntax error!\n");
+		//assert(0 && "syntax error!\n");
+		pctx->pushNode(to_node);
 	}
 }
 
@@ -374,7 +382,34 @@ void Parser::parseFunction(ParseContext *pctx, Token *tk)
 
 void Parser::parseFunctionCall(ParseContext *pctx, Token *tk)
 {
+	if (isIrregularFunction(pctx, tk)) {
+		parseIrregularFunction(pctx, tk);
+	} else {
+		FunctionCallNode *f = new FunctionCallNode(tk);
+		BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
+		return (!node) ? pctx->pushNode(f) : node->link(f);
+	}
+}
+
+bool Parser::isIrregularFunction(ParseContext *pctx, Token *tk)
+{
+	using namespace TokenType;
+	TokenType::Type type = tk->info.type;
+	if (tk->data == "map" || tk->data == "grep") return true;
+	return false;
+}
+
+void Parser::parseIrregularFunction(ParseContext *pctx, Token *tk)
+{
 	FunctionCallNode *f = new FunctionCallNode(tk);
+	Token *next_tk = pctx->nextToken();
+	Node *block_node = _parse(next_tk);
+	pctx->next();
+	Node *extra_node = this->extra_node;
+	assert(block_node && "syntax error near by irregular function");
+	f->setArgs(block_node->getRoot());
+	f->setArgs(extra_node);
+	this->extra_node = NULL;
 	BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
 	return (!node) ? pctx->pushNode(f) : node->link(f);
 }
@@ -395,5 +430,5 @@ void Parser::parseTerm(ParseContext *pctx, Token *tk)
 	}
 	assert(term && "syntax error!: near by term");
 	Node *node = pctx->lastNode();
-	return (!node) ? pctx->pushNode(term) : link(node, term);
+	return (!node) ? pctx->pushNode(term) : link(pctx, node, term);
 }

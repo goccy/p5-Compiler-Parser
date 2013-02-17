@@ -151,12 +151,13 @@ public:
 class Parser {
 public:
 	Node *_prev_stmt;
+	Node *extra_node;
 	Parser(void);
-	void link(Node *from, Node *to);
-	void completeExpr(Token *root);
 	AST *parse(Token *root);
 	Node *_parse(Token *root);
+	void link(ParseContext *pctx, Node *from, Node *to);
 	bool isSingleTermOperator(ParseContext *pctx, Token *tk);
+	bool isIrregularFunction(ParseContext *pctx, Token *tk);
 	void parseStmt(ParseContext *pctx, Node *stmt);
 	void parseExpr(ParseContext *pctx, Node *expr);
 	void parseToken(ParseContext *pctx, Token *tk);
@@ -167,6 +168,7 @@ public:
 	void parseDecl(ParseContext *pctx, Token *comma);
 	void parseFunction(ParseContext *pctx, Token *func);
 	void parseFunctionCall(ParseContext *pctx, Token *func);
+	void parseIrregularFunction(ParseContext *pctx, Token *func);
 };
 
 class Completer {
@@ -205,15 +207,3 @@ public:
 
 #define TYPE_match(ptr, T) typeid(*ptr) == typeid(T)
 
-#define Node_dump(node, msg, depth) do {								\
-		if (node) {														\
-			for (size_t i = 0; i < depth; i++) {						\
-				fprintf(stdout, "----------------");					\
-			}															\
-			fprintf(stdout, "%s ", msg);									\
-			Node *traverse_ptr = node;									\
-			for (; traverse_ptr != NULL; traverse_ptr = traverse_ptr->next) { \
-				traverse_ptr->dump(depth+1);							\
-			}															\
-		}																\
-	} while(0)
