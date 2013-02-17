@@ -4,19 +4,9 @@ namespace TokenType = Enum::Lexer::Token;
 using namespace TokenType;
 using namespace std;
 
-AnnotateMethods::AnnotateMethods(void)
-{
-}
-
-void AnnotateMethods::add(AnnotateMethod method)
-{
-	push_back(method);
-}
-
-void AnnotateMethods::setAnnotator(Annotator *executor)
-{
-	this->executor = executor;
-}
+AnnotateMethods::AnnotateMethods(void){}
+void AnnotateMethods::add(AnnotateMethod method){ push_back(method); }
+void AnnotateMethods::setAnnotator(Annotator *executor){ this->executor = executor; }
 
 Annotator::Annotator(void)
 {

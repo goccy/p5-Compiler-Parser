@@ -7,10 +7,12 @@ objs = build/main.o \
 	build/Compiler_gen_token_decl.o \
 	build/Compiler_lexer.o \
 	build/Compiler_annotator.o \
+	build/Compiler_scanner.o \
 	build/Compiler_parser.o \
 	build/Compiler_completer.o \
 	build/Compiler_node.o \
 	build/Compiler_util.o \
+	build/Compiler_token.o \
 
 .PHONY: all
 all: $(target)
@@ -30,6 +32,9 @@ build/Compiler_lexer.o : src/compiler/lexer/Compiler_lexer.cpp
 build/Compiler_annotator.o : src/compiler/lexer/Compiler_annotator.cpp
 	$(CC) $(CFLAGS) -o $@ -c $^
 
+build/Compiler_scanner.o : src/compiler/lexer/Compiler_scanner.cpp
+	$(CC) $(CFLAGS) -o $@ -c $^
+
 build/Compiler_completer.o : src/compiler/parser/Compiler_completer.cpp
 	$(CC) $(CFLAGS) -o $@ -c $^
 
@@ -40,6 +45,9 @@ build/Compiler_node.o : src/compiler/parser/Compiler_node.cpp
 	$(CC) $(CFLAGS) -o $@ -c $^
 
 build/Compiler_util.o : src/compiler/util/Compiler_util.cpp
+	$(CC) $(CFLAGS) -o $@ -c $^
+
+build/Compiler_token.o : src/compiler/util/Compiler_token.cpp
 	$(CC) $(CFLAGS) -o $@ -c $^
 
 .PHONY: clean

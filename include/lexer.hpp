@@ -80,6 +80,8 @@ public:
 	LexContext(Tokens *tokens);
 	Token *tk(void);
 	Token *nextToken(void);
+	void clearToken(char *token);
+	void writeChar(char *token, char ch);
 	void next(void);
 	bool end(void);
 };
@@ -91,14 +93,12 @@ public:
 	Module(const char *name, const char *args);
 };
 
-class Lexer {
+class Scanner {
 public:
 	bool isStringStarted;
 	bool isRegexStarted;
 	bool commentFlag;
 	bool hereDocumentFlag;
-	TokenPos start_pos;
-	TokenPos pos;
 	FileInfo finfo;
 	char start_string_ch;
 	char regex_delim;
@@ -108,31 +108,10 @@ public:
 	int cury_brace_count_inner_regex;
 	std::string here_document_tag;
 
-	Lexer(const char *filename);
-	//~Lexer(void);
+	Scanner(void);
 	bool isRegexDelim(Token *prev_token, char symbol);
-	Tokens *tokenize(char *script);
-	void annotateTokens(Tokens *tokens);
-	void grouping(Tokens *tokens); /* for Namespace::Namespace */
-	void prepare(Tokens *tokens);
-	Token *parseSyntax(Token *start_token, Tokens *tokens);
-	void parseSpecificStmt(Token *root);
-	void setIndent(Token *tk, int indent);
-	void setBlockIDWithBreadthFirst(Token *tk, size_t base_id);
-	void setBlockIDWithDepthFirst(Token *tk, size_t *block_id);
-	void dump(Tokens *tokens);
-	void dumpSyntax(Token *tk, int indent);
-	Tokens *getTokensBySyntaxLevel(Token *root, Enum::Lexer::Syntax::Type type);
-	Modules *getUsedModules(Token *root);
-private:
 	bool isSkip(LexContext *ctx, char *script, size_t idx);
-	bool isExpr(Token *tk, Token *prev_tk, Enum::Lexer::Token::Type type, Enum::Lexer::Kind kind);
-	void insertStmt(Token *tk, int idx, size_t grouping_num);
-	void writeChar(LexContext *ctx, char *token, char ch);
-	void clearToken(LexContext *ctx, char *token);
-	void escapeQuotation(std::string *from, char quote);
 	Token *scanQuote(LexContext *ctx, char quote);
-	//Token *scanEscapeChar(LexContext *ctx, char ch);
 	Token *scanNewLineKeyword(LexContext *ctx);
 	Token *scanTabKeyword(LexContext *ctx);
 	Token *scanPrevSymbol(LexContext *ctx, char symbol);
@@ -146,6 +125,32 @@ private:
 	bool scanNegativeNumber(LexContext *ctx, char num);
 	TokenInfo getTokenInfo(Enum::Lexer::Token::Type type);
 	TokenInfo getTokenInfo(const char *data);
+};
+
+class Lexer {
+public:
+	TokenPos start_pos;
+	TokenPos pos;
+	FileInfo finfo;
+	Scanner *scanner;
+
+	Lexer(const char *filename);
+	Tokens *tokenize(char *script);
+	void annotateTokens(Tokens *tokens);
+	void grouping(Tokens *tokens);
+	void prepare(Tokens *tokens);
+	Token *parseSyntax(Token *start_token, Tokens *tokens);
+	void parseSpecificStmt(Token *root);
+	void setIndent(Token *tk, int indent);
+	void setBlockIDWithBreadthFirst(Token *tk, size_t base_id);
+	void setBlockIDWithDepthFirst(Token *tk, size_t *block_id);
+	void dump(Tokens *tokens);
+	void dumpSyntax(Token *tk, int indent);
+	Tokens *getTokensBySyntaxLevel(Token *root, Enum::Lexer::Syntax::Type type);
+	Modules *getUsedModules(Token *root);
+private:
+	bool isExpr(Token *tk, Token *prev_tk, Enum::Lexer::Token::Type type, Enum::Lexer::Kind kind);
+	void insertStmt(Token *tk, int idx, size_t grouping_num);
 	bool search(std::vector<std::string> list, std::string str);
 	void insertParenthesis(Tokens *tokens);
 };
