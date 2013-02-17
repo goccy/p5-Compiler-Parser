@@ -253,9 +253,9 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 		pctx->pushNode(if_stmt);
 		_prev_stmt = if_stmt;
 		Node *expr_node = _parse(pctx->token(tk, 1))->getRoot();
-		Node *block_stmt_node = _parse(pctx->token(tk, 2));
+		Node *block_node = _parse(pctx->token(tk, 2));
 		if_stmt->expr = expr_node;
-		if_stmt->true_stmt = block_stmt_node->getRoot();
+		if_stmt->true_stmt = (block_node) ? block_node->getRoot() : NULL;
 		pctx->next(2);
 		break;
 	}
@@ -265,9 +265,9 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 		node->false_stmt = if_stmt->getRoot();
 		_prev_stmt = if_stmt;
 		Node *expr_node = _parse(pctx->token(tk, 1))->getRoot();
-		Node *block_stmt_node = _parse(pctx->token(tk, 2));
+		Node *block_node = _parse(pctx->token(tk, 2));
 		if_stmt->expr = expr_node;
-		if_stmt->true_stmt = block_stmt_node->getRoot();
+		if_stmt->true_stmt = (block_node) ? block_node->getRoot() : NULL;
 		pctx->next(2);
 		break;
 	}
@@ -307,7 +307,8 @@ void Parser::parseSingleTermOperator(ParseContext *pctx, Token *tk)
 	Token *next_tk = pctx->token(tk, 1);
 	TokenType::Type type = tk->info.type;
 	SingleTermOperatorNode *op_node = NULL;
-	if ((type == IsNot || type == Ref || type == Add || type == Sub) ||
+	if ((type == IsNot || type == Ref || type == Add ||
+		 type == Sub   || type == BitNot) ||
 		((type == Inc || type == Dec) && pctx->idx == 0)) {
 		assert(next_tk && "syntax error near by single term operator");
 		op_node = new SingleTermOperatorNode(tk);
@@ -326,25 +327,22 @@ void Parser::parseSingleTermOperator(ParseContext *pctx, Token *tk)
 			op_node->expr = node->getRoot();
 		}
 		pctx->next();
+		pctx->pushNode(op_node);
 	} else if (type == Inc || type == Dec) {
-		asm("int3");
+		Node *node = pctx->lastNode();
 		op_node = new SingleTermOperatorNode(tk);
+		op_node->expr = node;
+		pctx->nodes->swapLastNode(op_node);
 	}
 	assert(op_node && "syntax error!");
-	Nodes *nodes = pctx->nodes;
-	BranchNode *node = dynamic_cast<BranchNode *>(nodes->lastNode());
-	if (!node) {
-		nodes->push(op_node);
-		return;
-	}
-	//node->link(op_node);//TODO swap from previous node to op_node
 }
 
 bool Parser::isSingleTermOperator(ParseContext *pctx, Token *tk)
 {
 	using namespace TokenType;
 	TokenType::Type type = tk->info.type;
-	if (type == IsNot || type == Ref || type == Inc || type == Dec) return true;
+	if (type == IsNot || type == Ref || type == Inc ||
+		type == Dec   || type == BitNot) return true;
 	if ((type == Add || type == Sub) && pctx->idx == 0) return true;
 	return false;
 }

@@ -60,7 +60,6 @@ public:
 
 	Token(std::string data_, FileInfo finfo);
 	Token(Tokens *tokens);
-	//~Token(void);
 	const char *deparse(void);
 };
 
@@ -151,7 +150,6 @@ public:
 private:
 	bool isExpr(Token *tk, Token *prev_tk, Enum::Lexer::Token::Type type, Enum::Lexer::Kind kind);
 	void insertStmt(Token *tk, int idx, size_t grouping_num);
-	bool search(std::vector<std::string> list, std::string str);
 	void insertParenthesis(Tokens *tokens);
 };
 

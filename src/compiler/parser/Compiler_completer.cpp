@@ -10,6 +10,7 @@ Completer::Completer(void)
 {
 	named_unary_keywords = new vector<string>();
 	named_unary_keywords->push_back("defined");
+	named_unary_keywords->push_back("die");
 }
 
 void Completer::complete(Token *root)

@@ -286,16 +286,6 @@ void Lexer::grouping(Tokens *tokens)
 	}
 }
 
-bool Lexer::search(vector<string> list, string target)
-{
-	bool ret = false;
-	vector<string>::iterator it = find(list.begin(), list.end(), target);
-	if (it != list.end()){
-		ret = true;
-	}
-	return ret;
-}
-
 void Lexer::prepare(Tokens *tokens)
 {
 	pos = tokens->begin();
