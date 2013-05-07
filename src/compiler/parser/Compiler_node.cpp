@@ -2,13 +2,17 @@
 #include <parser.hpp>
 
 using namespace std;
-static inline void Node_dump(Node *node, char *msg, size_t depth)
+static inline void Node_dump(Node *node, const char *msg, size_t depth)
 {
 	if (node) {
 		for (size_t i = 0; i < depth; i++) {
 			fprintf(stdout, "----------------");
 		}
-		fprintf(stdout, "%s ", msg);
+		if (msg) {
+			fprintf(stdout, "%s ", msg);
+		} else {
+			fprintf(stdout, " ");
+		}
 		Node *traverse_ptr = node;
 		for (; traverse_ptr != NULL; traverse_ptr = traverse_ptr->next) {
 			traverse_ptr->dump(depth+1);
@@ -74,7 +78,7 @@ void Nodes::dump(size_t depth)
 {
 	size_t n = size();
 	for (size_t idx = 0; idx < n; idx++) {
-		Node_dump(at(idx), "", depth);
+		Node_dump(at(idx), NULL, depth);
 	}
 }
 

@@ -333,8 +333,8 @@ void Completer::completeAssignExpr(Token *root)
 
 void Completer::completeCommaArrowExpr(Token *root)
 {
-	completeExprFromLeft(root, TokenType::Comma);
 	completeExprFromLeft(root, TokenType::Arrow);
+	completeExprFromLeft(root, TokenType::Comma);
 }
 
 void Completer::completeFunctionListExpr(Token *root)

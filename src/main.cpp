@@ -5,6 +5,7 @@
 
 int main(int argc, char **argv)
 {
+	(void)argc;
 	const char *filename = argv[1];
 	char line[MAX_LINE_SIZE] = {0};
 	char script_[MAX_SCRIPT_SIZE] = {0};
