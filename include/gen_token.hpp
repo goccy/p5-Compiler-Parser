@@ -1,6 +1,6 @@
 namespace Enum {
-namespace Lexer {
 namespace Token {
+namespace Type {
 typedef enum {
 	Return,
 	Add,
@@ -32,14 +32,15 @@ typedef enum {
 	EqualEqual,
 	Diamond,
 	Compare,
+	PolymorphicCompare,
 	RegOK,
 	RegNot,
 	NotEqual,
 	ArraySize,
 	StringLess,
 	StringLessEqual,
-	StringGrater,
-	StringGraterEqual,
+	StringGreater,
+	StringGreaterEqual,
 	StringEqual,
 	StringNotEqual,
 	StringCompare,
@@ -157,6 +158,7 @@ typedef enum {
 	GlobalVarDecl,
 	MultiLocalVarDecl,
 	MultiGlobalVarDecl,
+	Prototype,
 	Var,
 	CodeVar,
 	ArrayVar,
@@ -196,7 +198,7 @@ typedef enum {
 	Undefined,
 } Type;
 }
-
+namespace Kind {
 typedef enum {
 	Return,
 	Operator,
@@ -234,5 +236,6 @@ typedef enum {
 	Set,
 	Undefined,
 } Kind;
+}
 }
 }

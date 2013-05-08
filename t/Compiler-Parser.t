@@ -1,18 +1,52 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl Compiler-Parser.t'
-
-#########################
-
-# change 'tests => 1' to 'tests => last_test_to_print';
-
 use strict;
 use warnings;
+use Test::More;
+use Compiler::Lexer;
+use Data::Dumper;
+BEGIN {
+    use_ok('Compiler::Parser');
+    use_ok('Compiler::Parser::AST::Renderer');
+};
 
-use Test::More tests => 1;
-BEGIN { use_ok('Compiler-Parser') };
+my $tokens = Compiler::Lexer->new('')->tokenize(<<'SCRIPT');
+$v = $a->{b}->c;
+my $v = $a->{b}->c(defined $a && 1 || $b < 3 || $c > 5);
+$v + $v + $v++ + $v-- * ++$v / --$v % $v x $v + $v ** $v ** $v;
+!$v + ~$v + \$v + +$v - +($v) - -$v - -($v) << $v >> $v + $v & $v + $v | $v + $v ^ $v;
+my $a = $v =~ $v =~ $v !~ $v;
+#my $a = ((($v =~ $v) =~ $v) !~ $v);
+my $b = $v < $v && $v > $v || $v gt $v && $v le $v || $v == $v && $v <=> $v;# || $v ~~ $v;
+#my $b = $v < $v && $v > $v || $v gt $v && $v le $v || $v == $v && $v <=> $v || $v ~~ $v;
+my $c = $v += $v -= $v *= $v;
+print $v || $v , $v && $v, $v + $v * $v, $v;
+#print (((($v || $v) , ($v && $v)), ($v + ($v * $v))), $v);
+print + $v || $v , $v && $v, $v + $v * $v, $v;
+print - $v || $v => $v && $v => $v + $v * $v => $v;
+$v = $a->{b}->c(defined $a) || die "died";
+$v = $a->{b}->c($a) or die "died";
+if (!defined $v{0}) {}
+if (!defined $v{0} || 1) {}
+if (!defined $v[0]) {}
+if (!defined $v[0] || 1) {}
+if (!defined $v->[0]) {}
+if (!defined $v->[0] || 1) {}
+if (!defined $v->{0}) {}
+if (!defined $v->{0} || 1) {}
+if (!defined $v->{0}->[0]) {}
+if (!defined $v->{0}->[0] || 1) {}
+if (!defined $v->[0]->{0}) {}
+if (!defined $v->[0]->{0} + 1) {}
+if (!defined $v->[0]->{0} && undef) {}
+if (!defined $v->[0]->{0} + 1 && undef) {}
+!print $v->[0]->{0} + 1 && undef;
+defined $v->[0]->{0} + 1 && undef;
+print $v->[0]->{0} + 1 && undef;
+print $v->[0]->{0} + 1 && undef xor die "hoge";
+print reverse sort keys values %v;
+SCRIPT
 
-#########################
-
-# Insert your test code below, the Test::More module is use()ed here so read
-# its man page ( perldoc Test::More ) for help writing this test script.
+my $parser = Compiler::Parser->new();
+my $ast = $parser->parse($$tokens);
+Compiler::Parser::AST::Renderer->new->render($ast);
+done_testing;
 

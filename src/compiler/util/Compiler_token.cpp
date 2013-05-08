@@ -1,9 +1,9 @@
-#include <lexer.hpp>
+#include <common.hpp>
 
 using namespace std;
-namespace TokenType = Enum::Lexer::Token;
-namespace SyntaxType = Enum::Lexer::Syntax;
-namespace TokenKind = Enum::Lexer;
+namespace TokenType = Enum::Token::Type;
+namespace SyntaxType = Enum::Parser::Syntax;
+namespace TokenKind = Enum::Token::Kind;
 
 Token::Token(string data_, FileInfo finfo_) :
 	data(data_), token_num(0), total_token_num(0),
@@ -13,6 +13,8 @@ Token::Token(string data_, FileInfo finfo_) :
 	stype = SyntaxType::Value;
 	info.type = TokenType::Undefined;
 	info.kind = TokenKind::Undefined;
+	info.name = "";
+	info.data = NULL;
 	info.has_warnings = false;
 	finfo.start_line_num = finfo_.start_line_num;
 	finfo.end_line_num = finfo_.start_line_num;
@@ -28,6 +30,8 @@ Token::Token(Tokens *tokens) :
 	type =  TokenType::Undefined;
 	info.type = TokenType::Undefined;
 	info.kind = TokenKind::Undefined;
+	info.name = "";
+	info.data = NULL;
 	info.has_warnings = false;
 	size_t size = tokens->size();
 	TokenPos pos = tokens->begin();
@@ -69,13 +73,13 @@ const char *Token::deparse(void)
 	isDeparsed = true;
 	if (this->token_num > 0) {
 		if (stype == SyntaxType::Expr) {
-			deparsed_data += "(";
+			//deparsed_data += "(";
 		}
 		for (size_t i = 0; i < this->token_num; i++) {
 			deparsed_data += string(this->tks[i]->deparse());
 		}
 		if (stype == SyntaxType::Expr) {
-			deparsed_data += ")";
+			//deparsed_data += ")";
 		}
 	} else {
 		switch (info.type) {
@@ -106,4 +110,47 @@ const char *Token::deparse(void)
 		}
 	}
 	return cstr(deparsed_data);
+}
+
+Tokens::Tokens(void) {}
+
+void Tokens::add(Token *token)
+{
+	if (token) this->push_back(token);
+}
+
+void Tokens::remove(size_t idx)
+{
+	//this->erase(idx);
+}
+
+Token *Tokens::lastToken(void)
+{
+	size_t size = this->size();
+	return (size > 0) ? this->back() : NULL;
+}
+
+TokenInfo getTokenInfo(TokenType::Type type)
+{
+	size_t i = 0;
+	for (; decl_tokens[i].type != TokenType::Undefined; i++) {
+		if (type == decl_tokens[i].type) {
+			return decl_tokens[i];
+		}
+	}
+	return decl_tokens[i];
+}
+
+TokenInfo getTokenInfo(const char *data)
+{
+	size_t i = 0;
+	size_t dsize = strlen(data);
+	for (; decl_tokens[i].type != TokenType::Undefined; i++) {
+		const char *token_data = decl_tokens[i].data;
+		size_t tsize = strlen(token_data);
+		if (dsize == tsize && !strncmp(token_data, data, dsize)) {
+			return decl_tokens[i];
+		}
+	}
+	return decl_tokens[i];
 }

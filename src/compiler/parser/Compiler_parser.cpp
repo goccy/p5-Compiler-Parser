@@ -1,10 +1,9 @@
-#include <lexer.hpp>
 #include <parser.hpp>
 
 using namespace std;
-namespace TokenType = Enum::Lexer::Token;
-namespace SyntaxType = Enum::Lexer::Syntax;
-namespace TokenKind = Enum::Lexer;
+namespace TokenType = Enum::Token::Type;
+namespace TokenKind = Enum::Token::Kind;
+namespace SyntaxType = Enum::Parser::Syntax;
 
 AST::AST(Node *root)
 {
@@ -84,8 +83,515 @@ Parser::Parser(void)
 	this->extra_node = NULL;
 }
 
-AST *Parser::parse(Token *root)
+void Parser::grouping(Tokens *tokens)
 {
+	using namespace TokenType;
+	TokenPos pos = tokens->begin();
+	string ns = "";
+	Token *next_tk = NULL;
+	while (pos != tokens->end()) {
+		Token *tk = ITER_CAST(Token *, pos);
+		if (!tk) break;
+		switch (tk->info.type) {
+		case Var: case GlobalVar: case GlobalHashVar:
+		case Namespace: case Class: case CORE: {
+			Token *ns_token = tk;
+			TokenPos start_pos = pos+1;
+			size_t move_count = 0;
+			do {
+				tk = ITER_CAST(Token *, pos);
+				if (tk) ns += tk->data;
+				else break;
+				pos++;
+				move_count++;
+				next_tk = ITER_CAST(Token *, pos);
+			} while ((tk->info.type == NamespaceResolver &&
+					 (next_tk && next_tk->info.kind != TokenKind::Symbol &&
+					  next_tk->info.kind != TokenKind::StmtEnd)) ||
+					 (next_tk && next_tk->info.type == NamespaceResolver));
+			TokenPos end_pos = pos;
+			pos -= move_count;
+			ns_token->data = ns;
+			ns_token->info.has_warnings = true;
+			ns = "";
+			tokens->erase(start_pos, end_pos);
+			break;
+		}
+		case ArraySize: {
+			Token *as_token = tk;
+			Token *next_tk = ITER_CAST(Token *, pos+1);
+			TokenType::Type type = next_tk->info.type;
+			if (type == Key || type == Var || type == GlobalVar) {
+				as_token->data += next_tk->data;
+				tokens->erase(pos+1);
+			}
+			break;
+		}
+		case ShortScalarDereference: case ShortArrayDereference:
+		case ShortHashDereference:   case ShortCodeDereference: {
+			Token *next_tk = ITER_CAST(Token *, pos+1);
+			if (!next_tk) break;
+			Token *sp_token = tk;
+			sp_token->data += next_tk->data;
+			tokens->erase(pos+1);
+			break;
+		}
+		default:
+			break;
+		}
+		pos++;
+	}
+}
+
+void Parser::prepare(Tokens *tokens)
+{
+	pos = tokens->begin();
+	start_pos = pos;
+	TokenPos it = tokens->begin();
+	TokenPos tag_pos = start_pos;
+	while (it != tokens->end()) {
+		Token *t = ITER_CAST(Token *, it);
+		switch (t->info.type) {
+		case TokenType::HereDocumentTag: case TokenType::HereDocumentRawTag:
+			tag_pos = it;
+			break;
+		case TokenType::HereDocument:
+			if (tag_pos == start_pos) {
+				fprintf(stderr, "ERROR!: nothing use HereDocumentTag\n");
+				exit(EXIT_FAILURE);
+			} else {
+				Token *tag = ITER_CAST(Token *, tag_pos);
+				switch (tag->info.type) {
+				case TokenType::HereDocumentTag:
+					tag->info = getTokenInfo(TokenType::RegDoubleQuote);
+					tag->data = "qq{" + t->data + "}";
+					break;
+				case TokenType::HereDocumentRawTag:
+					tag->info = getTokenInfo(TokenType::RegQuote);//RawString);
+					tag->data = "q{" + t->data + "}";
+					break;
+				default:
+					break;
+				}
+				tokens->erase(tag_pos-1);
+				tokens->erase(it-1);
+				it--;
+				continue;
+			}
+			break;
+		case TokenType::HereDocumentEnd:
+			tokens->erase(it);
+			continue;
+			break;
+		default:
+			break;
+		}
+		it++;
+	}
+}
+
+bool Parser::isExpr(Token *tk, Token *prev_tk, TokenType::Type type, TokenKind::Kind kind)
+{
+	using namespace TokenType;
+	assert(tk->tks[0]->info.type == LeftBrace);
+	if (tk->token_num > 3 &&
+		(tk->tks[1]->info.type == Key   || tk->tks[1]->info.type == String) &&
+		(tk->tks[2]->info.type == Arrow || tk->tks[2]->info.type == Comma)) {
+		/* { [key|"key"] [,|=>] value ... */
+		return true;
+	} else if (type == Pointer || type == Mul || kind == TokenKind::Term || kind == TokenKind::Function ||/* type == FunctionDecl ||*/
+			((prev_tk && prev_tk->stype == SyntaxType::Expr) && (type == RightBrace || type == RightBracket))) {
+		/* ->{ or $hash{ or map { or {key}{ or [idx]{ */
+		return true;
+	}
+	return false;
+}
+
+Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
+{
+	using namespace TokenType;
+	Type prev_type = Undefined;
+	TokenKind::Kind prev_kind = TokenKind::Undefined;
+	TokenPos end_pos = tokens->end();
+	Tokens *new_tokens = new Tokens();
+	TokenPos intermediate_pos = pos;
+	Token *prev_syntax = NULL;
+	if (start_token) {
+		new_tokens->push_back(start_token);
+		intermediate_pos--;
+	}
+	while (pos != end_pos) {
+		Token *t = ITER_CAST(Token *, pos);
+		Type type = t->info.type;
+		TokenKind::Kind kind = t->info.kind;
+		switch (type) {
+		case LeftBracket: case LeftParenthesis:
+		case ArrayDereference: case HashDereference: case ScalarDereference:
+		case ArraySizeDereference: {
+			pos++;
+			Token *syntax = parseSyntax(t, tokens);
+			syntax->stype = SyntaxType::Expr;
+			new_tokens->push_back(syntax);
+			prev_syntax = syntax;
+			break;
+		}
+		case LeftBrace: {
+			Token *prev = ITER_CAST(Token *, pos-1);
+			if (prev) prev_type = prev->info.type;
+			pos++;
+			Token *syntax = parseSyntax(t, tokens);
+			if (isExpr(syntax, prev_syntax, prev_type, prev_kind)) {
+				syntax->stype = SyntaxType::Expr;
+			} else if (prev_type == FunctionDecl) {
+				/* LeftBrace is Expr but assign stype of BlockStmt */
+				syntax->stype = SyntaxType::BlockStmt;
+			} else if (prev_kind == TokenKind::Do) {
+				syntax->stype = SyntaxType::BlockStmt;
+			} else {
+				syntax->stype = SyntaxType::BlockStmt;
+				if (pos+1 != tokens->end()) {
+					Token *next_tk = ITER_CAST(Token *, pos+1);
+					if (next_tk && next_tk->info.type != SemiColon) {
+						intermediate_pos = pos;
+					}
+				}
+			}
+			new_tokens->push_back(syntax);
+			prev_syntax = syntax;
+			break;
+		}
+		case RightBrace: case RightBracket: case RightParenthesis:
+			new_tokens->push_back(t);
+			return new Token(new_tokens);
+			break; /* not reached this stmt */
+		case SemiColon: {
+			size_t k = pos - intermediate_pos;
+			if (start_pos == intermediate_pos) k++;
+			Tokens *stmt = new Tokens();
+			for (size_t j = 0; j < k - 1; j++) {
+				Token *tk = new_tokens->back();
+				j += (tk->total_token_num > 0) ? tk->total_token_num - 1 : 0;
+				stmt->insert(stmt->begin(), tk);
+				new_tokens->pop_back();
+			}
+			stmt->push_back(t);
+			Token *stmt_ = new Token(stmt);
+			stmt_->stype = SyntaxType::Stmt;
+			new_tokens->push_back(stmt_);
+			intermediate_pos = pos;
+			prev_syntax = stmt_;
+			break;
+		}
+		default:
+			new_tokens->push_back(t);
+			prev_syntax = NULL;
+			break;
+		}
+		prev_kind = kind;
+		prev_type = type;
+		pos++;
+	}
+	return new Token(new_tokens);
+}
+
+
+void Parser::insertStmt(Token *syntax, int idx, size_t grouping_num)
+{
+	size_t tk_n = syntax->token_num;
+	Token **tks = syntax->tks;
+	Token *tk = tks[idx];
+	Tokens *stmt = new Tokens();
+	stmt->push_back(tk);
+	for (size_t i = 1; i < grouping_num; i++) {
+		stmt->push_back(tks[idx+i]);
+	}
+	Token *stmt_ = new Token(stmt);
+	stmt_->stype = SyntaxType::Stmt;
+	tks[idx] = stmt_;
+	if (tk_n == idx+grouping_num) {
+		for (size_t i = 1; i < grouping_num; i++) {
+			syntax->tks[idx+i] = NULL;
+		}
+	} else {
+		memmove(syntax->tks+(idx+1), syntax->tks+(idx+grouping_num),
+				sizeof(Token *) * (tk_n - (idx+grouping_num)));
+		for (size_t i = 1; i < grouping_num; i++) {
+			syntax->tks[tk_n-i] = NULL;
+		}
+	}
+	syntax->token_num -= (grouping_num - 1);
+}
+
+void Parser::parseSpecificStmt(Token *syntax)
+{
+	using namespace TokenType;
+	size_t tk_n = syntax->token_num;
+	for (size_t i = 0; i < tk_n; i++) {
+		Token **tks = syntax->tks;
+		Token *tk = tks[i];
+		switch (tk->info.type) {
+		case IfStmt:    case ElsifStmt: case ForeachStmt:
+		case ForStmt:   case WhileStmt: case UnlessStmt:
+		case GivenStmt: case UntilStmt: case WhenStmt: {
+			if (tk_n > i+2 &&
+				tks[i+1]->stype == SyntaxType::Expr &&
+				tks[i+2]->stype == SyntaxType::BlockStmt) {
+				/* if Expr BlockStmt */
+				Token *expr = tks[i+1];
+				if (expr->token_num > 3 && tk->info.type == ForStmt &&
+					expr->tks[1]->stype == SyntaxType::Stmt &&
+					expr->tks[2]->stype == SyntaxType::Stmt &&
+					expr->tks[3]->stype != SyntaxType::Stmt &&
+					expr->tks[3]->info.type != RightParenthesis) {
+					insertStmt(expr, 3, expr->token_num - 4);
+				}
+				insertStmt(syntax, i, 3);
+				tk_n -= 2;
+				parseSpecificStmt(tks[i]->tks[2]);
+				//i += 2;
+			} else if ((tk->info.type == ForStmt || tk->info.type == ForeachStmt) &&
+					   tk_n > i+3 && tks[i+1]->stype != SyntaxType::Expr) {
+				/* for(each) [decl] Term Expr BlockStmt */
+				if (tk_n > i+3 &&
+					tks[i+1]->info.kind == TokenKind::Term &&
+					tks[i+2]->stype == SyntaxType::Expr &&
+					tks[i+3]->stype == SyntaxType::BlockStmt) {
+					insertStmt(syntax, i, 4);
+					tk_n -= 3;
+					parseSpecificStmt(tks[i]->tks[3]);
+					//i += 3;
+				} else if (tk_n > i+4 &&
+					tks[i+1]->info.kind == TokenKind::Decl &&
+					tks[i+2]->info.kind == TokenKind::Term &&
+					tks[i+3]->stype == SyntaxType::Expr &&
+					tks[i+4]->stype == SyntaxType::BlockStmt) {
+					insertStmt(syntax, i, 5);
+					tk_n -= 4;
+					parseSpecificStmt(tks[i]->tks[4]);
+					//i += 4;
+				} else {
+					//fprintf(stderr, "Syntax Error!: near by line[%lu]\n", tk->finfo.start_line_num);
+					//exit(EXIT_FAILURE);
+				}
+			}
+			break;
+		}
+		case ElseStmt: case Do: case Continue: case DefaultStmt:
+			if (tk_n > i+1 &&
+				tks[i+1]->stype == SyntaxType::BlockStmt) {
+				/* else BlockStmt */
+				insertStmt(syntax, i, 2);
+				tk_n -= 1;
+				parseSpecificStmt(tks[i]->tks[1]);
+				//i += 1;
+			}
+			break;
+		case FunctionDecl:
+			if (tk_n > i+1 &&
+				tks[i+1]->info.type == SyntaxType::BlockStmt) {
+				/* sub BlockStmt */
+				insertStmt(syntax, i, 2);
+				tk_n -= 1;
+				parseSpecificStmt(tks[i]->tks[1]);
+			} else if (tk_n > i+2 &&
+				tks[i+1]->info.type == Function &&
+				tks[i+2]->stype == SyntaxType::BlockStmt) {
+				/* sub func BlockStmt */
+				insertStmt(syntax, i, 3);
+				tk_n -= 2;
+				parseSpecificStmt(tks[i]->tks[2]);
+			} else if (tk_n > i+3 &&
+				tks[i+1]->info.type == Function &&
+				tks[i+2]->stype == SyntaxType::Expr &&
+				tks[i+3]->stype == SyntaxType::BlockStmt) {
+				/* sub func Expr BlockStmt */
+				insertStmt(syntax, i, 4);
+				tk_n -= 3;
+				parseSpecificStmt(tks[i]->tks[3]);
+			}
+			break;
+		default:
+			if (tk->stype == SyntaxType::BlockStmt) {
+				if (i > 0 &&
+					(tks[i-1]->stype == SyntaxType::Stmt ||
+					 tks[i-1]->stype == SyntaxType::BlockStmt)) {
+					/* nameless block */
+					insertStmt(syntax, i, 1);
+				}
+				parseSpecificStmt(tk);
+			} else if (tk->stype == SyntaxType::Stmt || tk->stype == SyntaxType::Expr) {
+				parseSpecificStmt(tk);
+			}
+			break;
+		}
+	}
+}
+
+void Parser::setIndent(Token *syntax, int indent)
+{
+	using namespace SyntaxType;
+	size_t tk_n = syntax->token_num;
+	for (size_t i = 0; i < tk_n; i++) {
+		Token *tk = syntax->tks[i];
+		switch (tk->stype) {
+		case BlockStmt:
+			tk->finfo.indent = ++indent;
+			setIndent(tk, indent);
+			if (indent == 0) {
+				fprintf(stderr, "ERROR!!: syntax error near %s:%lu\n", tk->finfo.filename, tk->finfo.start_line_num);
+				exit(EXIT_FAILURE);
+			}
+			indent--;
+			break;
+		case Expr: case Stmt:
+			tk->finfo.indent = indent;
+			setIndent(tk, indent);
+			break;
+		default:
+			syntax->tks[i]->finfo.indent = indent;
+			break;
+		}
+	}
+}
+
+void Parser::setBlockIDWithBreadthFirst(Token *syntax, size_t base_id)
+{
+	using namespace SyntaxType;
+	size_t tk_n = syntax->token_num;
+	size_t block_num = 0;
+	for (size_t i = 0; i < tk_n; i++) {
+		Token *tk = syntax->tks[i];
+		if (tk->stype == BlockStmt) block_num++;
+	}
+	size_t total_block_num = block_num;
+	block_num = 0;
+	for (size_t i = 0; i < tk_n; i++) {
+		Token *tk = syntax->tks[i];
+		switch (tk->stype) {
+		case BlockStmt:
+			setBlockIDWithBreadthFirst(tk, base_id + total_block_num + 1);
+			block_num++;
+			break;
+		case Expr: case Stmt:
+			setBlockIDWithBreadthFirst(tk, base_id + block_num);
+			break;
+		default:
+			syntax->tks[i]->finfo.block_id = base_id + block_num;
+			break;
+		}
+	}
+}
+
+void Parser::setBlockIDWithDepthFirst(Token *syntax, size_t *block_id)
+{
+	using namespace SyntaxType;
+	size_t tk_n = syntax->token_num;
+	size_t base_id = *block_id;
+	for (size_t i = 0; i < tk_n; i++) {
+		Token *tk = syntax->tks[i];
+		switch (tk->stype) {
+		case BlockStmt:
+			*block_id += 1;
+			syntax->tks[i]->finfo.block_id = *block_id;
+			setBlockIDWithDepthFirst(tk, block_id);
+			break;
+		case Expr: case Stmt:
+			syntax->tks[i]->finfo.block_id = base_id;
+			setBlockIDWithDepthFirst(tk, block_id);
+			break;
+		default:
+			syntax->tks[i]->finfo.block_id = base_id;
+			break;
+		}
+	}
+}
+
+void Parser::dumpSyntax(Token *syntax, int indent)
+{
+	using namespace SyntaxType;
+	size_t tk_n = syntax->token_num;
+	for (size_t i = 0; i < tk_n; i++) {
+		Token *tk = syntax->tks[i];
+		for (int j = 0; j < indent; j++) {
+			fprintf(stdout, "----------------");
+		}
+		switch (tk->stype) {
+		case Term:
+			fprintf(stdout, "Term |\n");
+			dumpSyntax(tk, ++indent);
+			indent--;
+			break;
+		case Expr:
+			fprintf(stdout, "Expr |\n");
+			dumpSyntax(tk, ++indent);
+			indent--;
+			break;
+		case Stmt:
+			fprintf(stdout, "Stmt |\n");
+			dumpSyntax(tk, ++indent);
+			indent--;
+			break;
+		case BlockStmt:
+			fprintf(stdout, "BlockStmt |\n");
+			dumpSyntax(tk, ++indent);
+			indent--;
+			break;
+		default:
+			fprintf(stdout, "%-12s\n", syntax->tks[i]->info.name);
+			break;
+		}
+	}
+}
+
+Tokens *Parser::getTokensBySyntaxLevel(Token *root, SyntaxType::Type type)
+{
+	Tokens *ret = new Tokens();
+	for (size_t i = 0; i < root->token_num; i++) {
+		Token **tks = root->tks;
+		if (tks[i]->stype == type) {
+			ret->push_back(tks[i]);
+		}
+		if (tks[i]->token_num > 0) {
+			Tokens *new_tks = getTokensBySyntaxLevel(tks[i], type);
+			ret->insert(ret->end(), new_tks->begin(), new_tks->end());
+		}
+	}
+	return ret;
+}
+
+Modules *Parser::getUsedModules(Token *root)
+{
+	using namespace TokenType;
+	Modules *ret = new Modules();
+	for (size_t i = 0; i < root->token_num; i++) {
+		Token **tks = root->tks;
+		if (tks[i]->info.type == UseDecl && i + 1 < root->token_num) {
+			const char *module_name = cstr(tks[i+1]->data);
+			string args;
+			for (i += 2; tks[i]->info.type != SemiColon; i++) {
+				args += " " + string(tks[i]->deparse());
+			}
+			ret->push_back(new Module(module_name, (new string(args))->c_str()));
+		}
+		if (tks[i]->token_num > 0) {
+			Modules *new_mds = getUsedModules(tks[i]);
+			ret->insert(ret->end(), new_mds->begin(), new_mds->end());
+		}
+	}
+	return ret;
+}
+
+AST *Parser::parse(Tokens *tokens)
+{
+	grouping(tokens);
+	prepare(tokens);
+	Token *root = parseSyntax(NULL, tokens);//Level1
+	parseSpecificStmt(root);//Level2
+	setIndent(root, 0);
+	size_t block_id = 0;
+	setBlockIDWithDepthFirst(root, &block_id);
+	Completer completer;
+	completer.complete(root);
 	Node *last_stmt = _parse(root);
 	return new AST(last_stmt->getRoot());
 }

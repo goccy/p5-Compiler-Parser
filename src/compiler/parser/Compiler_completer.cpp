@@ -1,10 +1,9 @@
-#include <lexer.hpp>
 #include <parser.hpp>
 
 using namespace std;
-namespace TokenType = Enum::Lexer::Token;
-namespace SyntaxType = Enum::Lexer::Syntax;
-namespace TokenKind = Enum::Lexer;
+namespace TokenType = Enum::Token::Type;
+namespace SyntaxType = Enum::Parser::Syntax;
+namespace TokenKind = Enum::Token::Kind;
 
 Completer::Completer(void)
 {
@@ -144,7 +143,7 @@ RESTART:;
 	}
 }
 
-void Completer::completeExprFromRight(Token *root, Enum::Lexer::Kind kind)
+void Completer::completeExprFromRight(Token *root, TokenKind::Kind kind)
 {
 	Token **tks = root->tks;
 	size_t tk_n = root->token_num;
@@ -296,9 +295,9 @@ void Completer::completeHighPriorityCompareOperatorExpr(Token *root)
 	completeExprFromLeft(root, TokenType::Less);
 	completeExprFromLeft(root, TokenType::GreaterEqual);
 	completeExprFromLeft(root, TokenType::LessEqual);
-	completeExprFromLeft(root, TokenType::StringGrater);
+	completeExprFromLeft(root, TokenType::StringGreater);
 	completeExprFromLeft(root, TokenType::StringLess);
-	completeExprFromLeft(root, TokenType::StringGraterEqual);
+	completeExprFromLeft(root, TokenType::StringGreaterEqual);
 	completeExprFromLeft(root, TokenType::StringLessEqual);
 }
 

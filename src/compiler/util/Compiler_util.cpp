@@ -1,4 +1,4 @@
-#include <lexer.hpp>
+#include <common.hpp>
 
 static int memory_leaks = 0;
 

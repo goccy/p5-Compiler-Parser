@@ -1,4 +1,4 @@
-#include <typeinfo>
+#include <common.hpp>
 
 class Node {
 public:
@@ -122,6 +122,13 @@ public:
 	void dump(size_t depth);
 };
 
+class Module {
+public:
+	const char *name;
+	const char *args;
+	Module(const char *name, const char *args);
+};
+
 class AST {
 public:
 	Node *root;
@@ -150,10 +157,23 @@ public:
 
 class Parser {
 public:
+	TokenPos start_pos;
+	TokenPos pos;
 	Node *_prev_stmt;
 	Node *extra_node;
+
 	Parser(void);
-	AST *parse(Token *root);
+	void grouping(Tokens *tokens);
+	void prepare(Tokens *tokens);
+	Token *parseSyntax(Token *start_token, Tokens *tokens);
+	void parseSpecificStmt(Token *root);
+	void setIndent(Token *tk, int indent);
+	void setBlockIDWithBreadthFirst(Token *tk, size_t base_id);
+	void setBlockIDWithDepthFirst(Token *tk, size_t *block_id);
+	void dumpSyntax(Token *tk, int indent);
+	Tokens *getTokensBySyntaxLevel(Token *root, Enum::Parser::Syntax::Type type);
+	Modules *getUsedModules(Token *root);
+	AST *parse(Tokens *tks);
 	Node *_parse(Token *root);
 	void link(ParseContext *pctx, Node *from, Node *to);
 	bool isSingleTermOperator(ParseContext *pctx, Token *tk);
@@ -169,6 +189,10 @@ public:
 	void parseFunction(ParseContext *pctx, Token *func);
 	void parseFunctionCall(ParseContext *pctx, Token *func);
 	void parseIrregularFunction(ParseContext *pctx, Token *func);
+private:
+	bool isExpr(Token *tk, Token *prev_tk, Enum::Token::Type::Type type, Enum::Token::Kind::Kind kind);
+	void insertStmt(Token *tk, int idx, size_t grouping_num);
+	void insertParenthesis(Tokens *tokens);
 };
 
 class Completer {
@@ -181,9 +205,9 @@ public:
 	void completeTerm(Token *root);
 	void insertExpr(Token *syntax, int idx, size_t grouping_num);
 	void insertTerm(Token *syntax, int idx, size_t grouping_num);
-	void completeExprFromLeft(Token *root, Enum::Lexer::Token::Type type);
-	void completeExprFromRight(Token *root, Enum::Lexer::Token::Type type);
-	void completeExprFromRight(Token *root, Enum::Lexer::Kind kind);
+	void completeExprFromLeft(Token *root, Enum::Token::Type::Type type);
+	void completeExprFromRight(Token *root, Enum::Token::Type::Type type);
+	void completeExprFromRight(Token *root, Enum::Token::Kind::Kind kind);
 	void completePointerExpr(Token *root);
 	void completeIncDecExpr(Token *root);
 	void completePowerExpr(Token *root);
@@ -206,4 +230,3 @@ public:
 };
 
 #define TYPE_match(ptr, T) typeid(*ptr) == typeid(T)
-
