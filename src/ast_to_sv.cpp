@@ -2,6 +2,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 #define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
@@ -14,6 +15,9 @@ extern "C" {
 #define new_Ref(sv) sv_2mortal(newRV_inc((SV*)sv))
 #define set(e) SvREFCNT_inc(e)
 #define get_value(hash, key) *hv_fetchs(hash, key, strlen(key))
+#define add_key(hash, key, value) (value) ? hv_stores(hash, key, set(node_to_sv(aTHX_ value))) : NULL
+#define add_token(hash, node) hv_stores(hash, "token", set(new_Token(aTHX_ node)))
+
 #ifdef __cplusplus
 };
 #endif
@@ -44,12 +48,10 @@ static SV *node_to_sv(pTHX_ Node *node)
 	if (!node) return ret;
 	if (TYPE_match(node, BranchNode)) {
 		BranchNode *branch = dynamic_cast<BranchNode *>(node);
-		SV *left = node_to_sv(aTHX_ branch->left);
-		SV *right = node_to_sv(aTHX_ branch->right);
 		HV *hash = (HV*)new_Hash();
-		hv_stores(hash, "token", set(new_Token(aTHX_ branch->tk)));
-		hv_stores(hash, "left", set(left));
-		hv_stores(hash, "right", set(right));
+		add_token(hash, branch->tk);
+		add_key(hash, "left", branch->left);
+		add_key(hash, "right", branch->right);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Branch");
 	} else if (TYPE_match(node, FunctionCallNode)) {
 		FunctionCallNode *call = dynamic_cast<FunctionCallNode *>(node);
@@ -62,88 +64,88 @@ static SV *node_to_sv(pTHX_ Node *node)
 			av_push(array, set(arg));
 		}
 		HV *hash = (HV*)new_Hash();
-		hv_stores(hash, "token", set(new_Token(aTHX_ call->tk)));
+		add_token(hash, call->tk);
 		hv_stores(hash, "args", set(new_Ref(array)));
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::FunctionCall");
 	} else if (TYPE_match(node, ArrayNode)) {
 		ArrayNode *array = dynamic_cast<ArrayNode *>(node);
 		HV *hash = (HV*)new_Hash();
-		hv_stores(hash, "token", set(new_Token(aTHX_ array->tk)));
-		hv_stores(hash, "idx", set(node_to_sv(aTHX_ array->idx)));
+		add_token(hash, array->tk);
+		add_key(hash, "idx", array->idx);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Array");
 	} else if (TYPE_match(node, HashNode)) {
 		HashNode *h = dynamic_cast<HashNode *>(node);
 		HV *hash = (HV*)new_Hash();
-		hv_stores(hash, "token", set(new_Token(aTHX_ h->tk)));
-		hv_stores(hash, "key", set(node_to_sv(aTHX_ h->key)));
+		add_token(hash, h->tk);
+		add_key(hash, "key", h->key);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Hash");
 	} else if (TYPE_match(node, FunctionNode)) {
 		FunctionNode *f = dynamic_cast<FunctionNode *>(node);
 		HV *hash = (HV*)new_Hash();
-		hv_stores(hash, "token", set(new_Token(aTHX_ f->tk)));
-		hv_stores(hash, "body", set(node_to_sv(aTHX_ f->body)));
+		add_token(hash, f->tk);
+		add_key(hash, "body", f->body);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Function");
 	} else if (TYPE_match(node, BlockNode)) {
 		BlockNode *b = dynamic_cast<BlockNode *>(node);
 		HV *hash = (HV*)new_Hash();
-		hv_stores(hash, "token", set(new_Token(aTHX_ b->tk)));
-		hv_stores(hash, "body", set(node_to_sv(aTHX_ b->body)));
+		add_token(hash, b->tk);
+		add_key(hash, "body", b->body);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Block");
 	} else if (TYPE_match(node, ReturnNode)) {
 		ReturnNode *r = dynamic_cast<ReturnNode *>(node);
 		HV *hash = (HV*)new_Hash();
-		hv_stores(hash, "token", set(new_Token(aTHX_ r->tk)));
-		hv_stores(hash, "body", set(node_to_sv(aTHX_ r->body)));
+		add_token(hash, r->tk);
+		add_key(hash, "body", r->body);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Return");
 	} else if (TYPE_match(node, SingleTermOperatorNode)) {
 		SingleTermOperatorNode *s = dynamic_cast<SingleTermOperatorNode *>(node);
 		HV *hash = (HV*)new_Hash();
-		hv_stores(hash, "token", set(new_Token(aTHX_ s->tk)));
-		hv_stores(hash, "expr", set(node_to_sv(aTHX_ s->expr)));
+		add_token(hash, s->tk);
+		add_key(hash, "expr", s->expr);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::SingleTermOperator");
 	} else if (TYPE_match(node, DoubleTermOperatorNode)) {
 	} else if (TYPE_match(node, LeafNode)) {
 		LeafNode *leaf = dynamic_cast<LeafNode *>(node);
 		HV *hash = (HV*)new_Hash();
-		hv_stores(hash, "token", set(new_Token(aTHX_ leaf->tk)));
+		add_token(hash, leaf->tk);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Leaf");
 	} else if (TYPE_match(node, IfStmtNode)) {
 		IfStmtNode *stmt = dynamic_cast<IfStmtNode *>(node);
 		HV *hash = (HV*)new_Hash();
-		hv_stores(hash, "token", set(new_Token(aTHX_ stmt->tk)));
-		hv_stores(hash, "expr", set(node_to_sv(aTHX_ stmt->expr)));
-		hv_stores(hash, "true_stmt", set(node_to_sv(aTHX_ stmt->true_stmt)));
-		hv_stores(hash, "false_stmt", set(node_to_sv(aTHX_ stmt->false_stmt)));
+		add_token(hash, stmt->tk);
+		add_key(hash, "expr", stmt->expr);
+		add_key(hash, "true_stmt", stmt->true_stmt);
+		add_key(hash, "false_stmt", stmt->false_stmt);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::IfStmt");
 	} else if (TYPE_match(node, ElseStmtNode)) {
 		ElseStmtNode *stmt = dynamic_cast<ElseStmtNode *>(node);
 		HV *hash = (HV*)new_Hash();
-		hv_stores(hash, "token", set(new_Token(aTHX_ stmt->tk)));
-		hv_stores(hash, "stmt", set(node_to_sv(aTHX_ stmt->stmt)));
+		add_token(hash, stmt->tk);
+		add_key(hash, "stmt", stmt->stmt);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::ElseStmt");
 	} else if (TYPE_match(node, ForStmtNode)) {
 		ForStmtNode *stmt = dynamic_cast<ForStmtNode *>(node);
 		HV *hash = (HV*)new_Hash();
-		hv_stores(hash, "token", set(new_Token(aTHX_ stmt->tk)));
-		hv_stores(hash, "init", set(node_to_sv(aTHX_ stmt->init)));
-		hv_stores(hash, "cond", set(node_to_sv(aTHX_ stmt->cond)));
-		hv_stores(hash, "progress", set(node_to_sv(aTHX_ stmt->progress)));
-		hv_stores(hash, "true_stmt", set(node_to_sv(aTHX_ stmt->true_stmt)));
+		add_token(hash, stmt->tk);
+		add_key(hash, "init", stmt->init);
+		add_key(hash, "cond", stmt->cond);
+		add_key(hash, "progress", stmt->progress);
+		add_key(hash, "true_stmt", stmt->true_stmt);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::ForStmt");
 	} else {
-		assert(NULL && "node type is not found");
+		assert(0 && "node type is not found");
 	}
 	return ret;
 }
 
-SV *ast_to_sv(pTHX_ AST *ast)
+AV *ast_to_sv(pTHX_ AST *ast)
 {
 	Node *traverse_ptr = ast->root;
 	AV *ret = new_Array();
-	for (; traverse_ptr->next != NULL; traverse_ptr = traverse_ptr->next) {
+	for (; traverse_ptr != NULL; traverse_ptr = traverse_ptr->next) {
 		SV *node = node_to_sv(aTHX_ traverse_ptr);
 		if (!node) continue;
 		av_push(ret, set(node));
 	}
-	return (SV *)new_Ref(ret);
+	return (AV *)new_Ref(ret);
 }

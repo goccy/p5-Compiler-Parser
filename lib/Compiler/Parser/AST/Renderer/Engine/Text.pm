@@ -11,7 +11,7 @@ sub new {
 
 sub render {
     my ($self, $ast) = @_;
-    foreach my $node (@$ast) {
+    foreach my $node (@$$ast) {
         my $args = +{};
         $args->{$_} = $node->{$_} foreach @{$node->branches};
         print BOLD, "|-- ";

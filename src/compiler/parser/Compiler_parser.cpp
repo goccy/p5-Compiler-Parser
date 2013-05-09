@@ -897,7 +897,7 @@ void Parser::parseFunctionCall(ParseContext *pctx, Token *tk)
 	}
 }
 
-bool Parser::isIrregularFunction(ParseContext *pctx, Token *tk)
+bool Parser::isIrregularFunction(ParseContext *, Token *tk)
 {
 	using namespace TokenType;
 	TokenType::Type type = tk->info.type;
