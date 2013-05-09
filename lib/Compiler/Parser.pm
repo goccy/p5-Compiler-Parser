@@ -23,53 +23,42 @@ XSLoader::load('Compiler::Parser', $VERSION);
 
 1;
 __END__
-# Below is stub documentation for your module. You'd better edit it!
 
 =head1 NAME
 
-Compiler-Parser - Perl extension for blah blah blah
+Compiler::Parser - Create Abstract Syntax Tree for Perl5
 
 =head1 SYNOPSIS
 
-  use Compiler-Parser;
-  blah blah blah
+    use Compiler::Lexer;
+    use Compiler::Parser;
+
+    my $filename = $ARGV[0];
+    open(my $fh, "<", $filename) or die("$filename is not found.");
+    my $script = do { local $/; <$fh> };
+    my $lexer = Compiler::Lexer->new($filename);
+    my $tokens = $lexer->tokenize($script);
+    my $parser = Compiler::Parser->new();
+    my $ast = $parser->parse($$tokens);
+    Compiler::Parser::AST::Renderer->new->render($ast);
 
 =head1 DESCRIPTION
 
-Stub documentation for Compiler-Parser, created by h2xs. It looks like the
-author of the extension was negligent enough to leave the stub
-unedited.
-
-Blah blah blah.
-
-=head2 EXPORT
-
-None by default.
-
-
+Compiler::Parser creates abstract syntax tree for perl5.
 
 =head1 SEE ALSO
 
-Mention other useful documentation such as the documentation of
-related modules or operating system documentation (such as man pages
-in UNIX), or any relevant external documentation such as RFCs or
-standards.
-
-If you have a mailing list set up for your module, mention it here.
-
-If you have a web site set up for your module, mention it here.
+[Compiler::Lexer](http://search.cpan.org/perldoc?Compiler::Lexer)
 
 =head1 AUTHOR
 
-goccy, E<lt>goccy@localE<gt>
+Masaaki Goshima (goccy) <goccy54@gmail.com>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2013 by goccy
+Copyright (C) Masaaki Goshima (goccy).
 
 This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.12.3 or,
-at your option, any later version of Perl 5 you may have available.
-
+it under the same terms as Perl itself.
 
 =cut
