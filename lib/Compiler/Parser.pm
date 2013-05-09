@@ -2,8 +2,14 @@ package Compiler::Parser;
 use 5.012003;
 use strict;
 use warnings;
-use Compiler::Parser::BranchNode;
-use Compiler::Parser::FunctionCallNode;
+use Compiler::Parser::Node;
+use Compiler::Parser::Node::Branch;
+use Compiler::Parser::Node::FunctionCall;
+use Compiler::Parser::Node::IfStmt;
+use Compiler::Parser::Node::SingleTermOperator;
+use Compiler::Parser::Node::Array;
+use Compiler::Parser::Node::Hash;
+use Compiler::Parser::Node::Leaf;
 
 require Exporter;
 
