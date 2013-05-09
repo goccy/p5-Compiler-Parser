@@ -72,7 +72,7 @@ void Nodes::dump(size_t depth)
 {
 	size_t n = size();
 	for (size_t idx = 0; idx < n; idx++) {
-		Node_dump(at(idx), "", depth);
+		Node_dump(at(idx), NULL, depth);
 	}
 }
 

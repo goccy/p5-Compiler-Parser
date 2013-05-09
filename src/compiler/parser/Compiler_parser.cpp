@@ -899,8 +899,6 @@ void Parser::parseFunctionCall(ParseContext *pctx, Token *tk)
 
 bool Parser::isIrregularFunction(ParseContext *, Token *tk)
 {
-	using namespace TokenType;
-	TokenType::Type type = tk->info.type;
 	if (tk->data == "map" || tk->data == "grep") return true;
 	return false;
 }
@@ -911,11 +909,10 @@ void Parser::parseIrregularFunction(ParseContext *pctx, Token *tk)
 	Token *next_tk = pctx->nextToken();
 	Node *block_node = _parse(next_tk);
 	pctx->next();
-	Node *extra_node = this->extra_node;
 	assert(block_node && "syntax error near by irregular function");
 	f->setArgs(block_node->getRoot());
-	f->setArgs(extra_node);
-	this->extra_node = NULL;
+	if (extra_node) f->setArgs(extra_node);
+	extra_node = NULL;
 	BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
 	return (!node) ? pctx->pushNode(f) : node->link(f);
 }
