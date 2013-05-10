@@ -657,6 +657,7 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 	switch (tk->info.kind) {
 	case RegPrefix:
 		assert(0 && "TODO: RegPrefix parse");
+		parseRegPrefix(pctx, tk);
 		break;
 	case Decl: case Package:
 		DBG_PL("DECL");
@@ -742,6 +743,25 @@ void Parser::link(ParseContext *pctx, Node *from_node, Node *to_node)
 		//assert(0 && "syntax error!\n");
 		pctx->pushNode(to_node);
 	}
+}
+
+void Parser::parseRegPrefix(ParseContext *pctx, Token *tk)
+{
+	asm("int3");
+	RegPrefixNode *reg = new RegPrefixNode(tk);
+	Token *start_delim = pctx->nextToken();
+	assert(start_delim && start_delim->info.type == TokenType::RegDelim && "not regex like delimiter");
+	pctx->next();
+	Token *exp = pctx->nextToken();
+	pctx->next();
+	assert(exp && "not regex like expr");
+	Token *end_delim = pctx->nextToken();
+	assert(end_delim && end_delim->info.type == TokenType::RegDelim && "not regex like delimiter");
+	pctx->next();
+	LeafNode *leaf = new LeafNode(exp);
+	reg->exp = leaf;
+	BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
+	return (!node) ? pctx->pushNode(reg) : node->link(reg);
 }
 
 void Parser::parseDecl(ParseContext *pctx, Token *tk)

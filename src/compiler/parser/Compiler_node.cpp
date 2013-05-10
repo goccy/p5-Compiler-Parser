@@ -172,6 +172,16 @@ void PackageNode::dump(size_t depth)
 	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 }
 
+RegPrefixNode::RegPrefixNode(Token *tk_) : Node(tk_)
+{
+	exp = NULL;
+}
+
+void RegPrefixNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+}
+
 BlockNode::BlockNode(Token *tk_) : Node(tk_)
 {
 	this->body = NULL;
