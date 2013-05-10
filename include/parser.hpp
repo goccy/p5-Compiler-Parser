@@ -51,6 +51,19 @@ public:
 	void dump(size_t depth);
 };
 
+class ModuleNode : public Node {
+public:
+	Node *args;
+	ModuleNode(Token *tk);
+	void dump(size_t depth);
+};
+
+class PackageNode : public Node {
+public:
+	PackageNode(Token *tk);
+	void dump(size_t depth);
+};
+
 class FunctionCallNode : public Node {
 public:
 	Nodes *args;
@@ -186,6 +199,7 @@ public:
 	void parseBranchType(ParseContext *pctx, Token *branch);
 	void parseSpecificStmt(ParseContext *pctx, Token *stmt);
 	void parseDecl(ParseContext *pctx, Token *comma);
+	void parseModule(ParseContext *pctx, Token *mod);
 	void parseFunction(ParseContext *pctx, Token *func);
 	void parseFunctionCall(ParseContext *pctx, Token *func);
 	void parseIrregularFunction(ParseContext *pctx, Token *func);

@@ -132,6 +132,17 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "progress", stmt->progress);
 		add_key(hash, "true_stmt", stmt->true_stmt);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::ForStmt");
+	} else if (TYPE_match(node, ModuleNode)) {
+		ModuleNode *mod = dynamic_cast<ModuleNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, mod->tk);
+		add_key(hash, "args", mod->args);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Module");
+	} else if (TYPE_match(node, PackageNode)) {
+		PackageNode *pkg = dynamic_cast<PackageNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, pkg->tk);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Package");
 	} else {
 		assert(0 && "node type is not found");
 	}

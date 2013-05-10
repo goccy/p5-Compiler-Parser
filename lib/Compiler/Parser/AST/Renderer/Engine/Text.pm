@@ -14,7 +14,7 @@ sub render {
     foreach my $node (@$$ast) {
         my $args = +{};
         $args->{$_} = $node->{$_} foreach @{$node->branches};
-        print BOLD, "|-- ";
+        print BOLD, '├── ';
         $self->__print_data($node);
         print "\n";
         $self->__render($args, 1);
@@ -27,18 +27,16 @@ sub __render {
     foreach my $name (@names) {
         my $node = $nodes->{$name};
         next unless (defined $node);
-        if (ref $node eq 'ARRAY') {
-            $self->__render_branch($_, $name, $depth) foreach (@$node);
-        } else {
-            $self->__render_branch($node, $name, $depth);
-        }
+        $self->__render_branch($_, $name, $depth)
+            foreach (ref $node eq 'ARRAY') ? @$node : ($node);
     }
 }
 
 sub __render_branch {
     my ($self, $node, $name, $depth) = @_;
     print BOLD, '|   ' foreach (1 .. $depth);
-    print BOLD, "|-- ";
+    print BOLD, '├── ';
+    #print BOLD, '└─';
     $self->__print_name($name);
     print ' ';
     $self->__print_data($node);

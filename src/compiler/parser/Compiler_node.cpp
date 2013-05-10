@@ -152,6 +152,26 @@ void FunctionNode::dump(size_t depth)
 	Node_dump(body, "body  : ", depth+1);
 }
 
+ModuleNode::ModuleNode(Token *tk_) : Node(tk_)
+{
+	this->args = NULL;
+}
+
+void ModuleNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(args, "args  : ", depth+1);
+}
+
+PackageNode::PackageNode(Token *tk_) : Node(tk_)
+{
+}
+
+void PackageNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+}
+
 BlockNode::BlockNode(Token *tk_) : Node(tk_)
 {
 	this->body = NULL;

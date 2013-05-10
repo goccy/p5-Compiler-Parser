@@ -655,7 +655,10 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 {
 	using namespace TokenKind;
 	switch (tk->info.kind) {
-	case Decl:
+	case RegPrefix:
+		assert(0 && "TODO: RegPrefix parse");
+		break;
+	case Decl: case Package:
 		DBG_PL("DECL");
 		parseDecl(pctx, tk);
 		break;
@@ -744,6 +747,25 @@ void Parser::link(ParseContext *pctx, Node *from_node, Node *to_node)
 void Parser::parseDecl(ParseContext *pctx, Token *tk)
 {
 	switch (tk->info.type) {
+	case TokenType::Package: {
+		Token *next_tk = pctx->nextToken();
+		assert(next_tk && "syntax error!: near by package decl\n");
+		pctx->next();
+		DBG_PL("PACKAGE");
+		PackageNode *p = new PackageNode(next_tk);
+		pctx->next();
+		assert(!pctx->lastNode() && "parse error!: already exists node");
+		pctx->pushNode(p);
+		break;
+	}
+	case TokenType::UseDecl: case TokenType::RequireDecl: {
+		Token *next_tk = pctx->nextToken();
+		assert(next_tk && "syntax error!: near by require/use decl\n");
+		pctx->next();
+		DBG_PL("MODULE");
+		parseModule(pctx, next_tk);
+		break;
+	}
 	case TokenType::FunctionDecl: {
 		Token *next_tk = pctx->nextToken();
 		assert(next_tk && "syntax error!: near by function decl\n");
@@ -884,6 +906,18 @@ void Parser::parseFunction(ParseContext *pctx, Token *tk)
 	pctx->next();
 	BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
 	return (!node) ? pctx->pushNode(f) : node->link(f);
+}
+
+void Parser::parseModule(ParseContext *pctx, Token *tk)
+{
+	using namespace SyntaxType;
+	ModuleNode *m = new ModuleNode(tk);
+	Token *next_tk = pctx->nextToken();
+	Node *args = (next_tk->info.kind != TokenKind::StmtEnd) ? _parse(next_tk) : NULL;
+	if (args) m->args = args->getRoot();
+	pctx->next();
+	assert(!pctx->lastNode() && "parse error!: already exists node");
+	pctx->pushNode(m);
 }
 
 void Parser::parseFunctionCall(ParseContext *pctx, Token *tk)
