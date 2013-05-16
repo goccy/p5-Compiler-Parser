@@ -380,13 +380,15 @@ RESTART:;
 			 tk->info.type == TokenType::ArrayVar ||
 			 tk->info.type == TokenType::HashVar ||
 			 tk->info.type == TokenType::LocalVar ||
+			 tk->info.type == TokenType::SpecificValue ||
 			 tk->info.type == TokenType::LocalArrayVar ||
 			 tk->info.type == TokenType::LocalHashVar ||
 			 tk->info.type == TokenType::GlobalVar ||
 			 tk->info.type == TokenType::GlobalArrayVar ||
 			 tk->info.type == TokenType::GlobalHashVar ||
 			 tk->info.kind == TokenKind::Function) &&
-			tks[i+1]->stype == SyntaxType::Expr) {
+			tks[i+1]->stype == SyntaxType::Expr &&
+			(!tks[i+2] || tks[i+2]->info.type != TokenType::Comma)) {
 			insertTerm(root, i, 2);
 			tk_n -= 1;
 			goto RESTART;

@@ -207,6 +207,7 @@ public:
 	void parseSpecificStmt(ParseContext *pctx, Token *stmt);
 	void parseDecl(ParseContext *pctx, Token *comma);
 	void parseModule(ParseContext *pctx, Token *mod);
+	void parseModuleArgument(ParseContext *pctx, Token *args);
 	void parseRegPrefix(ParseContext *pctx, Token *reg);
 	void parseFunction(ParseContext *pctx, Token *func);
 	void parseFunctionCall(ParseContext *pctx, Token *func);

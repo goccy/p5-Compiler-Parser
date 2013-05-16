@@ -590,8 +590,10 @@ AST *Parser::parse(Tokens *tokens)
 	setIndent(root, 0);
 	size_t block_id = 0;
 	setBlockIDWithDepthFirst(root, &block_id);
+	dumpSyntax(root, 0);
 	Completer completer;
 	completer.complete(root);
+	dumpSyntax(root, 0);
 	Node *last_stmt = _parse(root);
 	return new AST(last_stmt->getRoot());
 }
@@ -656,7 +658,7 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 	using namespace TokenKind;
 	switch (tk->info.kind) {
 	case RegPrefix:
-		assert(0 && "TODO: RegPrefix parse");
+		//assert(0 && "TODO: RegPrefix parse");
 		parseRegPrefix(pctx, tk);
 		break;
 	case Decl: case Package:
@@ -747,7 +749,6 @@ void Parser::link(ParseContext *pctx, Node *from_node, Node *to_node)
 
 void Parser::parseRegPrefix(ParseContext *pctx, Token *tk)
 {
-	asm("int3");
 	RegPrefixNode *reg = new RegPrefixNode(tk);
 	Token *start_delim = pctx->nextToken();
 	assert(start_delim && start_delim->info.type == TokenType::RegDelim && "not regex like delimiter");
@@ -933,11 +934,25 @@ void Parser::parseModule(ParseContext *pctx, Token *tk)
 	using namespace SyntaxType;
 	ModuleNode *m = new ModuleNode(tk);
 	Token *next_tk = pctx->nextToken();
-	Node *args = (next_tk->info.kind != TokenKind::StmtEnd) ? _parse(next_tk) : NULL;
-	if (args) m->args = args->getRoot();
+	if (next_tk->info.kind != TokenKind::StmtEnd) {
+		parseModuleArgument(pctx, next_tk);
+		Node *args = pctx->lastNode();
+		if (args) {
+			m->args = args->getRoot();
+			pctx->nodes->pop_back();
+		}
+	}
 	pctx->next();
 	assert(!pctx->lastNode() && "parse error!: already exists node");
 	pctx->pushNode(m);
+}
+
+void Parser::parseModuleArgument(ParseContext *pctx, Token *tk)
+{
+	if (tk->info.kind == TokenKind::RegPrefix) {
+		pctx->next();
+		parseRegPrefix(pctx, tk);
+	}
 }
 
 void Parser::parseFunctionCall(ParseContext *pctx, Token *tk)
@@ -981,6 +996,8 @@ void Parser::parseTerm(ParseContext *pctx, Token *tk)
 			term = new ArrayNode(tk);
 		} else if (next_tk->tks[0]->info.type == TokenType::LeftBrace) {
 			term = new HashNode(tk);
+		} else {
+			term = _parse(next_tk);
 		}
 	} else {
 		term = new LeafNode(tk);
