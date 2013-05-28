@@ -590,10 +590,9 @@ AST *Parser::parse(Tokens *tokens)
 	setIndent(root, 0);
 	size_t block_id = 0;
 	setBlockIDWithDepthFirst(root, &block_id);
-	dumpSyntax(root, 0);
 	Completer completer;
 	completer.complete(root);
-	dumpSyntax(root, 0);
+	//dumpSyntax(root, 0);
 	Node *last_stmt = _parse(root);
 	return new AST(last_stmt->getRoot());
 }

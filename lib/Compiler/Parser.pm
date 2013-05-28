@@ -7,6 +7,7 @@ use Compiler::Parser::Node::Branch;
 use Compiler::Parser::Node::Block;
 use Compiler::Parser::Node::Module;
 use Compiler::Parser::Node::Package;
+use Compiler::Parser::Node::RegPrefix;
 use Compiler::Parser::Node::Function;
 use Compiler::Parser::Node::FunctionCall;
 use Compiler::Parser::Node::IfStmt;

@@ -375,22 +375,24 @@ RESTART:;
 	for (size_t i = 0; i < tk_n; i++) {
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
-			(tk->info.type == TokenType::Var ||
-			 tk->info.type == TokenType::CodeVar ||
-			 tk->info.type == TokenType::ArrayVar ||
-			 tk->info.type == TokenType::HashVar ||
-			 tk->info.type == TokenType::LocalVar ||
-			 tk->info.type == TokenType::SpecificValue ||
-			 tk->info.type == TokenType::LocalArrayVar ||
-			 tk->info.type == TokenType::LocalHashVar ||
-			 tk->info.type == TokenType::GlobalVar ||
-			 tk->info.type == TokenType::GlobalArrayVar ||
-			 tk->info.type == TokenType::GlobalHashVar ||
-			 tk->info.kind == TokenKind::Function) &&
+			(tk->info.type == Var || tk->info.type == CodeVar ||
+			 tk->info.type == ArrayVar || tk->info.type == HashVar ||
+			 tk->info.type == LocalVar || tk->info.type == SpecificValue ||
+			 tk->info.type == LocalArrayVar || tk->info.type == LocalHashVar ||
+			 tk->info.type == GlobalVar || tk->info.type == GlobalArrayVar ||
+			 tk->info.type == GlobalHashVar || tk->info.kind == Function) &&
 			tks[i+1]->stype == SyntaxType::Expr &&
 			(!tks[i+2] || tks[i+2]->info.type != TokenType::Comma)) {
 			insertTerm(root, i, 2);
 			tk_n -= 1;
+			goto RESTART;
+		} else if (tk_n > 4 && tk_n > i+3 &&
+				   tk->info.kind == TokenKind::RegPrefix &&
+				   tks[i+1]->info.type == RegDelim &&
+				   tks[i+2]->info.type == RegExp &&
+				   tks[i+3]->info.type == RegDelim) {
+			insertExpr(root, i, 4);
+			tk_n -= 3;
 			goto RESTART;
 		}
 		if (tks[i]->token_num > 0) {

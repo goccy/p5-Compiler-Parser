@@ -143,6 +143,12 @@ static SV *node_to_sv(pTHX_ Node *node)
 		HV *hash = (HV*)new_Hash();
 		add_token(hash, pkg->tk);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Package");
+	} else if (TYPE_match(node, RegPrefixNode)) {
+		RegPrefixNode *reg = dynamic_cast<RegPrefixNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, reg->tk);
+		add_key(hash, "expr", reg->exp);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::RegPrefix");
 	} else {
 		assert(0 && "node type is not found");
 	}

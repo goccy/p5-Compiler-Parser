@@ -1,4 +1,5 @@
 #include <common.hpp>
+
 TokenInfo decl_tokens[] = {
 	{Enum::Token::Type::Return, Enum::Token::Kind::Return, "Return", "return"},
 	{Enum::Token::Type::Add, Enum::Token::Kind::Operator, "Add", "+"},
@@ -313,7 +314,8 @@ TokenInfo decl_tokens[] = {
 	{Enum::Token::Type::OurDecl, Enum::Token::Kind::Decl, "OurDecl", "our"},
 	{Enum::Token::Type::StateDecl, Enum::Token::Kind::Decl, "StateDecl", "state"},
 	{Enum::Token::Type::UseDecl, Enum::Token::Kind::Decl, "UseDecl", "use"},
-	{Enum::Token::Type::UsedName, Enum::Token::Kind::Term, "UsedName", ""},
+	{Enum::Token::Type::UsedName, Enum::Token::Kind::Module, "UsedName", ""},
+	{Enum::Token::Type::RequiredName, Enum::Token::Kind::Module, "RequiredName", ""},
 	{Enum::Token::Type::IfStmt, Enum::Token::Kind::Stmt, "IfStmt", "if"},
 	{Enum::Token::Type::ElseStmt, Enum::Token::Kind::Stmt, "ElseStmt", "else"},
 	{Enum::Token::Type::ElsifStmt, Enum::Token::Kind::Stmt, "ElsifStmt", "elsif"},
@@ -445,11 +447,16 @@ TokenInfo decl_tokens[] = {
 	{Enum::Token::Type::String, Enum::Token::Kind::Term, "String", ""},
 	{Enum::Token::Type::RawString, Enum::Token::Kind::Term, "RawString", ""},
 	{Enum::Token::Type::ExecString, Enum::Token::Kind::Term, "ExecString", ""},
+	{Enum::Token::Type::VersionString, Enum::Token::Kind::Term, "VersionString", ""},
 	{Enum::Token::Type::HereDocumentTag, Enum::Token::Kind::Term, "HereDocumentTag", ""},
 	{Enum::Token::Type::HereDocumentRawTag, Enum::Token::Kind::Term, "HereDocumentRawTag", ""},
+	{Enum::Token::Type::HereDocumentExecTag, Enum::Token::Kind::Term, "HereDocumentExecTag", ""},
 	{Enum::Token::Type::RawHereDocument, Enum::Token::Kind::Term, "RawHereDocument", ""},
 	{Enum::Token::Type::HereDocument, Enum::Token::Kind::Term, "HereDocument", ""},
 	{Enum::Token::Type::HereDocumentEnd, Enum::Token::Kind::Term, "HereDocumentEnd", ""},
+	{Enum::Token::Type::FormatDecl, Enum::Token::Kind::Decl, "FormatDecl", ""},
+	{Enum::Token::Type::Format, Enum::Token::Kind::Term, "Format", ""},
+	{Enum::Token::Type::FormatEnd, Enum::Token::Kind::Term, "FormatEnd", ""},
 	{Enum::Token::Type::Object, Enum::Token::Kind::Term, "Object", ""},
 	{Enum::Token::Type::RegExp, Enum::Token::Kind::Term, "RegExp", ""},
 	{Enum::Token::Type::Array, Enum::Token::Kind::Term, "Array", ""},
@@ -472,6 +479,6 @@ TokenInfo decl_tokens[] = {
 	{Enum::Token::Type::Argument, Enum::Token::Kind::Term, "Argument", ""},
 	{Enum::Token::Type::List, Enum::Token::Kind::Term, "List", ""},
 	{Enum::Token::Type::Default, Enum::Token::Kind::Term, "Default", "undef"},
-	{Enum::Token::Type::Undefined, Enum::Token::Kind::Undefined, "Undefined", ""},
+	{Enum::Token::Type::Undefined, Enum::Token::Kind::Undefined, "Undefined", ""}
 };
 

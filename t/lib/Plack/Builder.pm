@@ -1,7 +1,7 @@
 package Plack::Builder;
 use strict;
 use parent qw( Exporter );
-#our @EXPORT = qw( builder add enable enable_if mount );
+our @EXPORT = qw( builder add enable enable_if mount );
 
 use Carp ();
 use Plack::App::URLMap;

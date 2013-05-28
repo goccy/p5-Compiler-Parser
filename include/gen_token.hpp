@@ -91,6 +91,7 @@ typedef enum {
 	StateDecl,
 	UseDecl,
 	UsedName,
+	RequiredName,
 	IfStmt,
 	ElseStmt,
 	ElsifStmt,
@@ -168,11 +169,16 @@ typedef enum {
 	String,
 	RawString,
 	ExecString,
+	VersionString,
 	HereDocumentTag,
 	HereDocumentRawTag,
+	HereDocumentExecTag,
 	RawHereDocument,
 	HereDocument,
 	HereDocumentEnd,
+	FormatDecl,
+	Format,
+	FormatEnd,
 	Object,
 	RegExp,
 	Array,
@@ -195,9 +201,10 @@ typedef enum {
 	Argument,
 	List,
 	Default,
-	Undefined,
+	Undefined
 } Type;
 }
+
 namespace Kind {
 typedef enum {
 	Return,
@@ -221,7 +228,7 @@ typedef enum {
 	Continue,
 	Do,
 	Break,
-	Term,
+	Module,
 	Stmt,
 	DefaultStmt,
 	Comma,
@@ -229,6 +236,7 @@ typedef enum {
 	StmtEnd,
 	Symbol,
 	Modifier,
+	Term,
 	Namespace,
 	Package,
 	Class,
@@ -239,7 +247,7 @@ typedef enum {
 	Ref,
 	Get,
 	Set,
-	Undefined,
+	Undefined
 } Kind;
 }
 }
