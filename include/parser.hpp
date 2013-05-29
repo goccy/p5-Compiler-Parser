@@ -142,6 +142,16 @@ public:
 	void dump(size_t depth);
 };
 
+class ForeachStmtNode : public Node {
+public:
+	Node *itr;
+	Node *cond;
+	Node *true_stmt;
+	ForeachStmtNode(Token *tk);
+	void setExpr(Node *expr);
+	void dump(size_t depth);
+};
+
 class Module {
 public:
 	const char *name;
@@ -204,6 +214,7 @@ public:
 	void parseTerm(ParseContext *pctx, Token *term);
 	void parseSingleTermOperator(ParseContext *pctx, Token *op);
 	void parseBranchType(ParseContext *pctx, Token *branch);
+	void parseSpecificKeyword(ParseContext *pctx, Token *stmt);
 	void parseSpecificStmt(ParseContext *pctx, Token *stmt);
 	void parseDecl(ParseContext *pctx, Token *comma);
 	void parseModule(ParseContext *pctx, Token *mod);

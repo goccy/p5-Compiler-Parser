@@ -585,11 +585,16 @@ AST *Parser::parse(Tokens *tokens)
 {
 	grouping(tokens);
 	prepare(tokens);
+	for (size_t i = 0; i < tokens->size(); i++) {
+		Token *t = tokens->at(i);
+		//fprintf(stdout, "[%-12s] : %12s \n", cstr(t->data), t->info.name);
+	}
 	Token *root = parseSyntax(NULL, tokens);//Level1
 	parseSpecificStmt(root);//Level2
 	setIndent(root, 0);
 	size_t block_id = 0;
 	setBlockIDWithDepthFirst(root, &block_id);
+	//dumpSyntax(root, 0);
 	Completer completer;
 	completer.complete(root);
 	//dumpSyntax(root, 0);
@@ -675,7 +680,7 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 		DBG_PL("BRANCH");
 		parseBranchType(pctx, tk);
 		break;
-	case Function:
+	case Function: case Namespace:
 		DBG_PL("CALL");
 		parseFunctionCall(pctx, tk);
 		break;
@@ -689,6 +694,7 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 		break;
 	case SpecificKeyword:
 		DBG_PL("KEYWORD");
+		parseSpecificKeyword(pctx, tk);
 		break;
 	case Handle:
 		DBG_PL("HANDLE");
@@ -799,6 +805,14 @@ void Parser::parseDecl(ParseContext *pctx, Token *tk)
 	}
 }
 
+void Parser::parseSpecificKeyword(ParseContext *pctx, Token *tk)
+{
+	if (tk->data == "__PACKAGE__") {
+		/* like Namespace */
+		return parseTerm(pctx, tk);
+	}
+}
+
 void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 {
 	using namespace TokenType;
@@ -809,9 +823,18 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 		pctx->pushNode(if_stmt);
 		_prev_stmt = if_stmt;
 		Node *expr_node = _parse(pctx->token(tk, 1))->getRoot();
-		Node *block_node = _parse(pctx->token(tk, 2));
+		Token *block_or_stmt_end_node = pctx->token(tk, 2);
+		if (block_or_stmt_end_node->info.type != TokenType::SemiColon) {
+			Node *block_node = _parse(pctx->token(tk, 2));
+			if_stmt->true_stmt = (block_node) ? block_node->getRoot() : NULL;
+		} else {
+			assert(pctx->nodes->size() == 2 && "syntax error! near by postposition if statement");
+			Node *true_stmt_node = pctx->nodes->at(0);
+			if_stmt->true_stmt = true_stmt_node;
+			pctx->nodes->clear();
+			pctx->pushNode(if_stmt);
+		}
 		if_stmt->expr = expr_node;
-		if_stmt->true_stmt = (block_node) ? block_node->getRoot() : NULL;
 		pctx->next(2);
 		break;
 	}
@@ -838,18 +861,39 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 		break;
 	}
 	case TokenType::ForStmt: {
-		ForStmtNode *for_stmt = new ForStmtNode(tk);
-		Node *expr_node = _parse(pctx->token(tk, 1));
-		for_stmt->setExpr(expr_node->getRoot());
-		Node *block_stmt_node = _parse(pctx->token(tk, 2));
-		for_stmt->true_stmt = block_stmt_node->getRoot();
-		_prev_stmt = for_stmt;
-		pctx->pushNode(for_stmt);
-		pctx->next(2);
+		Token *next_tk = pctx->nextToken();
+		if (next_tk &&
+			(next_tk->info.type == TokenType::VarDecl ||
+			 next_tk->info.type == TokenType::Var ||
+			 next_tk->info.type == TokenType::GlobalVar)) {
+			//fall through (foreach stmt)
+		} else {
+			ForStmtNode *for_stmt = new ForStmtNode(tk);
+			Node *expr_node = _parse(pctx->token(tk, 1));
+			for_stmt->setExpr(expr_node->getRoot());
+			Node *block_stmt_node = _parse(pctx->token(tk, 2));
+			for_stmt->true_stmt = block_stmt_node->getRoot();
+			_prev_stmt = for_stmt;
+			pctx->pushNode(for_stmt);
+			pctx->next(2);
+			break;
+		}
+	}
+	case TokenType::ForeachStmt: {
+		ForeachStmtNode *foreach_stmt = new ForeachStmtNode(tk);
+		Token *next_tk = pctx->nextToken();
+		size_t idx = 1;
+		Node *itr = (next_tk->info.type == TokenType::VarDecl) ? new LeafNode(pctx->token(tk, ++idx)) : NULL;
+		Node *expr_node = _parse(pctx->token(tk, ++idx));
+		foreach_stmt->itr = itr;
+		foreach_stmt->cond = expr_node->getRoot();
+		Node *block_stmt_node = _parse(pctx->token(tk, ++idx));
+		foreach_stmt->true_stmt = block_stmt_node->getRoot();
+		_prev_stmt = foreach_stmt;
+		pctx->pushNode(foreach_stmt);
+		pctx->next(idx);
 		break;
 	}
-	case TokenType::ForeachStmt:
-		break;
 	case TokenType::WhileStmt:
 		break;
 	default:
@@ -961,11 +1005,21 @@ void Parser::parseModuleArgument(ParseContext *pctx, Token *tk)
 
 void Parser::parseFunctionCall(ParseContext *pctx, Token *tk)
 {
+	Token *next_tk = pctx->nextToken();
+	if (tk->info.type == TokenType::Namespace &&
+		next_tk && next_tk->info.type == TokenType::Pointer) {
+		/* Name::Space->method() */
+		return parseTerm(pctx, tk);
+	}
 	if (isIrregularFunction(pctx, tk)) {
 		parseIrregularFunction(pctx, tk);
 	} else {
 		FunctionCallNode *f = new FunctionCallNode(tk);
 		BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
+		TokenType::Type type = tk->info.type;
+		if (type == TokenType::Method ||
+			type == TokenType::Namespace /* Static Method Invocation */
+		) pctx->pushNode(f);
 		return (!node) ? pctx->pushNode(f) : node->link(f);
 	}
 }

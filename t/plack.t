@@ -8,7 +8,7 @@ BEGIN {
     use_ok('Compiler::Parser::AST::Renderer');
 };
 
-my $filename = $ARGV[0];
+my $filename = 't/lib/Plack/Builder.pm';#$ARGV[0];
 open my $fh, '<', $filename;
 my $script = do { local $/; <$fh> };
 my $tokens = Compiler::Lexer->new('')->tokenize($script);

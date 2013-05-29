@@ -11,20 +11,20 @@ sub new {
 
 sub render {
     my ($self, $ast) = @_;
-    foreach my $node (@$$ast) {
-        my $args = +{};
-        $args->{$_} = $node->{$_} foreach @{$node->branches};
-        print BOLD, '├── ';
-        $self->__print_data($node);
-        print "\n";
-        $self->__render($args, 1);
-    }
+    my $args = +{};
+    $args->{$_} = $ast->{$_} foreach @{$ast->branches};
+    print BOLD, '├── ';
+    $self->__print_data($ast);
+    print "\n";
+    $self->__render($args, 1);
 }
 
 sub __render {
     my ($self, $nodes, $depth) = @_;
     my @names = keys %$nodes;
-    foreach my $name (@names) {
+    my @sorted_names = grep { $_ !~ /next/ } @names;
+    push @sorted_names, 'next';
+    foreach my $name (@sorted_names) {
         my $node = $nodes->{$name};
         next unless (defined $node);
         $self->__render_branch($_, $name, $depth)
@@ -34,6 +34,9 @@ sub __render {
 
 sub __render_branch {
     my ($self, $node, $name, $depth) = @_;
+    if ($name =~ /next/) {
+        $depth--;
+    }
     print BOLD, '|   ' foreach (1 .. $depth);
     print BOLD, '├── ';
     #print BOLD, '└─';
@@ -55,6 +58,5 @@ sub __print_name {
     my ($self, $name) = @_;
     print BOLD, GREEN, "<$name>", BOLD, WHITE;
 }
-
 
 1;

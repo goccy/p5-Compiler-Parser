@@ -263,8 +263,8 @@ RESTART:;
 	for (size_t i = 0; i < tk_n; i++) {
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
-			tk->info.type == TokenType::BuiltinFunc &&
-			isUnaryKeyword(tk->data) &&
+			((tk->info.type == TokenType::BuiltinFunc &&
+			  isUnaryKeyword(tk->data)) || tk->info.type == TokenType::Namespace) &&
 			(tks[i+1]->stype == SyntaxType::Expr ||
 			 tks[i+1]->info.kind == TokenKind::Term)) {
 			insertExpr(root, i, 2);
@@ -374,15 +374,15 @@ void Completer::completeTerm(Token *root)
 RESTART:;
 	for (size_t i = 0; i < tk_n; i++) {
 		Token *tk = tks[i];
-		if (tk_n > 2 && tk_n > i+1 &&
+		if (tk_n > 2 && tk_n > i+1 && (tks[0]->info.type != ForStmt && tks[0]->info.type != ForeachStmt) &&
 			(tk->info.type == Var || tk->info.type == CodeVar ||
 			 tk->info.type == ArrayVar || tk->info.type == HashVar ||
 			 tk->info.type == LocalVar || tk->info.type == SpecificValue ||
 			 tk->info.type == LocalArrayVar || tk->info.type == LocalHashVar ||
 			 tk->info.type == GlobalVar || tk->info.type == GlobalArrayVar ||
 			 tk->info.type == GlobalHashVar || tk->info.kind == Function) &&
-			tks[i+1]->stype == SyntaxType::Expr &&
-			(!tks[i+2] || tks[i+2]->info.type != TokenType::Comma)) {
+			tks[i+1]->stype == SyntaxType::Expr/* &&
+		  (!tks[i+2] || tks[i+2]->info.type != TokenType::Comma)*/) {
 			insertTerm(root, i, 2);
 			tk_n -= 1;
 			goto RESTART;
@@ -393,6 +393,12 @@ RESTART:;
 				   tks[i+3]->info.type == RegDelim) {
 			insertExpr(root, i, 4);
 			tk_n -= 3;
+			goto RESTART;
+		} else if (tk_n > 2 && tk_n > i+1 &&
+				   tk->info.type == FunctionDecl &&
+				   tks[i+1]->stype == SyntaxType::BlockStmt) {
+			insertExpr(root, i, 2);
+			tk_n -= 1;
 			goto RESTART;
 		}
 		if (tks[i]->token_num > 0) {

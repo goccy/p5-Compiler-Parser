@@ -284,6 +284,27 @@ void ForStmtNode::dump(size_t depth)
 	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 	Node_dump(init, "init  : ", depth+1);
 	Node_dump(cond, "cond  : ", depth+1);
-	Node_dump(cond, "progress  : ", depth+1);
-	Node_dump(cond, "true  : ", depth+1);
+	Node_dump(progress, "progress  : ", depth+1);
+	Node_dump(true_stmt, "true  : ", depth+1);
+}
+
+ForeachStmtNode::ForeachStmtNode(Token *tk) : Node(tk)
+{
+	this->itr = NULL;
+	this->cond = NULL;
+	this->true_stmt = NULL;
+}
+
+void ForeachStmtNode::setExpr(Node *expr)
+{
+	itr = expr;
+	cond = expr->next;
+}
+
+void ForeachStmtNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(itr, "itr  : ", depth+1);
+	Node_dump(cond, "cond  : ", depth+1);
+	Node_dump(true_stmt, "true  : ", depth+1);
 }
