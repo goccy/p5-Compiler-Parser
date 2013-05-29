@@ -948,10 +948,15 @@ void Parser::parseModule(ParseContext *pctx, Token *tk)
 
 void Parser::parseModuleArgument(ParseContext *pctx, Token *tk)
 {
-	if (tk->info.kind == TokenKind::RegPrefix) {
-		pctx->next();
-		parseRegPrefix(pctx, tk);
+	Node *node = NULL;
+	TokenType::Type type = tk->info.type;
+	if (tk->stype == SyntaxType::Expr) {
+		node = _parse(tk);
+	} else if (type == TokenType::String || type == TokenType::RawString) {
+		node = new LeafNode(tk);
 	}
+	if (node) pctx->pushNode(node);
+	pctx->next();
 }
 
 void Parser::parseFunctionCall(ParseContext *pctx, Token *tk)
