@@ -263,8 +263,8 @@ RESTART:;
 	for (size_t i = 0; i < tk_n; i++) {
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
-			((tk->info.type == TokenType::BuiltinFunc &&
-			  isUnaryKeyword(tk->data)) || tk->info.type == TokenType::Namespace) &&
+			((tk->info.type == BuiltinFunc && isUnaryKeyword(tk->data)) ||
+			 (tks[0]->info.type != UseDecl && tk->info.type == TokenType::Namespace)) &&
 			(tks[i+1]->stype == SyntaxType::Expr ||
 			 tks[i+1]->info.kind == TokenKind::Term)) {
 			insertExpr(root, i, 2);

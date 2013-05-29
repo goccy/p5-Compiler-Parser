@@ -37,6 +37,27 @@ public:
 	void dump(size_t depth);
 };
 
+class ArrayRefNode : public Node {
+public:
+	Node *data;
+	ArrayRefNode(Token *tk);
+	void dump(size_t depth);
+};
+
+class HashRefNode : public Node {
+public:
+	Node *data;
+	HashRefNode(Token *tk);
+	void dump(size_t depth);
+};
+
+class ListNode : public Node {
+public:
+	Node *data;
+	ListNode(Token *tk);
+	void dump(size_t depth);
+};
+
 class HashNode : public Node {
 public:
 	Node *key;
@@ -212,6 +233,7 @@ public:
 	void parseExpr(ParseContext *pctx, Node *expr);
 	void parseToken(ParseContext *pctx, Token *tk);
 	void parseTerm(ParseContext *pctx, Token *term);
+	void parseSymbol(ParseContext *pctx, Token *symbol);
 	void parseSingleTermOperator(ParseContext *pctx, Token *op);
 	void parseBranchType(ParseContext *pctx, Token *branch);
 	void parseSpecificKeyword(ParseContext *pctx, Token *stmt);

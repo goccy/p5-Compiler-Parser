@@ -308,3 +308,38 @@ void ForeachStmtNode::dump(size_t depth)
 	Node_dump(cond, "cond  : ", depth+1);
 	Node_dump(true_stmt, "true  : ", depth+1);
 }
+
+ListNode::ListNode(Token *tk) : Node(tk)
+{
+	this->data = NULL;
+}
+
+void ListNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(data, "data  : ", depth+1);
+}
+
+
+ArrayRefNode::ArrayRefNode(Token *tk) : Node(tk)
+{
+	this->data = NULL;
+}
+
+void ArrayRefNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(data, "data  : ", depth+1);
+}
+
+
+HashRefNode::HashRefNode(Token *tk) : Node(tk)
+{
+	this->data = NULL;
+}
+
+void HashRefNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(data, "data  : ", depth+1);
+}

@@ -597,7 +597,7 @@ AST *Parser::parse(Tokens *tokens)
 	//dumpSyntax(root, 0);
 	Completer completer;
 	completer.complete(root);
-	//dumpSyntax(root, 0);
+	dumpSyntax(root, 0);
 	Node *last_stmt = _parse(root);
 	return new AST(last_stmt->getRoot());
 }
@@ -615,9 +615,13 @@ Node *Parser::_parse(Token *root)
 			case BlockStmt: {
 				/* Nameless Block */
 				Node *stmt = _parse(tk);
-				BlockNode *block = new BlockNode(tk);
-				block->body = stmt->getRoot();
-				parseStmt(pctx, block);
+				if (TYPE_match(stmt, HashRefNode)) {
+					link(pctx, pctx->lastNode(), stmt);
+				} else {
+					BlockNode *block = new BlockNode(tk);
+					block->body = stmt->getRoot();
+					parseStmt(pctx, block);
+				}
 				break;
 			}
 			case Stmt: {
@@ -704,6 +708,7 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 		break;
 	case Symbol:
 		DBG_PL("SYMBOL");
+		parseSymbol(pctx, tk);
 		break;
 	default:
 		DBG_PL("OTHER");
@@ -749,6 +754,54 @@ void Parser::link(ParseContext *pctx, Node *from_node, Node *to_node)
 	} else {
 		//assert(0 && "syntax error!\n");
 		pctx->pushNode(to_node);
+	}
+}
+
+void Parser::parseSymbol(ParseContext *pctx, Token *tk)
+{
+	using namespace TokenType;
+	if (tk->info.type == LeftParenthesis) {
+		Node *node = _parse(pctx->nextToken());
+		if (!node) {
+			tk->data = "()";
+			ListNode *list = new ListNode(tk);
+			pctx->pushNode(list);
+			for (; !pctx->end(); pctx->next()) {}
+		} else if (node->tk->info.type == Comma || node->tk->info.type == Arrow) {
+			tk->data = "()";
+			ListNode *list = new ListNode(tk);
+			list->data = node;
+			pctx->pushNode(list);
+			for (; !pctx->end(); pctx->next()) {}
+		}
+	} else if (tk->info.type == LeftBracket) {
+		Node *node = _parse(pctx->nextToken());
+		if (!node) {
+			tk->data = "[]";
+			ListNode *list = new ListNode(tk);
+			pctx->pushNode(list);
+			for (; !pctx->end(); pctx->next()) {}
+		} else if (node->tk->info.type == Comma || node->tk->info.type == Arrow) {
+			tk->data = "[]";
+			ArrayRefNode *array = new ArrayRefNode(tk);
+			array->data = node;
+			pctx->pushNode(array);
+			for (; !pctx->end(); pctx->next()) {}
+		}
+	} else if (tk->info.type == LeftBrace) {
+		Node *node = _parse(pctx->nextToken());
+		if (!node) {
+			tk->data = "{}";
+			HashRefNode *hash = new HashRefNode(tk);
+			pctx->pushNode(hash);
+			for (; !pctx->end(); pctx->next()) {}
+		} else if (node->tk->info.type == Comma || node->tk->info.type == Arrow) {
+			tk->data = "{}";
+			HashRefNode *hash = new HashRefNode(tk);
+			hash->data = node;
+			pctx->pushNode(hash);
+			for (; !pctx->end(); pctx->next()) {}
+		}
 	}
 }
 

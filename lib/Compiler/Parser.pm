@@ -18,6 +18,9 @@ use Compiler::Parser::Node::SingleTermOperator;
 use Compiler::Parser::Node::Array;
 use Compiler::Parser::Node::Hash;
 use Compiler::Parser::Node::Leaf;
+use Compiler::Parser::Node::List;
+use Compiler::Parser::Node::ArrayRef;
+use Compiler::Parser::Node::HashRef;
 
 require Exporter;
 

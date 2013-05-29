@@ -118,6 +118,27 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_token(hash, leaf->tk);
 		add_key(hash, "next", leaf->next);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Leaf");
+	} else if (TYPE_match(node, ListNode)) {
+		ListNode *list = dynamic_cast<ListNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, list->tk);
+		add_key(hash, "data", list->data);
+		add_key(hash, "next", list->next);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::List");
+	} else if (TYPE_match(node, ArrayRefNode)) {
+		ArrayRefNode *ref = dynamic_cast<ArrayRefNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, ref->tk);
+		add_key(hash, "data", ref->data);
+		add_key(hash, "next", ref->next);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::ArrayRef");
+	} else if (TYPE_match(node, HashRefNode)) {
+		HashRefNode *ref = dynamic_cast<HashRefNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, ref->tk);
+		add_key(hash, "data", ref->data);
+		add_key(hash, "next", ref->next);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::HashRef");
 	} else if (TYPE_match(node, IfStmtNode)) {
 		IfStmtNode *stmt = dynamic_cast<IfStmtNode *>(node);
 		HV *hash = (HV*)new_Hash();
