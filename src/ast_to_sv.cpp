@@ -88,6 +88,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		HV *hash = (HV*)new_Hash();
 		add_token(hash, f->tk);
 		add_key(hash, "next", f->next);
+		add_key(hash, "prototype", f->prototype);
 		add_key(hash, "body", f->body);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Function");
 	} else if (TYPE_match(node, BlockNode)) {

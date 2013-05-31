@@ -684,6 +684,9 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 		DBG_PL("BRANCH");
 		parseBranchType(pctx, tk);
 		break;
+	case SingleTerm:
+		parseSingleTermOperator(pctx, tk);
+		break;
 	case Function: case Namespace:
 		DBG_PL("CALL");
 		parseFunctionCall(pctx, tk);
@@ -1018,9 +1021,33 @@ void Parser::parseFunction(ParseContext *pctx, Token *tk)
 {
 	using namespace SyntaxType;
 	FunctionNode *f = new FunctionNode(tk);
-	Node *block_stmt_node = (tk->stype == BlockStmt) ? _parse(tk) : _parse(pctx->nextToken());
-	f->body = block_stmt_node->getRoot();
-	pctx->next();
+	Token *next_tk = pctx->nextToken();
+	if (tk->info.type == TokenType::Function &&
+		next_tk && next_tk->stype == Expr) {
+		/* sub name () {} */
+		Token *after_next_tk = pctx->token(tk, 2);
+		assert(after_next_tk && after_next_tk->stype == BlockStmt && "syntax error! near by prototype");
+		Node *prototype_node = _parse(next_tk);
+		Node *block_stmt_node = _parse(after_next_tk);
+		f->prototype = (prototype_node) ? prototype_node->getRoot() : NULL;
+		f->body = (block_stmt_node) ? block_stmt_node->getRoot() : NULL;
+		pctx->next();
+		pctx->next();
+	} else if (tk->stype == BlockStmt) {
+		/* sub {} */
+		Node *block_stmt_node = _parse(tk);
+		f->body = (block_stmt_node) ? block_stmt_node->getRoot() : NULL;
+		f->tk->info.data = "sub";
+		pctx->next();
+	} else if (tk->info.type == TokenType::Function &&
+		next_tk && next_tk->stype == BlockStmt) {
+		/* sub name {} */
+		Node *block_stmt_node = _parse(pctx->nextToken());
+		f->body = (block_stmt_node) ? block_stmt_node->getRoot() : NULL;
+		pctx->next();
+	} else {
+		assert(0 && "syntax error! near by sub declare");
+	}
 	BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
 	return (!node) ? pctx->pushNode(f) : node->link(f);
 }
@@ -1079,6 +1106,7 @@ void Parser::parseFunctionCall(ParseContext *pctx, Token *tk)
 
 bool Parser::isIrregularFunction(ParseContext *, Token *tk)
 {
+	if (tk->info.type == TokenType::Method) return false;
 	if (tk->data == "map" || tk->data == "grep") return true;
 	return false;
 }

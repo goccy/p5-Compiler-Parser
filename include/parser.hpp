@@ -68,6 +68,7 @@ public:
 class FunctionNode : public Node {
 public:
 	Node *body;
+	Node *prototype;
 	FunctionNode(Token *tk);
 	void dump(size_t depth);
 };
