@@ -343,3 +343,14 @@ void HashRefNode::dump(size_t depth)
 	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 	Node_dump(data, "data  : ", depth+1);
 }
+
+DereferenceNode::DereferenceNode(Token *tk) : Node(tk)
+{
+	this->expr = NULL;
+}
+
+void DereferenceNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(expr, "expr  : ", depth+1);
+}

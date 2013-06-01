@@ -10,6 +10,7 @@ Completer::Completer(void)
 	named_unary_keywords = new vector<string>();
 	named_unary_keywords->push_back("defined");
 	named_unary_keywords->push_back("die");
+	named_unary_keywords->push_back("ref");
 }
 
 void Completer::complete(Token *root)
@@ -208,8 +209,8 @@ RESTART:;
 	for (size_t i = 0; i < tk_n; i++) {
 		Token *tk = tks[i];
 		TokenType::Type type = tk->info.type;
-		if (tk_n > 2 && tk_n > i+1 &&
-			(type == IsNot || type == Ref || type == BitNot)) {
+		if (tk_n > 3 && tk_n > i+2 &&
+			(type == IsNot || type == Ref || type == BitNot) && tks[i+1]->info.type != CallDecl) {
 			insertExpr(root, i, 2);
 			tk_n -= 1;
 			goto RESTART;
@@ -265,7 +266,7 @@ RESTART:;
 		if (tk_n > 2 && tk_n > i+1 &&
 			((tk->info.type == BuiltinFunc && isUnaryKeyword(tk->data)) ||
 			 (tks[0]->info.type != UseDecl && tk->info.type == TokenType::Namespace)) &&
-			(tks[i+1]->stype == SyntaxType::Expr ||
+			(tks[i+1]->stype == SyntaxType::Expr || tks[i+1]->stype == SyntaxType::Term ||
 			 tks[i+1]->info.kind == TokenKind::Term)) {
 			insertExpr(root, i, 2);
 			tk_n -= 1;
@@ -399,6 +400,12 @@ RESTART:;
 				   tks[i+1]->stype == SyntaxType::BlockStmt) {
 			insertExpr(root, i, 2);
 			tk_n -= 1;
+			goto RESTART;
+		} else if (tk_n > 3 && tk_n > i+2 &&
+				   tk->info.type == Ref &&
+				   tks[i+1]->info.type == CallDecl) {
+			insertTerm(root, i, 3);
+			tk_n -= 2;
 			goto RESTART;
 		}
 		if (tks[i]->token_num > 0) {

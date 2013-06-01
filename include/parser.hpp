@@ -30,6 +30,13 @@ public:
 	void dump(size_t depth);
 };
 
+class DereferenceNode : public Node {
+public:
+	Node *expr;
+	DereferenceNode(Token *tk);
+	void dump(size_t depth);
+};
+
 class ArrayNode : public Node {
 public:
 	Node *idx;
@@ -213,6 +220,7 @@ public:
 	TokenPos pos;
 	Node *_prev_stmt;
 	Node *extra_node;
+	Enum::Parser::Syntax::Type cur_stype;
 
 	Parser(void);
 	void grouping(Tokens *tokens);
@@ -233,6 +241,7 @@ public:
 	void parseStmt(ParseContext *pctx, Node *stmt);
 	void parseExpr(ParseContext *pctx, Node *expr);
 	void parseToken(ParseContext *pctx, Token *tk);
+	void parseModifier(ParseContext *pctx, Token *term);
 	void parseTerm(ParseContext *pctx, Token *term);
 	void parseSymbol(ParseContext *pctx, Token *symbol);
 	void parseSingleTermOperator(ParseContext *pctx, Token *op);

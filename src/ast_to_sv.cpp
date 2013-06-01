@@ -83,13 +83,20 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "next", h->next);
 		add_key(hash, "key", h->key);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Hash");
+	} else if (TYPE_match(node, DereferenceNode)) {
+		DereferenceNode *dref = dynamic_cast<DereferenceNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, dref->tk);
+		add_key(hash, "next", dref->next);
+		add_key(hash, "expr", dref->expr);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Dereference");
 	} else if (TYPE_match(node, FunctionNode)) {
 		FunctionNode *f = dynamic_cast<FunctionNode *>(node);
 		HV *hash = (HV*)new_Hash();
 		add_token(hash, f->tk);
 		add_key(hash, "next", f->next);
-		add_key(hash, "prototype", f->prototype);
 		add_key(hash, "body", f->body);
+		add_key(hash, "prototype", f->prototype);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Function");
 	} else if (TYPE_match(node, BlockNode)) {
 		BlockNode *b = dynamic_cast<BlockNode *>(node);

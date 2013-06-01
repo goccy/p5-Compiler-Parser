@@ -21,6 +21,8 @@ use Compiler::Parser::Node::Leaf;
 use Compiler::Parser::Node::List;
 use Compiler::Parser::Node::ArrayRef;
 use Compiler::Parser::Node::HashRef;
+use Compiler::Parser::Node::Dereference;
+use Compiler::Parser::Node::Return;
 
 require Exporter;
 

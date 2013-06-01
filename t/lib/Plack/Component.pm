@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp ();
 use Plack::Util;
-use overload '&{}' => \&to_app_auto, fallback => 1;
+#use overload '&{}' => \&to_app_auto, fallback => 1;
 
 sub new {
     my $proto = shift;
@@ -39,7 +39,7 @@ sub to_app_auto {
 # - SL
 sub mk_accessors {
     my $self = shift;
-    Plack::Util::Accessor::mk_accessors( ref( $self ) || $self, @_ )
+    Plack::Util::Accessor::mk_accessors( ref( $self ) || $self, @_ );
 }
 
 sub prepare_app { return }
