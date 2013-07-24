@@ -309,6 +309,19 @@ void ForeachStmtNode::dump(size_t depth)
 	Node_dump(true_stmt, "true  : ", depth+1);
 }
 
+WhileStmtNode::WhileStmtNode(Token *tk) : Node(tk)
+{
+	this->expr = NULL;
+	this->true_stmt = NULL;
+}
+
+void WhileStmtNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(expr, "expr  : ", depth+1);
+	Node_dump(true_stmt, "true  : ", depth+1);
+}
+
 ListNode::ListNode(Token *tk) : Node(tk)
 {
 	this->data = NULL;

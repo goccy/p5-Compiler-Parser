@@ -597,7 +597,7 @@ AST *Parser::parse(Tokens *tokens)
 	//dumpSyntax(root, 0);
 	Completer completer;
 	completer.complete(root);
-	dumpSyntax(root, 0);
+	//dumpSyntax(root, 0);
 	Node *last_stmt = _parse(root);
 	return new AST(last_stmt->getRoot());
 }
@@ -968,8 +968,17 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 		pctx->next(idx);
 		break;
 	}
-	case TokenType::WhileStmt:
+	case TokenType::WhileStmt: {
+		WhileStmtNode *while_stmt = new WhileStmtNode(tk);
+		Node *expr_node = _parse(pctx->token(tk, 1));
+		while_stmt->expr = expr_node->getRoot();
+		cur_stype = SyntaxType::Value;
+		Node *block_stmt_node = _parse(pctx->token(tk, 2));
+		while_stmt->true_stmt = block_stmt_node->getRoot();
+		pctx->pushNode(while_stmt);
+		pctx->next(2);
 		break;
+	}
 	default:
 		break;
 	}

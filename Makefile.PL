@@ -17,6 +17,6 @@ my @ignore_warnings_options = qw(missing-field-initializers unused-variable);
 makemaker_args->{CCFLAGS} .= join('', map { ' -Wno-' . $_ } @ignore_warnings_options);
 if (DEBUG) {
     makemaker_args->{OPTIMIZE} = '-O0';
-    makemaker_args->{CCFLAGS} = '-g3 ' . makemaker_args->{CCFLAGS};
+    makemaker_args->{CCFLAGS} = "-g3 " . makemaker_args->{CCFLAGS};
 }
 WriteAll(check_nmake => 0);

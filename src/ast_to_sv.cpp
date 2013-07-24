@@ -182,6 +182,14 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "cond", stmt->cond);
 		add_key(hash, "true_stmt", stmt->true_stmt);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::ForeachStmt");
+	} else if (TYPE_match(node, WhileStmtNode)) {
+		WhileStmtNode *stmt = dynamic_cast<WhileStmtNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, stmt->tk);
+		add_key(hash, "next", stmt->next);
+		add_key(hash, "true_stmt", stmt->true_stmt);
+		add_key(hash, "expr", stmt->expr);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::WhileStmt");
 	} else if (TYPE_match(node, ModuleNode)) {
 		ModuleNode *mod = dynamic_cast<ModuleNode *>(node);
 		HV *hash = (HV*)new_Hash();

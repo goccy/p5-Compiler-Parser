@@ -10,6 +10,7 @@ use Compiler::Parser::Node::Package;
 use Compiler::Parser::Node::RegPrefix;
 use Compiler::Parser::Node::ForStmt;
 use Compiler::Parser::Node::ForeachStmt;
+use Compiler::Parser::Node::WhileStmt;
 use Compiler::Parser::Node::Function;
 use Compiler::Parser::Node::FunctionCall;
 use Compiler::Parser::Node::IfStmt;
