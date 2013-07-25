@@ -144,6 +144,7 @@ void FunctionCallNode::dump(size_t depth)
 FunctionNode::FunctionNode(Token *tk_) : Node(tk_)
 {
 	this->body = NULL;
+	this->prototype = NULL;
 }
 
 void FunctionNode::dump(size_t depth)
