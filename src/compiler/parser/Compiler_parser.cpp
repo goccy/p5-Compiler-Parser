@@ -817,7 +817,12 @@ void Parser::parseSymbol(ParseContext *pctx, Token *tk)
 			HashRefNode *hash = new HashRefNode(tk);
 			hash->data = node;
 			pctx->pushNode(hash);
-			for (; !pctx->end(); pctx->next()) {}
+			for (; !pctx->end(); pctx->next()) {
+				if (pctx->token()->info.type == TokenType::RightBrace) break;
+			}
+			if (!pctx->end()) {
+				extra_node = _parse(pctx->nextToken());
+			}
 		}
 	}
 }

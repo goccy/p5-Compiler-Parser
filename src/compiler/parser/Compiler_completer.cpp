@@ -11,6 +11,7 @@ Completer::Completer(void)
 	named_unary_keywords->push_back("defined");
 	named_unary_keywords->push_back("die");
 	named_unary_keywords->push_back("ref");
+	named_unary_keywords->push_back("shift");
 }
 
 void Completer::complete(Token *root)
