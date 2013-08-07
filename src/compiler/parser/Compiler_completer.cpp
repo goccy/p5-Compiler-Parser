@@ -31,6 +31,7 @@ void Completer::complete(Token *root)
 	completeHighPriorityDoubleOperatorExpr(root);
 	// +, -, .
 	completeLowPriorityDoubleOperatorExpr(root);
+
 	// <<, >>
 	completeShiftOperatorExpr(root);
 	//handler, builtin functions
@@ -405,6 +406,12 @@ RESTART:;
 		} else if (tk_n > 3 && tk_n > i+2 &&
 				   tk->info.type == Ref &&
 				   tks[i+1]->info.type == CallDecl) {
+			insertTerm(root, i, 3);
+			tk_n -= 2;
+			goto RESTART;
+		} else if (tk_n > 3 && tk_n > i+2 &&
+				   tk->info.type == Call &&
+				   tks[i+1]->stype == SyntaxType::Expr) {
 			insertTerm(root, i, 3);
 			tk_n -= 2;
 			goto RESTART;
