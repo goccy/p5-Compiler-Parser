@@ -797,6 +797,11 @@ void Parser::parseSymbol(ParseContext *pctx, Token *tk)
 			array->data = node;
 			pctx->pushNode(array);
 			for (; !pctx->end(); pctx->next()) {}
+		} else {
+			tk->data = "[]";
+			ArrayRefNode *array = new ArrayRefNode(tk);
+			array->data = node;
+			pctx->pushNode(array);
 		}
 	} else if (tk->info.type == LeftBrace) {
 		SyntaxType::Type parent_stype = cur_stype;
