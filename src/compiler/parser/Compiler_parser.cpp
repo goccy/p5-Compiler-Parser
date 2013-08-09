@@ -825,7 +825,7 @@ void Parser::parseSymbol(ParseContext *pctx, Token *tk)
 			for (; !pctx->end(); pctx->next()) {
 				if (pctx->token()->info.type == TokenType::RightBrace) break;
 			}
-			if (!pctx->end()) {
+			if (!pctx->end() && pctx->nextToken()) {
 				extra_node = _parse(pctx->nextToken());
 			}
 		}
