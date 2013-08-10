@@ -677,7 +677,7 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 		DBG_PL("DECL");
 		parseDecl(pctx, tk);
 		break;
-	case Term:
+	case Term: case Class:
 		DBG_PL("TERM");
 		parseTerm(pctx, tk);
 		break;
