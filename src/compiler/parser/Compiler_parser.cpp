@@ -1174,9 +1174,9 @@ void Parser::parseModifier(ParseContext *pctx, Token *tk)
 {
 	using namespace SyntaxType;
 	Token *next_tk = pctx->nextToken();
-	assert(next_tk && "syntax error! near by dereference operator");
+	//assert(next_tk && "syntax error! near by dereference operator");
 	DereferenceNode *dref = new DereferenceNode(tk);
-	if (next_tk->stype == Expr || next_tk->stype == Term) {
+	if (next_tk && (next_tk->stype == Expr || next_tk->stype == Term)) {
 		dref->expr = _parse(next_tk);
 	} else {
 		dref->expr = new LeafNode(tk);
