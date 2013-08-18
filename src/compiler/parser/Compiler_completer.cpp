@@ -12,6 +12,14 @@ Completer::Completer(void)
 	named_unary_keywords->push_back("die");
 	named_unary_keywords->push_back("ref");
 	named_unary_keywords->push_back("shift");
+	named_unary_keywords->push_back("bless");
+	named_unary_keywords->push_back("sqrt");
+	named_unary_keywords->push_back("abs");
+	named_unary_keywords->push_back("int");
+	named_unary_keywords->push_back("rand");
+	named_unary_keywords->push_back("sin");
+	named_unary_keywords->push_back("cos");
+	named_unary_keywords->push_back("atan2");
 }
 
 void Completer::complete(Token *root)
@@ -409,11 +417,11 @@ RESTART:;
 			insertTerm(root, i, 3);
 			tk_n -= 2;
 			goto RESTART;
-		} else if (tk_n > 3 && tk_n > i+2 &&
-				   tk->info.type == Call &&
+		} else if (tk_n > 2 && tk_n > i+1 &&
+				   (tk->info.type == Method || tk->info.type == Call || tk->info.type == BuiltinFunc) &&
 				   tks[i+1]->stype == SyntaxType::Expr) {
-			insertTerm(root, i, 3);
-			tk_n -= 2;
+			insertTerm(root, i, 2);
+			tk_n -= 1;
 			goto RESTART;
 		}
 		if (tks[i]->token_num > 0) {

@@ -777,7 +777,10 @@ void Parser::parseSymbol(ParseContext *pctx, Token *tk)
 			ListNode *list = new ListNode(tk);
 			pctx->pushNode(list);
 			for (; !pctx->end(); pctx->next()) {}
-		} else if (node->tk->info.type == Comma || node->tk->info.type == Arrow) {
+		} else if (node->tk->info.type == Comma ||
+				   node->tk->info.type == Arrow ||
+				   node->tk->info.type == GlobalVar ||
+				   node->tk->info.type == Var) {
 			tk->data = "()";
 			ListNode *list = new ListNode(tk);
 			list->data = node;
