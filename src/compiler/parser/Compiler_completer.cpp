@@ -12,7 +12,7 @@ Completer::Completer(void)
 	named_unary_keywords->push_back("die");
 	named_unary_keywords->push_back("ref");
 	named_unary_keywords->push_back("shift");
-	named_unary_keywords->push_back("bless");
+	//named_unary_keywords->push_back("bless");
 	named_unary_keywords->push_back("sqrt");
 	named_unary_keywords->push_back("abs");
 	named_unary_keywords->push_back("int");
@@ -20,6 +20,7 @@ Completer::Completer(void)
 	named_unary_keywords->push_back("sin");
 	named_unary_keywords->push_back("cos");
 	named_unary_keywords->push_back("atan2");
+	named_unary_keywords->push_back("chr");
 }
 
 void Completer::complete(Token *root)
@@ -391,7 +392,7 @@ RESTART:;
 			 tk->info.type == LocalVar || tk->info.type == SpecificValue ||
 			 tk->info.type == LocalArrayVar || tk->info.type == LocalHashVar ||
 			 tk->info.type == GlobalVar || tk->info.type == GlobalArrayVar ||
-			 tk->info.type == GlobalHashVar || tk->info.kind == Function) &&
+			 tk->info.type == GlobalHashVar || tk->info.kind == TokenKind::Function) &&
 			tks[i+1]->stype == SyntaxType::Expr/* &&
 		  (!tks[i+2] || tks[i+2]->info.type != TokenType::Comma)*/) {
 			insertTerm(root, i, 2);

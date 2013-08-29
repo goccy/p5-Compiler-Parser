@@ -35,6 +35,49 @@ our $VERSION = '0.01';
 require XSLoader;
 XSLoader::load('Compiler::Parser', $VERSION);
 
+sub link_ast {
+    my ($self, $ASTs) = @_;
+    foreach my $ast (values %$ASTs) {
+        my $nodes = $self->__find_module_nodes($ast);
+        foreach my $node (@$nodes) {
+            my $module_name = $node->{token}->data;
+            $node->{ast} = $ASTs->{$module_name};
+        }
+    }
+}
+
+sub __add_node_from_array {
+    my ($self, $nodes, $module_nodes) = @_;
+    $self->__add_node($_, $module_nodes) foreach (@$nodes);
+}
+
+sub __add_node {
+    my ($self, $node, $module_nodes) = @_;
+    push @$module_nodes, $node if (ref $node eq 'Compiler::Parser::Node::Module');
+    my $nodes = $self->__find_module_nodes($node);
+    push @$module_nodes, @$nodes if (@$nodes);
+}
+
+sub __find_module_nodes {
+    my ($self, $node) = @_;
+    my @module_nodes;
+    if (ref $node eq 'ARRAY') {
+        $self->__add_node_from_array($node, \@module_nodes);
+    } else {
+        push @module_nodes, $node if (ref $node eq 'Compiler::Parser::Node::Module');
+        foreach my $name (@{$node->branches}) {
+            my $child_node = $node->{$name};
+            next unless (defined $child_node);
+            if (ref $child_node eq 'ARRAY') {
+                $self->__add_node_from_array($child_node, \@module_nodes);
+            } else {
+                $self->__add_node($child_node, \@module_nodes);
+            }
+        }
+    }
+    return \@module_nodes;
+}
+
 1;
 __END__
 
