@@ -46,6 +46,6 @@ print reverse sort keys values %v;
 SCRIPT
 
 my $parser = Compiler::Parser->new();
-my $ast = $parser->parse($$tokens);
+my $ast = $parser->parse($tokens);
 Compiler::Parser::AST::Renderer->new->render($ast);
 done_testing;
