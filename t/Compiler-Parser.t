@@ -7,7 +7,7 @@ BEGIN {
     use_ok('Compiler::Parser');
     use_ok('Compiler::Parser::AST::Renderer');
 };
-
+print Dumper \%INC;
 my $tokens = Compiler::Lexer->new('')->tokenize(<<'SCRIPT');
 $v = $a->{b}->c;
 my $v = $a->{b}->c(defined $a && 1 || $b < 3 || $c > 5);

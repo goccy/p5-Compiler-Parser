@@ -8,6 +8,7 @@ extern "C" {
 #include "perl.h"
 #include "XSUB.h"
 #include "ppport.h"
+
 #define new_Array() (AV*)sv_2mortal((SV*)newAV())
 #define new_Hash() (HV*)sv_2mortal((SV*)newHV())
 #define new_String(s, len) sv_2mortal(newSVpv(s, len))
@@ -15,8 +16,8 @@ extern "C" {
 #define new_Ref(sv) sv_2mortal(newRV_inc((SV*)sv))
 #define set(e) SvREFCNT_inc(e)
 #define get_value(hash, key) *hv_fetchs(hash, key, strlen(key))
-#define add_key(hash, key, value) (value) ? hv_stores(hash, key, set(node_to_sv(aTHX_ value))) : NULL
-#define add_token(hash, node) hv_stores(hash, "token", set(new_Token(aTHX_ node)))
+#define add_key(hash, key, value) (void)((value) ? hv_stores(hash, key, set(node_to_sv(aTHX_ value))) : NULL)
+#define add_token(hash, node) (void)hv_stores(hash, "token", set(new_Token(aTHX_ node)))
 
 #ifdef __cplusplus
 };
@@ -25,13 +26,13 @@ extern "C" {
 static SV *new_Token(pTHX_ Token *token)
 {
 	HV *hash = (HV*)new_Hash();
-	hv_stores(hash, "stype", set(new_Int(token->stype)));
-	hv_stores(hash, "type", set(new_Int(token->info.type)));
-	hv_stores(hash, "kind", set(new_Int(token->info.kind)));
-	hv_stores(hash, "line", set(new_Int(token->finfo.start_line_num)));
-	hv_stores(hash, "has_warnings", set(new_Int(token->info.has_warnings)));
-	hv_stores(hash, "name", set(new_String(token->info.name, strlen(token->info.name))));
-	hv_stores(hash, "data", set(new_String(token->data.c_str(), strlen(token->data.c_str()))));
+	(void)hv_stores(hash, "stype", set(new_Int(token->stype)));
+	(void)hv_stores(hash, "type", set(new_Int(token->info.type)));
+	(void)hv_stores(hash, "kind", set(new_Int(token->info.kind)));
+	(void)hv_stores(hash, "line", set(new_Int(token->finfo.start_line_num)));
+	(void)hv_stores(hash, "has_warnings", set(new_Int(token->info.has_warnings)));
+	(void)hv_stores(hash, "name", set(new_String(token->info.name, strlen(token->info.name))));
+	(void)hv_stores(hash, "data", set(new_String(token->data.c_str(), strlen(token->data.c_str()))));
 	HV *stash = (HV *)gv_stashpv("Compiler::Lexer::Token", sizeof("Compiler::Lexer::Token") + 1);
 	return sv_bless(new_Ref(hash), stash);
 }
@@ -67,7 +68,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		HV *hash = (HV*)new_Hash();
 		add_key(hash, "next", call->next);
 		add_token(hash, call->tk);
-		hv_stores(hash, "args", set(new_Ref(array)));
+		(void)hv_stores(hash, "args", set(new_Ref(array)));
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::FunctionCall");
 	} else if (TYPE_match(node, ArrayNode)) {
 		ArrayNode *array = dynamic_cast<ArrayNode *>(node);
