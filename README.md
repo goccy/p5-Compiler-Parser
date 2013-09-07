@@ -34,24 +34,17 @@ Compiler::Parser creates abstract syntax tree for perl5.
 
 - my $renderer = Compiler::Parser::AST::Renderer->new();
 
-    Create new instance of Compiler::Parser::AST::Renderer.
+# SEE ALSO
 
-- $renderer->render($ast);
-
-    Render of abstract syntax tree.
-    Default rendering engine is Compiler::Parser::AST::Renderer::Engine::Text.
-
-# LICENSE
-
-Copyright (C) Masaaki Goshima (goccy).
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+\[Compiler::Lexer\](http://search.cpan.org/perldoc?Compiler::Lexer)
 
 # AUTHOR
 
 Masaaki Goshima (goccy) <goccy54@gmail.com>
 
-# SEE ALSO
+# COPYRIGHT AND LICENSE
 
-[Compiler::Lexer](http://search.cpan.org/perldoc?Compiler::Lexer)
+Copyright (C) Masaaki Goshima (goccy).
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.

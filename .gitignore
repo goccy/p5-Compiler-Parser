@@ -10,3 +10,14 @@ MYMETA.yml
 Makefile
 Makefile.old
 src/Compiler-Parser.cpp
+/Compiler-Parser-*
+/.build
+/_build_params
+/Build
+!Build/
+!META.json
+!LICENSE
+local
+_build
+lib/Compiler/Parser.c
+lib/Compiler/Parser.xs

@@ -1,8 +1,0 @@
-Changes
-Compiler-Parser.xs
-Makefile.PL
-MANIFEST
-ppport.h
-README
-t/Compiler-Parser.t
-lib/Compiler-Parser.pm

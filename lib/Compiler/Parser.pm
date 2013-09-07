@@ -1,5 +1,5 @@
 package Compiler::Parser;
-use 5.012003;
+use 5.008_001;
 use strict;
 use warnings;
 use Compiler::Parser::Node;

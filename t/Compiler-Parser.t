@@ -1,9 +1,10 @@
 use strict;
 use warnings;
 use Test::More;
-use Compiler::Lexer;
+
 use Data::Dumper;
 BEGIN {
+    use_ok('Compiler::Lexer');
     use_ok('Compiler::Parser');
     use_ok('Compiler::Parser::AST::Renderer');
 };
