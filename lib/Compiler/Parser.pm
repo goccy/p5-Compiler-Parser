@@ -31,7 +31,7 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 require XSLoader;
 XSLoader::load('Compiler::Parser', $VERSION);
 
@@ -92,7 +92,7 @@ Compiler::Parser - Create Abstract Syntax Tree for Perl5
     use Compiler::Parser::AST::Renderer;
 
     my $filename = $ARGV[0];
-    open(my $fh, "<", $filename) or die("$filename is not found.");
+    open(my $fh, "<", $filename) or die("$filename could not find.");
     my $script = do { local $/; <$fh> };
     my $lexer = Compiler::Lexer->new($filename);
     my $tokens = $lexer->tokenize($script);
@@ -103,6 +103,31 @@ Compiler::Parser - Create Abstract Syntax Tree for Perl5
 =head1 DESCRIPTION
 
 Compiler::Parser creates abstract syntax tree for perl5.
+
+=head1 METHODS
+
+=over
+
+=item my $parser = Compiler::Parser->new();
+
+    Create new instance of Compiler::Parser.
+
+=item my $ast = $parser->parse($tokens);
+
+    Get array reference includes abstract syntax tree each statement.
+    This method requires `$tokens` from Compiler::Lexer::tokenize.
+
+=item my $renderer = Compiler::Parser::AST::Renderer->new();
+
+    Create new instance of Compiler::Parser::AST::Renderer.
+
+=item $renderer->render($ast)
+
+    Render abstract syntax tree.
+    This method requires `$ast` from Compiler::Parser::parse.
+    Default rendering engine is Compiler::Parser::AST::Renderer::Engine::Text.
+
+=back
 
 =head1 SEE ALSO
 

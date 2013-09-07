@@ -11,7 +11,7 @@ on 'build' => sub {
     requires 'ExtUtils::ParseXS', '2.21';
 };
 
-on 'develop' => sub {
+on 'test' => sub {
     requires 'Compiler::Lexer', '>=0.13';
     requires 'Test::More';
 };
