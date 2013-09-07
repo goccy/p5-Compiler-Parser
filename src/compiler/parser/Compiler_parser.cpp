@@ -5,6 +5,9 @@ namespace TokenType = Enum::Token::Type;
 namespace TokenKind = Enum::Token::Kind;
 namespace SyntaxType = Enum::Parser::Syntax;
 
+Module::Module(const char *name_, const char *args_)
+	: name(name_), args(args_) {}
+
 AST::AST(Node *root)
 {
 	this->root = root;
