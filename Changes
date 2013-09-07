@@ -2,6 +2,10 @@ Revision history for Perl extension Compiler-Parser.
 
 {{$NEXT}}
 
+0.03 2013-09-07T14:45:06Z
+
+    - add Module symbol.
+
 0.02 2013-09-07T10:27:54Z
 
     - fix cpanfile.
