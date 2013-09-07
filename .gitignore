@@ -17,3 +17,7 @@ src/Compiler-Parser.cpp
 !Build/
 !META.json
 !LICENSE
+local
+_build
+lib/Compiler/Parser.c
+lib/Compiler/Parser.xs
