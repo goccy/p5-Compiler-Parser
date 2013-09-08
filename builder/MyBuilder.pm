@@ -3,7 +3,7 @@ use strict;
 use warnings FATAL => 'all';
 use 5.008005;
 use base 'Module::Build::XSUtil';
-use constant DEBUG => 1;
+use constant DEBUG => 0;
 
 sub new {
     my ( $class, %args ) = @_;
@@ -15,7 +15,7 @@ sub new {
         c_source => [qw/src/],
         xs_files => { 'src/Compiler-Parser.xs' => 'lib/Compiler/Parser.xs' },
         cc_warnings => 0, # TODO
-        extra_compiler_flags => ['-Iinclude', @ignore_warnings_options],
+        extra_compiler_flags => ['-Iinclude', @ignore_warnings_options, '-g3'],
         add_to_cleanup => [
             'lib/Compiler/Parser/*.o', 'lib/Compiler/Parser/*.c',
             'lib/Compiler/Parser/*.xs',

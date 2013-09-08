@@ -1108,7 +1108,7 @@ void Parser::parseModule(ParseContext *pctx, Token *tk)
 	using namespace SyntaxType;
 	ModuleNode *m = new ModuleNode(tk);
 	Token *next_tk = pctx->nextToken();
-	if (next_tk->info.kind != TokenKind::StmtEnd) {
+	if (next_tk && next_tk->info.kind != TokenKind::StmtEnd) {
 		parseModuleArgument(pctx, next_tk);
 		Node *args = pctx->lastNode();
 		if (args) {

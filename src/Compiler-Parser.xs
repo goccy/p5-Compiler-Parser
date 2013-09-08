@@ -45,11 +45,19 @@ parse(self, tokens_)
 	AV *tokens_
 CODE:
 {
+	int tokens_size = av_len(tokens_);
+	if (tokens_size < 0) {
+		RETVAL = NULL;
+		return;
+	}
 	SV **tokens = tokens_->sv_u.svu_array;
-	size_t tokens_size = av_len(tokens_);
 	Tokens tks;
-	for (size_t i = 0; i <= tokens_size; i++) {
-		HV *token = (HV *)SvRV(tokens[i]);
+	for (int i = 0; i <= tokens_size; i++) {
+		SV *token_ = (SV *)*av_fetch(tokens_, i, FALSE);
+		if (sv_isa(token_, "Compiler::Lexer::Token")) {
+			token_ = SvRV(token_);
+		}
+		HV *token = (HV *)token_;
 		const char *name = SvPVX(get_value(token, "name"));
 		const char *data = SvPVX(get_value(token, "data"));
 		int line = SvIVX(get_value(token, "line"));
