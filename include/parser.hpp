@@ -244,6 +244,7 @@ public:
 	AST *parse(Tokens *tks);
 	Node *_parse(Token *root);
 	void link(ParseContext *pctx, Node *from, Node *to);
+	bool isForeach(ParseContext *pctx, Token *tk);
 	bool isSingleTermOperator(ParseContext *pctx, Token *tk);
 	bool isIrregularFunction(ParseContext *pctx, Token *tk);
 	void parseStmt(ParseContext *pctx, Node *stmt);

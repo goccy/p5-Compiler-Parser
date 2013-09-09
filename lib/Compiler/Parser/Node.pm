@@ -23,4 +23,6 @@ sub data {
     return $self->{token}->{data};
 }
 
+sub next { shift->{next} }
+
 1;

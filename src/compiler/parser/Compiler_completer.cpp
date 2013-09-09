@@ -393,7 +393,8 @@ RESTART:;
 			 tk->info.type == LocalArrayVar || tk->info.type == LocalHashVar ||
 			 tk->info.type == GlobalVar || tk->info.type == GlobalArrayVar ||
 			 tk->info.type == GlobalHashVar || tk->info.kind == TokenKind::Function) &&
-			tks[i+1]->stype == SyntaxType::Expr/* &&
+			(tks[i+1]->stype == SyntaxType::Expr &&
+			 (tk->info.kind != TokenKind::Function || (tks[i+1]->tks[0]->info.type != LeftBrace && tks[i+1]->tks[0]->info.type != LeftBracket)))/* &&
 		  (!tks[i+2] || tks[i+2]->info.type != TokenType::Comma)*/) {
 			insertTerm(root, i, 2);
 			tk_n -= 1;
@@ -420,7 +421,9 @@ RESTART:;
 			goto RESTART;
 		} else if (tk_n > 2 && tk_n > i+1 &&
 				   (tk->info.type == Method || tk->info.type == Call || tk->info.type == BuiltinFunc) &&
-				   tks[i+1]->stype == SyntaxType::Expr) {
+				   (tks[i+1]->stype == SyntaxType::Expr &&
+					(tks[i+1]->tks[0]->info.type != LeftBrace &&
+					 tks[i+1]->tks[0]->info.type != LeftBracket))) {
 			insertTerm(root, i, 2);
 			tk_n -= 1;
 			goto RESTART;

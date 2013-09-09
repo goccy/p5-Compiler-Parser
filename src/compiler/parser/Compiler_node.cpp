@@ -278,6 +278,9 @@ void ForStmtNode::setExpr(Node *expr)
 	init = expr;
 	cond = expr->next;
 	progress = expr->next->next;
+	init->next = NULL;
+	cond->next = NULL;
+	progress->next = NULL;
 }
 
 void ForStmtNode::dump(size_t depth)
@@ -300,6 +303,7 @@ void ForeachStmtNode::setExpr(Node *expr)
 {
 	itr = expr;
 	cond = expr->next;
+	itr->next = NULL;
 }
 
 void ForeachStmtNode::dump(size_t depth)
