@@ -794,8 +794,8 @@ void Parser::parseSymbol(ParseContext *pctx, Token *tk)
 		Node *node = _parse(pctx->nextToken());
 		if (!node) {
 			tk->data = "[]";
-			ListNode *list = new ListNode(tk);
-			pctx->pushNode(list);
+			ArrayRefNode *array = new ArrayRefNode(tk);
+			pctx->pushNode(array);
 			for (; !pctx->end(); pctx->next()) {}
 		} else if (node->tk->info.type == Comma || node->tk->info.type == Arrow) {
 			tk->data = "[]";
