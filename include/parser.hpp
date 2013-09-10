@@ -1,4 +1,6 @@
 #include <common.hpp>
+#include <setjmp.h>
+#include <unistd.h>
 
 class Node {
 public:
@@ -214,6 +216,7 @@ public:
 	ParseContext(Token *tk);
 	Token *token(void);
 	Token *token(Token *base, int offset);
+	Token *nullableToken(Token *base, int offset);
 	Token *nextToken(void);
 	Node *lastNode(void);
 	void pushNode(Node *node);
@@ -232,7 +235,7 @@ public:
 
 	Parser(void);
 	void grouping(Tokens *tokens);
-	void prepare(Tokens *tokens);
+	void replaceHereDocument(Tokens *tokens);
 	Token *parseSyntax(Token *start_token, Tokens *tokens);
 	void parseSpecificStmt(Token *root);
 	void setIndent(Token *tk, int indent);
@@ -245,8 +248,10 @@ public:
 	Node *_parse(Token *root);
 	void link(ParseContext *pctx, Node *from, Node *to);
 	bool isForeach(ParseContext *pctx, Token *tk);
+	bool isForStmtPattern(Token *tk, Token *expr);
 	bool isSingleTermOperator(ParseContext *pctx, Token *tk);
 	bool isIrregularFunction(ParseContext *pctx, Token *tk);
+	bool canGrouping(Token *tk, Token *next_tk);
 	void parseStmt(ParseContext *pctx, Node *stmt);
 	void parseExpr(ParseContext *pctx, Node *expr);
 	void parseToken(ParseContext *pctx, Token *tk);
