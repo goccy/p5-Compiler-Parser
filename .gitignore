@@ -21,3 +21,6 @@ local
 _build
 lib/Compiler/Parser.c
 lib/Compiler/Parser.xs
+GTAGS
+GRTAGS
+GPATH
