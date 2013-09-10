@@ -264,7 +264,7 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 			break;
 		}
 		case LeftBrace: {
-			Token *prev = ITER_CAST(Token *, pos-1);
+			Token *prev = (pos != start_pos) ? ITER_CAST(Token *, pos-1) : NULL;
 			if (prev) prev_type = prev->info.type;
 			if (pos + 1 == end_pos) Parse_exception("nothing end flagment", t->finfo.start_line_num);
 			pos++;
