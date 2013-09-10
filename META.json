@@ -69,7 +69,7 @@
          "web" : "https://github.com/goccy/p5-Compiler-Parser"
       }
    },
-   "version" : "0.04",
+   "version" : "0.05",
    "x_contributors" : [
       "masaaki.goshima <masaaki.goshima@mixi.co.jp>"
    ]

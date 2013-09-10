@@ -2,6 +2,10 @@ Revision history for Perl extension Compiler-Parser.
 
 {{$NEXT}}
 
+0.05 2013-09-10T18:06:10Z
+
+    - fix segmentation faults at t/reported_issue.t
+
 0.04 2013-09-10T09:27:11Z
 
     - add Exception Handler
