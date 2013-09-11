@@ -234,6 +234,20 @@ bool Parser::isExpr(Token *tk, Token *prev_tk, TokenType::Type type, TokenKind::
 	return false;
 }
 
+bool Parser::isMissingSemicolon(TokenType::Type prev_type, TokenType::Type type, Tokens *tokens)
+{
+	using namespace TokenType;
+	if (type == RightBrace && prev_type != SemiColon) {
+		size_t size = tokens->size();
+		for (size_t i = 0; i < size; i++) {
+			if (tokens->at(i)->stype == SyntaxType::Stmt) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 {
 	using namespace TokenType;
@@ -290,10 +304,30 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 			prev_syntax = syntax;
 			break;
 		}
-		case RightBrace: case RightBracket: case RightParenthesis:
+		case RightBrace: case RightBracket: case RightParenthesis: {
+			if (isMissingSemicolon(prev_type, t->info.type, new_tokens)) {
+				size_t k = pos - intermediate_pos;
+				Tokens *stmt = new Tokens();
+				for (size_t j = 0; j < k - 1; j++) {
+					Token *tk = new_tokens->back();
+					j += (tk->total_token_num > 0) ? tk->total_token_num - 1 : 0;
+					stmt->insert(stmt->begin(), tk);
+					new_tokens->pop_back();
+				}
+				Token *semicolon = new Token(";", t->finfo);
+				semicolon->info.type = SemiColon;
+				semicolon->info.name = "SemiColon";
+				semicolon->info.kind = TokenKind::StmtEnd;
+				stmt->push_back(semicolon);
+				Token *stmt_ = new Token(stmt);
+				stmt_->stype = SyntaxType::Stmt;
+				new_tokens->push_back(stmt_);
+				prev_syntax = stmt_;
+			}
 			new_tokens->push_back(t);
 			return new Token(new_tokens);
 			break; /* not reached this stmt */
+		}
 		case SemiColon: {
 			size_t k = pos - intermediate_pos;
 			if (start_pos == intermediate_pos) k++;

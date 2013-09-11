@@ -251,6 +251,7 @@ public:
 	bool isForStmtPattern(Token *tk, Token *expr);
 	bool isSingleTermOperator(ParseContext *pctx, Token *tk);
 	bool isIrregularFunction(ParseContext *pctx, Token *tk);
+	bool isMissingSemicolon(Enum::Token::Type::Type prev_type, Enum::Token::Type::Type type, Tokens *tokens);
 	bool canGrouping(Token *tk, Token *next_tk);
 	void parseStmt(ParseContext *pctx, Node *stmt);
 	void parseExpr(ParseContext *pctx, Node *expr);

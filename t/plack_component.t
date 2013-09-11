@@ -78,6 +78,14 @@ subtest 'Plack::Component' => sub {
     is(ref $mk_accessors->body, 'Compiler::Parser::Node::Branch');
     is(ref $mk_accessors->body->left, 'Compiler::Parser::Node::Leaf');
     is(ref $mk_accessors->body->right, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $mk_accessors->body->next, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $mk_accessors->body->next->{args}[0], 'Compiler::Parser::Node::List');
+    is(ref $mk_accessors->body->next->{args}[0]->data_node, 'Compiler::Parser::Node::Branch');
+    is(ref $mk_accessors->body->next->{args}[0]->data_node->left, 'Compiler::Parser::Node::Branch');
+    is(ref $mk_accessors->body->next->{args}[0]->data_node->left->left, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $mk_accessors->body->next->{args}[0]->data_node->left->left->{args}[0], 'Compiler::Parser::Node::List');
+    is(ref $mk_accessors->body->next->{args}[0]->data_node->left->left->{args}[0]->data_node, 'Compiler::Parser::Node::Leaf');
+    is(ref $mk_accessors->body->next->{args}[0]->data_node->left->right, 'Compiler::Parser::Node::Leaf');
 
     my $prepare_app = $mk_accessors->next;
     is(ref $prepare_app, 'Compiler::Parser::Node::Function');
