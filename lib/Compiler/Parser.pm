@@ -8,6 +8,7 @@ use Compiler::Parser::Node::Block;
 use Compiler::Parser::Node::Module;
 use Compiler::Parser::Node::Package;
 use Compiler::Parser::Node::RegPrefix;
+use Compiler::Parser::Node::RegReplace;
 use Compiler::Parser::Node::ForStmt;
 use Compiler::Parser::Node::ForeachStmt;
 use Compiler::Parser::Node::WhileStmt;

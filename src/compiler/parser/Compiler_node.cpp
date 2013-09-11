@@ -183,6 +183,19 @@ void RegPrefixNode::dump(size_t depth)
 	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 }
 
+RegReplaceNode::RegReplaceNode(Token *tk_) : Node(tk_)
+{
+	prefix = NULL;
+	from = NULL;
+	to = NULL;
+	option = NULL;
+}
+
+void RegReplaceNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+}
+
 BlockNode::BlockNode(Token *tk_) : Node(tk_)
 {
 	this->body = NULL;

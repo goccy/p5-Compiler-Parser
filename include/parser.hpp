@@ -102,6 +102,16 @@ public:
 	void dump(size_t depth);
 };
 
+class RegReplaceNode : public Node {
+public:
+	Node *prefix;
+	Node *from;
+	Node *to;
+	Node *option;
+	RegReplaceNode(Token *tk);
+	void dump(size_t depth);
+};
+
 class FunctionCallNode : public Node {
 public:
 	Nodes *args;
@@ -267,6 +277,7 @@ public:
 	void parseModule(ParseContext *pctx, Token *mod);
 	void parseModuleArgument(ParseContext *pctx, Token *args);
 	void parseRegPrefix(ParseContext *pctx, Token *reg);
+	void parseRegReplace(ParseContext *pctx, Token *reg);
 	void parseFunction(ParseContext *pctx, Token *func);
 	void parseFunctionCall(ParseContext *pctx, Token *func);
 	void parseIrregularFunction(ParseContext *pctx, Token *func);

@@ -407,6 +407,21 @@ RESTART:;
 			insertExpr(root, i, 4);
 			tk_n -= 3;
 			goto RESTART;
+		} else if (tk_n > 6 && tk_n > i+5 && i != 0 &&
+				   tk->info.kind == TokenKind::RegReplacePrefix &&
+				   tks[i+1]->info.type == RegDelim &&
+				   tks[i+2]->info.type == RegReplaceFrom &&
+				   tks[i+3]->info.type == RegMiddleDelim &&
+				   tks[i+4]->info.type == RegReplaceTo &&
+				   tks[i+5]->info.type == RegDelim) {
+			if (tk_n > i + 6 && tks[i+6]->info.type == RegOpt) {
+				insertExpr(root, i, 7);
+				tk_n -= 6;
+			} else {
+				insertExpr(root, i, 6);
+				tk_n -= 5;
+			}
+			goto RESTART;
 		} else if (tk_n > 2 && tk_n > i+1 &&
 				   tk->info.type == FunctionDecl &&
 				   tks[i+1]->stype == SyntaxType::BlockStmt) {

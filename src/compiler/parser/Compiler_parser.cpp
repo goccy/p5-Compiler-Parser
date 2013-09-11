@@ -193,8 +193,10 @@ void Parser::replaceHereDocument(Tokens *tokens)
 					tag->data = "qq{" + t->data + "}";
 					break;
 				case TokenType::HereDocumentRawTag:
-					tag->info = getTokenInfo(TokenType::RegQuote);//RawString);
-					tag->data = "q{" + t->data + "}";
+					tag->data = t->data;
+					tag->info = getTokenInfo(TokenType::RawString);
+					//tag->info = getTokenInfo(TokenType::RegQuote);//RawString);
+					//tag->data = "q{" + t->data + "}";
 					break;
 				default:
 					break;
@@ -752,6 +754,9 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 	case RegPrefix:
 		parseRegPrefix(pctx, tk);
 		break;
+	case RegReplacePrefix:
+		parseRegReplace(pctx, tk);
+		break;
 	case Decl: case Package:
 		DBG_PL("DECL");
 		parseDecl(pctx, tk);
@@ -935,6 +940,47 @@ void Parser::parseRegPrefix(ParseContext *pctx, Token *tk)
 	return (!node) ? pctx->pushNode(reg) : node->link(reg);
 }
 
+void Parser::parseRegReplace(ParseContext *pctx, Token *tk)
+{
+	RegReplaceNode *replace = new RegReplaceNode(tk);
+	Token *start_delim = pctx->nextToken();
+	if (!(start_delim && start_delim->info.type == TokenType::RegDelim)) {
+		Parser_exception("not start delimiter", tk->finfo.start_line_num);
+	}
+	pctx->next();
+	Token *replace_from = pctx->nextToken();
+	if (!(replace_from && replace_from->info.type == TokenType::RegReplaceFrom)) {
+		Parser_exception("replace expression", tk->finfo.start_line_num);
+	} else {
+		replace->from = new LeafNode(replace_from);
+	}
+	pctx->next();
+	Token *middle_delim = pctx->nextToken();
+	if (!(middle_delim && middle_delim->info.type == TokenType::RegMiddleDelim)) {
+		Parser_exception("replace expression", tk->finfo.start_line_num);
+	}
+	pctx->next();
+	Token *replace_to = pctx->nextToken();
+	if (!(replace_to && replace_to->info.type == TokenType::RegReplaceTo)) {
+		Parser_exception("replace expression", tk->finfo.start_line_num);
+	} else {
+		replace->to = new LeafNode(replace_to);
+	}
+	pctx->next();
+	Token *end_delim = pctx->nextToken();
+	if (!(replace_to && replace_to->info.type == TokenType::RegReplaceTo)) {
+		Parser_exception("not end delimiter", tk->finfo.start_line_num);
+	}
+	pctx->next();
+	Token *option = pctx->nextToken();
+	if (option) {
+		replace->option = new LeafNode(option);
+		pctx->next();
+	}
+	BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
+	return (!node) ? pctx->pushNode(replace) : node->link(replace);
+}
+
 void Parser::parseDecl(ParseContext *pctx, Token *tk)
 {
 	switch (tk->info.type) {
@@ -1101,7 +1147,7 @@ void Parser::parseSingleTermOperator(ParseContext *pctx, Token *tk)
 	TokenType::Type type = tk->info.type;
 	SingleTermOperatorNode *op_node = NULL;
 	if ((type == IsNot || type == Ref || type == Add || type == BitAnd ||
-		 type == Sub   || type == BitNot) ||
+		 type == ArraySize || type == Sub   || type == BitNot) ||
 		((type == Inc || type == Dec) && pctx->idx == 0)) {
 		Token *next_tk = pctx->token(tk, 1);
 		assert(next_tk && "syntax error near by single term operator");
@@ -1143,7 +1189,7 @@ bool Parser::isSingleTermOperator(ParseContext *pctx, Token *tk)
 {
 	using namespace TokenType;
 	TokenType::Type type = tk->info.type;
-	if (type == IsNot || type == Ref || type == Inc ||
+	if (type == IsNot || type == Ref || type == Inc || type == ArraySize ||
 		type == Dec   || type == BitNot) return true;
 	if ((type == Add || type == Sub || type == BitAnd) && pctx->idx == 0) return true;
 	return false;
