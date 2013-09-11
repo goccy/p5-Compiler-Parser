@@ -1189,8 +1189,8 @@ void Parser::parseModuleArgument(ParseContext *pctx, Token *tk)
 	TokenType::Type type = tk->info.type;
 	if (tk->stype == SyntaxType::Expr) {
 		node = _parse(tk);
-	} else if (type == String || type == RawString ||
-			   type == VersionString || type == Double) {
+	} else if (type == String || type == RawString || type == VersionString ||
+			   type == Int || type == Double) {
 		node = new LeafNode(tk);
 	}
 	if (node) pctx->pushNode(node);
