@@ -6,7 +6,7 @@ namespace TokenKind = Enum::Token::Kind;
 namespace SyntaxType = Enum::Parser::Syntax;
 
 static jmp_buf jmp_point;
-static void Parse_exception(const char *msg, size_t line)
+static void Parser_exception(const char *msg, size_t line)
 {
 	fprintf(stderr, "[ERROR]: syntax error : %s at %ld\n", msg, line);
 	longjmp(jmp_point, 1);
@@ -56,7 +56,7 @@ Node *ParseContext::lastNode(void)
 Token *ParseContext::token(Token *base, int offset)
 {
 	Token *ret = nullableToken(base, offset);
-	if (!ret) Parse_exception("", base->finfo.start_line_num);
+	if (!ret) Parser_exception("", base->finfo.start_line_num);
 	return ret;
 }
 
@@ -184,7 +184,7 @@ void Parser::replaceHereDocument(Tokens *tokens)
 			break;
 		case TokenType::HereDocument:
 			if (tag_pos == start_pos) {
-				Parse_exception("nothing use HereDocumentTag", __LINE__);
+				Parser_exception("nothing use HereDocumentTag", __LINE__);
 			} else {
 				Token *tag = ITER_CAST(Token *, tag_pos);
 				switch (tag->info.type) {
@@ -255,7 +255,7 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 		case LeftBracket: case LeftParenthesis:
 		case ArrayDereference: case HashDereference: case ScalarDereference:
 		case ArraySizeDereference: {
-			if (pos + 1 == end_pos) Parse_exception("nothing end flagment", t->finfo.start_line_num);
+			if (pos + 1 == end_pos) Parser_exception("nothing end flagment", t->finfo.start_line_num);
 			pos++;
 			Token *syntax = parseSyntax(t, tokens);
 			syntax->stype = SyntaxType::Expr;
@@ -266,7 +266,7 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 		case LeftBrace: {
 			Token *prev = (pos != start_pos) ? ITER_CAST(Token *, pos-1) : NULL;
 			if (prev) prev_type = prev->info.type;
-			if (pos + 1 == end_pos) Parse_exception("nothing end flagment", t->finfo.start_line_num);
+			if (pos + 1 == end_pos) Parser_exception("nothing end flagment", t->finfo.start_line_num);
 			pos++;
 			Token *syntax = parseSyntax(t, tokens);
 			if (isExpr(syntax, prev_syntax, prev_type, prev_kind)) {
@@ -278,6 +278,7 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 				syntax->stype = SyntaxType::BlockStmt;
 			} else {
 				syntax->stype = SyntaxType::BlockStmt;
+				if (pos == end_pos) Parser_exception("nothing end flagment", t->finfo.start_line_num);
 				if (pos+1 != tokens->end()) {
 					Token *next_tk = ITER_CAST(Token *, pos+1);
 					if (next_tk && next_tk->info.type != SemiColon) {
@@ -318,6 +319,7 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 		}
 		prev_kind = kind;
 		prev_type = type;
+		if (pos == end_pos) Parser_exception("nothing end flagment", t->finfo.start_line_num);
 		pos++;
 	}
 	return new Token(new_tokens);
@@ -638,6 +640,7 @@ AST *Parser::parse(Tokens *tokens)
 		completer.complete(root);
 		//dumpSyntax(root, 0);
 		Node *last_stmt = _parse(root);
+		if (!last_stmt) Parser_exception("", 1);
 		return new AST(last_stmt->getRoot());
 	} else {
 		//catched exception
@@ -1181,11 +1184,13 @@ void Parser::parseModule(ParseContext *pctx, Token *tk)
 
 void Parser::parseModuleArgument(ParseContext *pctx, Token *tk)
 {
+	using namespace TokenType;
 	Node *node = NULL;
 	TokenType::Type type = tk->info.type;
 	if (tk->stype == SyntaxType::Expr) {
 		node = _parse(tk);
-	} else if (type == TokenType::String || type == TokenType::RawString) {
+	} else if (type == String || type == RawString ||
+			   type == VersionString || type == Double) {
 		node = new LeafNode(tk);
 	}
 	if (node) pctx->pushNode(node);
