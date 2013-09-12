@@ -262,7 +262,9 @@ public:
 	bool isSingleTermOperator(ParseContext *pctx, Token *tk);
 	bool isIrregularFunction(ParseContext *pctx, Token *tk);
 	bool isMissingSemicolon(Enum::Token::Type::Type prev_type, Enum::Token::Type::Type type, Tokens *tokens);
+	bool isMissingSemicolon(Tokens *tokens);
 	bool canGrouping(Token *tk, Token *next_tk);
+	Token *replaceToStmt(Tokens *tokens, Token *cur_tk, size_t offset);
 	void parseStmt(ParseContext *pctx, Node *stmt);
 	void parseExpr(ParseContext *pctx, Node *expr);
 	void parseToken(ParseContext *pctx, Token *tk);

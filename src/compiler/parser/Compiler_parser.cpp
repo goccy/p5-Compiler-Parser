@@ -250,6 +250,41 @@ bool Parser::isMissingSemicolon(TokenType::Type prev_type, TokenType::Type type,
 	return false;
 }
 
+bool Parser::isMissingSemicolon(Tokens *tokens)
+{
+	using namespace TokenType;
+	Token *tk = tokens->back();
+	if (tk->stype != SyntaxType::Stmt) {
+		size_t size = tokens->size();
+		for (size_t i = 0; i < size; i++) {
+			if (tokens->at(i)->stype == SyntaxType::Stmt) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+Token *Parser::replaceToStmt(Tokens *cur_tokens, Token *cur_tk, size_t offset)
+{
+	Tokens *stmt = new Tokens();
+	for (size_t i = 0; i < offset - 1; i++) {
+		Token *tk = cur_tokens->back();
+		i += (tk->total_token_num > 0) ? tk->total_token_num - 1 : 0;
+		stmt->insert(stmt->begin(), tk);
+		cur_tokens->pop_back();
+	}
+	Token *semicolon = new Token(";", cur_tk->finfo);
+	semicolon->info.type = TokenType::SemiColon;
+	semicolon->info.name = "SemiColon";
+	semicolon->info.kind = TokenKind::StmtEnd;
+	stmt->push_back(semicolon);
+	Token *stmt_ = new Token(stmt);
+	stmt_->stype = SyntaxType::Stmt;
+	cur_tokens->push_back(stmt_);
+	return stmt_;
+}
+
 Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 {
 	using namespace TokenType;
@@ -308,23 +343,7 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 		}
 		case RightBrace: case RightBracket: case RightParenthesis: {
 			if (isMissingSemicolon(prev_type, t->info.type, new_tokens)) {
-				size_t k = pos - intermediate_pos;
-				Tokens *stmt = new Tokens();
-				for (size_t j = 0; j < k - 1; j++) {
-					Token *tk = new_tokens->back();
-					j += (tk->total_token_num > 0) ? tk->total_token_num - 1 : 0;
-					stmt->insert(stmt->begin(), tk);
-					new_tokens->pop_back();
-				}
-				Token *semicolon = new Token(";", t->finfo);
-				semicolon->info.type = SemiColon;
-				semicolon->info.name = "SemiColon";
-				semicolon->info.kind = TokenKind::StmtEnd;
-				stmt->push_back(semicolon);
-				Token *stmt_ = new Token(stmt);
-				stmt_->stype = SyntaxType::Stmt;
-				new_tokens->push_back(stmt_);
-				prev_syntax = stmt_;
+				prev_syntax = replaceToStmt(new_tokens, t, pos - intermediate_pos);
 			}
 			new_tokens->push_back(t);
 			return new Token(new_tokens);
@@ -333,19 +352,8 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 		case SemiColon: {
 			size_t k = pos - intermediate_pos;
 			if (start_pos == intermediate_pos) k++;
-			Tokens *stmt = new Tokens();
-			for (size_t j = 0; j < k - 1; j++) {
-				Token *tk = new_tokens->back();
-				j += (tk->total_token_num > 0) ? tk->total_token_num - 1 : 0;
-				stmt->insert(stmt->begin(), tk);
-				new_tokens->pop_back();
-			}
-			stmt->push_back(t);
-			Token *stmt_ = new Token(stmt);
-			stmt_->stype = SyntaxType::Stmt;
-			new_tokens->push_back(stmt_);
+			prev_syntax = replaceToStmt(new_tokens, t, k);
 			intermediate_pos = pos;
-			prev_syntax = stmt_;
 			break;
 		}
 		default:
@@ -357,6 +365,9 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 		prev_type = type;
 		if (pos == end_pos) Parser_exception("nothing end flagment", t->finfo.start_line_num);
 		pos++;
+	}
+	if (isMissingSemicolon(new_tokens)) {
+		replaceToStmt(new_tokens, new_tokens->back(), pos - intermediate_pos);
 	}
 	return new Token(new_tokens);
 }

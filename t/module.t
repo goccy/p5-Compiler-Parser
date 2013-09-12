@@ -30,6 +30,21 @@ subtest 'module version argument' => sub {
     is($ast->data, 'ModuleName');
     is($ast->args->data, '54');
 
+    $tokens = Compiler::Lexer->new('-')->tokenize('use Foo; use Bar');
+    $ast = Compiler::Parser->new->parse($tokens);
+    Compiler::Parser::AST::Renderer->new->render($ast);
+    is(ref $ast, 'Compiler::Parser::Node::Module');
+    is(ref $ast->next, 'Compiler::Parser::Node::Module');
+
+    $tokens = Compiler::Lexer->new('-')->tokenize('use Foo; my $x = sub { }');
+    $ast = Compiler::Parser->new->parse($tokens);
+    Compiler::Parser::AST::Renderer->new->render($ast);
+    is(ref $ast, 'Compiler::Parser::Node::Module');
+    is(ref $ast->next, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->next->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->next->right, 'Compiler::Parser::Node::Function');
+    is(ref $ast->next->right->body, 'Compiler::Parser::Node::HashRef');
+
 };
 
 done_testing;
