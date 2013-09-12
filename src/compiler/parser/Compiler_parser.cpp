@@ -8,7 +8,7 @@ namespace SyntaxType = Enum::Parser::Syntax;
 static jmp_buf jmp_point;
 static void Parser_exception(const char *msg, size_t line)
 {
-	fprintf(stderr, "[ERROR]: syntax error : %s at %ld\n", msg, line);
+	fprintf(stderr, "[ERROR]: syntax error : %s at %zd\n", msg, line);
 	longjmp(jmp_point, 1);
 }
 
@@ -450,7 +450,7 @@ void Parser::parseSpecificStmt(Token *syntax)
 					tk_n -= (pattern_size - 1);
 					parseSpecificStmt(tks[i]->tks[4]);
 				} else {
-					//fprintf(stderr, "Syntax Error!: near by line[%lu]\n", tk->finfo.start_line_num);
+					//fprintf(stderr, "Syntax Error!: near by line[%zu]\n", tk->finfo.start_line_num);
 					//exit(EXIT_FAILURE);
 				}
 			}
@@ -518,7 +518,7 @@ void Parser::setIndent(Token *syntax, int indent)
 			tk->finfo.indent = ++indent;
 			setIndent(tk, indent);
 			if (indent == 0) {
-				fprintf(stderr, "ERROR!!: syntax error near %s:%lu\n", tk->finfo.filename, tk->finfo.start_line_num);
+				fprintf(stderr, "ERROR!!: syntax error near %s:%zu\n", tk->finfo.filename, tk->finfo.start_line_num);
 				exit(EXIT_FAILURE);
 			}
 			indent--;
