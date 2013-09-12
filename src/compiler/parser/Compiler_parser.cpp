@@ -485,14 +485,14 @@ void Parser::parseSpecificStmt(Token *syntax)
 				tk_n -= 1;
 				parseSpecificStmt(tks[i]->tks[1]);
 			} else if (tk_n > i+2 &&
-				tks[i+1]->info.type == Function &&
+			    (tks[i+1]->info.type == Function || tks[i+1]->info.type == Namespace) &&
 				tks[i+2]->stype == SyntaxType::BlockStmt) {
 				/* sub func BlockStmt */
 				insertStmt(syntax, i, 3);
 				tk_n -= 2;
 				parseSpecificStmt(tks[i]->tks[2]);
 			} else if (tk_n > i+3 &&
-				tks[i+1]->info.type == Function &&
+			    (tks[i+1]->info.type == Function || tks[i+1]->info.type == Namespace) &&
 				tks[i+2]->stype == SyntaxType::Expr &&
 				tks[i+3]->stype == SyntaxType::BlockStmt) {
 				/* sub func Expr BlockStmt */
@@ -947,6 +947,11 @@ void Parser::parseRegPrefix(ParseContext *pctx, Token *tk)
 	pctx->next();
 	LeafNode *leaf = new LeafNode(exp);
 	reg->exp = leaf;
+	Token *option = pctx->nextToken();
+	if (option) {
+		reg->option = new LeafNode(option);
+		pctx->next();
+	}
 	BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
 	return (!node) ? pctx->pushNode(reg) : node->link(reg);
 }
@@ -1225,7 +1230,7 @@ void Parser::parseFunction(ParseContext *pctx, Token *tk)
 	using namespace SyntaxType;
 	FunctionNode *f = new FunctionNode(tk);
 	Token *next_tk = pctx->nextToken();
-	if (tk->info.type == TokenType::Function &&
+	if ((tk->info.type == TokenType::Function || tk->info.type == TokenType::Namespace) &&
 		next_tk && next_tk->stype == Expr) {
 		/* sub name () {} */
 		Token *after_next_tk = pctx->token(tk, 2);
@@ -1242,7 +1247,7 @@ void Parser::parseFunction(ParseContext *pctx, Token *tk)
 		f->body = (block_stmt_node) ? block_stmt_node->getRoot() : NULL;
 		tk->data = "sub";
 		pctx->next();
-	} else if (tk->info.type == TokenType::Function &&
+	} else if ((tk->info.type == TokenType::Function || tk->info.type == TokenType::Namespace) &&
 		next_tk && next_tk->stype == BlockStmt) {
 		/* sub name {} */
 		Node *block_stmt_node = _parse(pctx->nextToken());
@@ -1358,6 +1363,17 @@ void Parser::parseTerm(ParseContext *pctx, Token *tk)
 		} else {
 			term = _parse(next_tk);
 		}
+	} else if (next_tk && next_tk->info.type == TokenType::RegExp) {
+		pctx->next();
+		RegexpNode *reg = new RegexpNode(next_tk);
+		if (pctx->nextToken()->info.type != TokenType::RegDelim) Parser_exception("near by regexp", tk->finfo.start_line_num);
+		pctx->next();
+		Token *option = pctx->nextToken();
+		if (option) {
+			reg->option = new LeafNode(option);
+			pctx->next();
+		}
+		term = reg;
 	} else {
 		term = new LeafNode(tk);
 	}

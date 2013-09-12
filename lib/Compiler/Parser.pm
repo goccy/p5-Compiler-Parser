@@ -9,6 +9,7 @@ use Compiler::Parser::Node::Module;
 use Compiler::Parser::Node::Package;
 use Compiler::Parser::Node::RegPrefix;
 use Compiler::Parser::Node::RegReplace;
+use Compiler::Parser::Node::Regexp;
 use Compiler::Parser::Node::ForStmt;
 use Compiler::Parser::Node::ForeachStmt;
 use Compiler::Parser::Node::WhileStmt;
@@ -116,7 +117,7 @@ Compiler::Parser creates abstract syntax tree for perl5.
 =item my $ast = $parser->parse($tokens);
 
     Get array reference includes abstract syntax tree each statement.
-    This method requires `$tokens` from Compiler::Lexer::tokenize.
+    This method requires $tokens from Compiler::Lexer::tokenize.
 
 =item my $renderer = Compiler::Parser::AST::Renderer->new();
 
@@ -125,7 +126,7 @@ Compiler::Parser creates abstract syntax tree for perl5.
 =item $renderer->render($ast)
 
     Render abstract syntax tree.
-    This method requires `$ast` from Compiler::Parser::parse.
+    This method requires $ast from Compiler::Parser::parse.
     Default rendering engine is Compiler::Parser::AST::Renderer::Engine::Text.
 
 =back

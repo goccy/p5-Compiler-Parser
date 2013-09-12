@@ -71,6 +71,7 @@
    },
    "version" : "0.05",
    "x_contributors" : [
-      "masaaki.goshima <masaaki.goshima@mixi.co.jp>"
+      "masaaki.goshima <masaaki.goshima@mixi.co.jp>",
+      "Syohei YOSHIDA <syohex@gmail.com>"
    ]
 }

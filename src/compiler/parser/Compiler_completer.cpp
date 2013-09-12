@@ -399,13 +399,30 @@ RESTART:;
 			insertTerm(root, i, 2);
 			tk_n -= 1;
 			goto RESTART;
-		} else if (tk_n > 4 && tk_n > i+3 &&
+		} else if (tk_n > 4 && tk_n > i+3 && i != 0 &&
 				   tk->info.kind == TokenKind::RegPrefix &&
 				   tks[i+1]->info.type == RegDelim &&
 				   tks[i+2]->info.type == RegExp &&
 				   tks[i+3]->info.type == RegDelim) {
-			insertExpr(root, i, 4);
-			tk_n -= 3;
+			if (tk_n > i + 4 && tks[i+4]->info.type == RegOpt) {
+				insertExpr(root, i, 5);
+				tk_n -= 4;
+			} else {
+				insertExpr(root, i, 4);
+				tk_n -= 3;
+			}
+			goto RESTART;
+		} else if (tk_n > 3 && tk_n > i+2 && (i > 0 && tks[i-1]->info.kind != TokenKind::RegPrefix) &&
+				   tk->info.type == RegDelim &&
+				   tks[i+1]->info.type == RegExp &&
+				   tks[i+2]->info.type == RegDelim) {
+			if (tk_n > i + 3 && tks[i+3]->info.type == RegOpt) {
+				insertExpr(root, i, 4);
+				tk_n -= 3;
+			} else {
+				insertExpr(root, i, 3);
+				tk_n -= 2;
+			}
 			goto RESTART;
 		} else if (tk_n > 6 && tk_n > i+5 && i != 0 &&
 				   tk->info.kind == TokenKind::RegReplacePrefix &&

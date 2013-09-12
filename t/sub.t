@@ -20,6 +20,21 @@ subtest 'simple sub' => sub {
     is(ref $ast->next->{args}[0], 'Compiler::Parser::Node::List');
 };
 
+subtest 'name::space style subroutine name' => sub {
+    my $tokens = Compiler::Lexer->new('')->tokenize('sub name::::space { return $_[0] + 2; } name::space();');
+    my $ast = Compiler::Parser->new->parse($tokens);
+    Compiler::Parser::AST::Renderer->new->render($ast);
+    is(ref $ast, 'Compiler::Parser::Node::Function');
+    is(ref $ast->body, 'Compiler::Parser::Node::Return');
+    is(ref $ast->body->body, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->body->body->left, 'Compiler::Parser::Node::Array');
+    is(ref $ast->body->body->left->idx, 'Compiler::Parser::Node::ArrayRef');
+    is(ref $ast->body->body->left->idx->data_node, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->body->body->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->next, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->next->{args}[0], 'Compiler::Parser::Node::List');
+};
+
 subtest 'multi argument' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize('sub f {  my ($a, $b, $c) = @_; } f;');
     my $ast = Compiler::Parser->new->parse($tokens);

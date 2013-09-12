@@ -29,14 +29,14 @@ Compiler::Parser creates abstract syntax tree for perl5.
 - my $ast = $parser->parse($tokens);
 
         Get array reference includes abstract syntax tree each statement.
-        This method requires `$tokens` from Compiler::Lexer::tokenize.
+        This method requires $tokens from Compiler::Lexer::tokenize.
 - my $renderer = Compiler::Parser::AST::Renderer->new();
 
         Create new instance of Compiler::Parser::AST::Renderer.
 - $renderer->render($ast)
 
         Render abstract syntax tree.
-        This method requires `$ast` from Compiler::Parser::parse.
+        This method requires $ast from Compiler::Parser::parse.
         Default rendering engine is Compiler::Parser::AST::Renderer::Engine::Text.
 
 # SEE ALSO

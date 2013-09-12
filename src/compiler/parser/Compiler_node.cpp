@@ -176,6 +176,7 @@ void PackageNode::dump(size_t depth)
 RegPrefixNode::RegPrefixNode(Token *tk_) : Node(tk_)
 {
 	exp = NULL;
+	option = NULL;
 }
 
 void RegPrefixNode::dump(size_t depth)
@@ -192,6 +193,16 @@ RegReplaceNode::RegReplaceNode(Token *tk_) : Node(tk_)
 }
 
 void RegReplaceNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+}
+
+RegexpNode::RegexpNode(Token *tk_) : Node(tk_)
+{
+	option = NULL;
+}
+
+void RegexpNode::dump(size_t depth)
 {
 	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 }

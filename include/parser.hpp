@@ -98,6 +98,7 @@ public:
 class RegPrefixNode : public Node {
 public:
 	Node *exp;
+	Node *option;
 	RegPrefixNode(Token *tk);
 	void dump(size_t depth);
 };
@@ -109,6 +110,13 @@ public:
 	Node *to;
 	Node *option;
 	RegReplaceNode(Token *tk);
+	void dump(size_t depth);
+};
+
+class RegexpNode : public Node {
+public:
+	Node *option;
+	RegexpNode(Token *tk);
 	void dump(size_t depth);
 };
 
