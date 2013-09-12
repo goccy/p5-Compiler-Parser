@@ -2,6 +2,10 @@ Revision history for Perl extension Compiler-Parser.
 
 {{$NEXT}}
 
+0.06 2013-09-12T09:48:56Z
+
+    - support parsing of regexp or module argument
+
 0.05 2013-09-10T18:06:10Z
 
     - fix segmentation faults at t/reported_issue.t
