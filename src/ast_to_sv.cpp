@@ -228,6 +228,12 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "next", reg->next);
 		add_key(hash, "option", reg->option);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Regexp");
+	} else if (TYPE_match(node, LabelNode)) {
+		LabelNode *label = dynamic_cast<LabelNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, label->tk);
+		add_key(hash, "next", label->next);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Label");
 	} else {
 		assert(0 && "node type is not found");
 	}

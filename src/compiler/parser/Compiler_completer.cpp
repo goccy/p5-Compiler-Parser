@@ -12,6 +12,7 @@ Completer::Completer(void)
 	named_unary_keywords->push_back("die");
 	named_unary_keywords->push_back("ref");
 	named_unary_keywords->push_back("shift");
+	named_unary_keywords->push_back("write");
 	//named_unary_keywords->push_back("bless");
 	named_unary_keywords->push_back("sqrt");
 	named_unary_keywords->push_back("abs");
@@ -21,6 +22,7 @@ Completer::Completer(void)
 	named_unary_keywords->push_back("cos");
 	named_unary_keywords->push_back("atan2");
 	named_unary_keywords->push_back("chr");
+	named_unary_keywords->push_back("close");
 }
 
 void Completer::complete(Token *root)
@@ -28,8 +30,8 @@ void Completer::complete(Token *root)
 	completeTerm(root);
 	// ->
 	completePointerExpr(root);
-	// ++, --
-	completeIncDecExpr(root);
+	// ++, --, *
+	completeIncDecGlobExpr(root);
 	// **
 	completePowerExpr(root);
 	// !, ~, \, +, -, &
@@ -40,7 +42,6 @@ void Completer::complete(Token *root)
 	completeHighPriorityDoubleOperatorExpr(root);
 	// +, -, .
 	completeLowPriorityDoubleOperatorExpr(root);
-
 	// <<, >>
 	completeShiftOperatorExpr(root);
 	//handler, builtin functions
@@ -143,7 +144,7 @@ void Completer::completeExprFromRight(Token *root, TokenType::Type type)
 	Token **tks = root->tks;
 	size_t tk_n = root->token_num;
 RESTART:;
-	for (size_t i = tk_n - 1; i > 0; i--) {
+	for (int i = tk_n - 1; i >= 0; i--) {
 		if (tk_n > 3 && i-2 > 0 && tks[i-1]->info.type == type) {
 			insertExpr(root, i - 2, 3);
 			tk_n -= 2;
@@ -177,7 +178,7 @@ void Completer::completePointerExpr(Token *root)
 	completeExprFromLeft(root, TokenType::Pointer);
 }
 
-void Completer::completeIncDecExpr(Token *root)
+void Completer::completeIncDecGlobExpr(Token *root)
 {
 	using namespace TokenType;
 	Token **tks = root->tks;
@@ -198,9 +199,13 @@ RESTART:;
 			insertExpr(root, i-1, 2);
 			tk_n -= 1;
 			goto RESTART;
+		} else if (tk_n > 2 && i > 0 && tk->info.type == Glob && next_tk->info.type == Key) {
+			insertExpr(root, i, 2);
+			tk_n -= 1;
+			goto RESTART;
 		}
 		if (tks[i]->token_num > 0) {
-			completeIncDecExpr(tks[i]);
+			completeIncDecGlobExpr(tks[i]);
 		}
 	}
 }
@@ -276,9 +281,15 @@ RESTART:;
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
 			((tk->info.type == BuiltinFunc && isUnaryKeyword(tk->data)) ||
-			 (tks[0]->info.type != UseDecl && tk->info.type == TokenType::Namespace)) &&
+			 (tks[0]->info.type != UseDecl && tk->info.type == Namespace)) &&
 			(tks[i+1]->stype == SyntaxType::Expr || tks[i+1]->stype == SyntaxType::Term ||
 			 tks[i+1]->info.kind == TokenKind::Term)) {
+			insertExpr(root, i, 2);
+			tk_n -= 1;
+			goto RESTART;
+		} else if (tk_n > i + 1 && tk_n != 2 &&
+				   (tk->info.type == Redo || tk->info.type == Next || tk->info.type == Last) &&
+				   tks[i+1]->info.type == Key) {
 			insertExpr(root, i, 2);
 			tk_n -= 1;
 			goto RESTART;

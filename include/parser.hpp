@@ -120,6 +120,12 @@ public:
 	void dump(size_t depth);
 };
 
+class LabelNode : public Node {
+public:
+	LabelNode(Token *tk);
+	void dump(size_t depth);
+};
+
 class FunctionCallNode : public Node {
 public:
 	Nodes *args;
@@ -294,6 +300,7 @@ public:
 private:
 	bool isExpr(Token *tk, Token *prev_tk, Enum::Token::Type::Type type, Enum::Token::Kind::Kind kind);
 	void insertStmt(Token *tk, int idx, size_t grouping_num);
+	void insertExpr(Token *syntax, int idx, size_t grouping_num);
 	void insertParenthesis(Tokens *tokens);
 };
 
@@ -311,7 +318,7 @@ public:
 	void completeExprFromRight(Token *root, Enum::Token::Type::Type type);
 	void completeExprFromRight(Token *root, Enum::Token::Kind::Kind kind);
 	void completePointerExpr(Token *root);
-	void completeIncDecExpr(Token *root);
+	void completeIncDecGlobExpr(Token *root);
 	void completePowerExpr(Token *root);
 	void completeSingleTermOperatorExpr(Token *root);
 	void completeRegexpMatchExpr(Token *root);

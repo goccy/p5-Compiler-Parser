@@ -207,6 +207,15 @@ void RegexpNode::dump(size_t depth)
 	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 }
 
+LabelNode::LabelNode(Token *tk_) : Node(tk_)
+{
+}
+
+void LabelNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+}
+
 BlockNode::BlockNode(Token *tk_) : Node(tk_)
 {
 	this->body = NULL;

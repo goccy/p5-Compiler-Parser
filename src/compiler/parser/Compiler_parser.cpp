@@ -372,6 +372,32 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 	return new Token(new_tokens);
 }
 
+void Parser::insertExpr(Token *syntax, int idx, size_t grouping_num)
+{
+	size_t tk_n = syntax->token_num;
+	Token **tks = syntax->tks;
+	Token *tk = tks[idx];
+	Tokens *expr = new Tokens();
+	expr->push_back(tk);
+	for (size_t i = 1; i < grouping_num; i++) {
+		expr->push_back(tks[idx+i]);
+	}
+	Token *expr_ = new Token(expr);
+	expr_->stype = SyntaxType::Expr;
+	tks[idx] = expr_;
+	if (tk_n == idx+grouping_num) {
+		for (size_t i = 1; i < grouping_num; i++) {
+			syntax->tks[idx+i] = NULL;
+		}
+	} else {
+		memmove(syntax->tks+(idx+1), syntax->tks+(idx+grouping_num),
+				sizeof(Token *) * (tk_n - (idx+grouping_num)));
+		for (size_t i = 1; i < grouping_num; i++) {
+			syntax->tks[tk_n-i] = NULL;
+		}
+	}
+	syntax->token_num -= (grouping_num - 1);
+}
 
 void Parser::insertStmt(Token *syntax, int idx, size_t grouping_num)
 {
@@ -467,14 +493,29 @@ void Parser::parseSpecificStmt(Token *syntax)
 			}
 			break;
 		}
-		case ElseStmt: case Do: case Continue: case DefaultStmt:
+		case ElseStmt: case Continue: case DefaultStmt:
 			if (tk_n > i+1 &&
 				tks[i+1]->stype == SyntaxType::BlockStmt) {
 				/* else BlockStmt */
 				insertStmt(syntax, i, 2);
 				tk_n -= 1;
 				parseSpecificStmt(tks[i]->tks[1]);
-				//i += 1;
+			}
+			break;
+		case Do:
+			if (tk_n > i+1 &&
+				tks[i+1]->stype == SyntaxType::BlockStmt) {
+				/* do BlockStmt */
+				insertStmt(syntax, i, 2);
+				tk_n -= 1;
+				parseSpecificStmt(tks[i]->tks[1]);
+			} else if (tk_n > i+3 &&
+					   tks[i+1]->info.kind == TokenKind::Term &&
+					   tks[i+2]->stype == SyntaxType::Expr) {
+				size_t pattern_size = 4;
+				insertExpr(syntax, i, pattern_size);
+				tk_n -= (pattern_size - 1);
+				parseSpecificStmt(tks[i]->tks[pattern_size-1]);
 			}
 			break;
 		case FunctionDecl:
@@ -753,7 +794,18 @@ Node *Parser::_parse(Token *root)
 	if (pctx->nodes->size() > 1) {
 		assert(pctx->nodes->size() == 2 && "parse error!! nodes too large size");
 		node = pctx->nodes->at(0);
-		extra_node = pctx->nodes->at(1);
+		if (TYPE_match(node, LabelNode)) {
+			Node *child = pctx->nodes->at(1);
+			node->next = child;
+			child->parent = node;
+			return child;
+			//return node->next;
+		} else {
+			extra_node = pctx->nodes->at(1);
+		}
+	} else if (node && TYPE_match(node, LabelNode)) {
+		Node *child = node->next;
+		child->parent = node;
 	}
 	return node;
 }
@@ -830,6 +882,7 @@ void Parser::parseStmt(ParseContext *pctx, Node *stmt)
 		pctx->pushNode(stmt);
 		return;
 	}
+	for (; prev_stmt->next; prev_stmt = prev_stmt->next) {}
 	prev_stmt->next = stmt;
 	stmt->parent = prev_stmt;
 	pctx->nodes->swapLastNode(stmt);
@@ -848,8 +901,12 @@ void Parser::link(ParseContext *pctx, Node *from_node, Node *to_node)
 		pctx->pushNode(to_node);
 	} else if (TYPE_match(from_node, BranchNode)) {
 		BranchNode *branch = dynamic_cast<BranchNode *>(from_node);
-		if (branch->right) pctx->pushNode(to_node);
-		else branch->link(to_node);
+		if (branch->right) {
+			if (TYPE_match(branch->right, FunctionCallNode)) branch->link(to_node);
+			else pctx->pushNode(to_node);
+		} else {
+			branch->link(to_node);
+		}
 	} else if (TYPE_match(from_node, FunctionCallNode)) {
 		FunctionCallNode *func = dynamic_cast<FunctionCallNode *>(from_node);
 		if (to_node) func->setArgs(to_node);
@@ -1141,14 +1198,33 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 		pctx->next(idx);
 		break;
 	}
-	case TokenType::WhileStmt: {
+	case TokenType::UntilStmt: case TokenType::WhileStmt: {
 		WhileStmtNode *while_stmt = new WhileStmtNode(tk);
 		Node *expr_node = _parse(pctx->token(tk, 1));
 		while_stmt->expr = expr_node->getRoot();
 		cur_stype = SyntaxType::Value;
-		Node *block_stmt_node = _parse(pctx->token(tk, 2));
-		while_stmt->true_stmt = block_stmt_node->getRoot();
-		pctx->pushNode(while_stmt);
+		Token *block_or_stmt_end_node = pctx->token(tk, 2);
+		if (block_or_stmt_end_node->info.type != TokenType::SemiColon) {
+			Node *block_node = _parse(pctx->token(tk, 2));
+			while_stmt->true_stmt = (block_node) ? block_node->getRoot() : NULL;
+			pctx->pushNode(while_stmt);
+		} else {
+			Node *node = pctx->nodes->at(0);
+			LabelNode *label = dynamic_cast<LabelNode *>(node);
+			assert((pctx->nodes->size() == 1 || (label && pctx->nodes->size() == 2)) && "syntax error! near by postposition if statement");
+			if (label) {
+				Node *true_stmt_node = pctx->nodes->at(1);
+				while_stmt->true_stmt = true_stmt_node;
+				label->next = while_stmt;
+				pctx->nodes->clear();
+				pctx->pushNode(label);
+			} else {
+				Node *true_stmt_node = pctx->nodes->at(0);
+				while_stmt->true_stmt = true_stmt_node;
+				pctx->nodes->clear();
+				pctx->pushNode(while_stmt);
+			}
+		}
 		pctx->next(2);
 		break;
 	}
@@ -1163,7 +1239,7 @@ void Parser::parseSingleTermOperator(ParseContext *pctx, Token *tk)
 	TokenType::Type type = tk->info.type;
 	SingleTermOperatorNode *op_node = NULL;
 	if ((type == IsNot || type == Ref || type == Add || type == BitAnd ||
-		 type == ArraySize || type == Sub   || type == BitNot) ||
+		 type == ArraySize || type == Sub   || type == BitNot || type == Glob) ||
 		((type == Inc || type == Dec) && pctx->idx == 0)) {
 		Token *next_tk = pctx->token(tk, 1);
 		assert(next_tk && "syntax error near by single term operator");
@@ -1205,7 +1281,7 @@ bool Parser::isSingleTermOperator(ParseContext *pctx, Token *tk)
 {
 	using namespace TokenType;
 	TokenType::Type type = tk->info.type;
-	if (type == IsNot || type == Ref || type == Inc || type == ArraySize ||
+	if (type == IsNot || type == Ref || type == Inc || type == ArraySize || type == Glob ||
 		type == Dec   || type == BitNot) return true;
 	if ((type == Add || type == Sub || type == BitAnd) && pctx->idx == 0) return true;
 	return false;
@@ -1374,6 +1450,10 @@ void Parser::parseTerm(ParseContext *pctx, Token *tk)
 			pctx->next();
 		}
 		term = reg;
+	} else if (next_tk && next_tk->info.type == TokenType::Colon) {
+		//LABEL:
+		pctx->next();
+		term = new LabelNode(tk);
 	} else {
 		term = new LeafNode(tk);
 	}
