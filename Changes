@@ -2,27 +2,26 @@ Revision history for Perl extension Compiler-Parser.
 
 {{$NEXT}}
 
-0.06 2013-09-12T09:48:56Z
+0.07 2013-09-29T09:55:43Z
+    - support do statment
+    - support three term operator
+    - support file handle like '<$fh>'
 
+0.06 2013-09-12T09:48:56Z
     - support parsing of regexp or module argument
 
 0.05 2013-09-10T18:06:10Z
-
     - fix segmentation faults at t/reported_issue.t
 
 0.04 2013-09-10T09:27:11Z
-
     - add Exception Handler
     - add some test codes
 
 0.03 2013-09-07T14:45:06Z
-
     - add Module symbol.
 
 0.02 2013-09-07T10:27:54Z
-
     - fix cpanfile.
 
 0.01 2013-09-07T06:08:22Z
-
     - First version.
