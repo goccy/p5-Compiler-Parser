@@ -216,6 +216,26 @@ void LabelNode::dump(size_t depth)
 	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 }
 
+HandleReadNode::HandleReadNode(Token *tk_) : Node(tk_)
+{
+}
+
+void HandleReadNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+}
+
+HandleNode::HandleNode(Token *tk_) : Node(tk_)
+{
+	expr = NULL;
+}
+
+void HandleNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(expr, "expr  : ", depth+1);
+}
+
 BlockNode::BlockNode(Token *tk_) : Node(tk_)
 {
 	this->body = NULL;
@@ -293,6 +313,17 @@ ElseStmtNode::ElseStmtNode(Token *tk) : Node(tk)
 }
 
 void ElseStmtNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(stmt, "", depth+1);
+}
+
+DoStmtNode::DoStmtNode(Token *tk) : Node(tk)
+{
+	this->stmt = NULL;
+}
+
+void DoStmtNode::dump(size_t depth)
 {
 	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 	Node_dump(stmt, "", depth+1);
@@ -404,4 +435,19 @@ void DereferenceNode::dump(size_t depth)
 {
 	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
 	Node_dump(expr, "expr  : ", depth+1);
+}
+
+ThreeTermOperatorNode::ThreeTermOperatorNode(Token *tk) : Node(tk)
+{
+	this->cond = NULL;
+	this->true_expr = NULL;
+	this->false_expr = NULL;
+}
+
+void ThreeTermOperatorNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(cond, "cond  : ", depth+1);
+	Node_dump(true_expr, "true_expr  : ", depth+1);
+	Node_dump(false_expr, "false_expr  : ", depth+1);
 }

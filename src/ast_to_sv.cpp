@@ -164,6 +164,13 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "next", stmt->next);
 		add_key(hash, "stmt", stmt->stmt);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::ElseStmt");
+	} else if (TYPE_match(node, DoStmtNode)) {
+		DoStmtNode *stmt = dynamic_cast<DoStmtNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, stmt->tk);
+		add_key(hash, "next", stmt->next);
+		add_key(hash, "stmt", stmt->stmt);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::DoStmt");
 	} else if (TYPE_match(node, ForStmtNode)) {
 		ForStmtNode *stmt = dynamic_cast<ForStmtNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -234,6 +241,28 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_token(hash, label->tk);
 		add_key(hash, "next", label->next);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Label");
+	} else if (TYPE_match(node, HandleNode)) {
+		HandleNode *fh = dynamic_cast<HandleNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, fh->tk);
+		add_key(hash, "expr", fh->expr);
+		add_key(hash, "next", fh->next);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Handle");
+	} else if (TYPE_match(node, HandleReadNode)) {
+		HandleReadNode *fh = dynamic_cast<HandleReadNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, fh->tk);
+		add_key(hash, "next", fh->next);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::HandleRead");
+	} else if (TYPE_match(node, ThreeTermOperatorNode)) {
+		ThreeTermOperatorNode *term = dynamic_cast<ThreeTermOperatorNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		add_token(hash, term->tk);
+		add_key(hash, "cond", term->cond);
+		add_key(hash, "true_expr", term->true_expr);
+		add_key(hash, "false_expr", term->false_expr);
+		add_key(hash, "next", term->next);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::ThreeTermOperator");
 	} else {
 		assert(0 && "node type is not found");
 	}

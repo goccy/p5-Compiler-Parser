@@ -101,4 +101,22 @@ subtest 'hash reference chain' => sub {
     is(ref $ast->right->data_node, 'Compiler::Parser::Node::Leaf');
 };
 
+subtest 'hash short dereference' => sub {
+    my $tokens = Compiler::Lexer->new('')->tokenize('print "\t", $key, ":", $$token{$key}, "\n";');
+    my $ast = Compiler::Parser->new->parse($tokens);
+    Compiler::Parser::AST::Renderer->new->render($ast);
+    is(ref $ast, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->{args}[0], 'Compiler::Parser::Node::Branch');
+    is(ref $ast->{args}[0]->left, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->{args}[0]->left->left, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->{args}[0]->left->left->left, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->{args}[0]->left->left->left->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->{args}[0]->left->left->left->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->{args}[0]->left->left->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->{args}[0]->left->right, 'Compiler::Parser::Node::Dereference');
+    is(ref $ast->{args}[0]->left->right->expr, 'Compiler::Parser::Node::HashRef');
+    is(ref $ast->{args}[0]->left->right->expr->data_node, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->{args}[0]->right, 'Compiler::Parser::Node::Leaf');
+};
+
 done_testing;

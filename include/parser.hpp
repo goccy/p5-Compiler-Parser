@@ -126,6 +126,19 @@ public:
 	void dump(size_t depth);
 };
 
+class HandleNode : public Node {
+public:
+	Node *expr;
+	HandleNode(Token *tk);
+	void dump(size_t depth);
+};
+
+class HandleReadNode : public Node {
+public:
+	HandleReadNode(Token *tk);
+	void dump(size_t depth);
+};
+
 class FunctionCallNode : public Node {
 public:
 	Nodes *args;
@@ -160,6 +173,15 @@ public:
 	DoubleTermOperatorNode(Token *op);
 };
 
+class ThreeTermOperatorNode : public Node {
+public:
+	Node *cond;
+	Node *true_expr;
+	Node *false_expr;
+	ThreeTermOperatorNode(Token *op);
+	void dump(size_t depth);
+};
+
 class OtherTermOperatorNode : public Node {
 public:
 	OtherTermOperatorNode(Token *op);
@@ -183,6 +205,13 @@ class ElseStmtNode : public Node {
 public:
 	Node *stmt;
 	ElseStmtNode(Token *tk);
+	void dump(size_t depth);
+};
+
+class DoStmtNode : public Node {
+public:
+	Node *stmt;
+	DoStmtNode(Token *tk);
 	void dump(size_t depth);
 };
 
@@ -286,6 +315,7 @@ public:
 	void parseTerm(ParseContext *pctx, Token *term);
 	void parseSymbol(ParseContext *pctx, Token *symbol);
 	void parseSingleTermOperator(ParseContext *pctx, Token *op);
+	void parseThreeTermOperator(ParseContext *pctx, Token *op);
 	void parseBranchType(ParseContext *pctx, Token *branch);
 	void parseSpecificKeyword(ParseContext *pctx, Token *stmt);
 	void parseSpecificStmt(ParseContext *pctx, Token *stmt);
@@ -330,6 +360,7 @@ public:
 	void completeNamedUnaryOperators(Token *root);
 	void completeBitOperatorExpr(Token *root);
 	void completeAndOrOperatorExpr(Token *root);
+	void completeThreeTermOperatorExpr(Token *root);
 	void completeAssignExpr(Token *root);
 	void completeCommaArrowExpr(Token *root);
 	void completeFunctionListExpr(Token *root);

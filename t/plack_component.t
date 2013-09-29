@@ -89,7 +89,7 @@ subtest 'Plack::Component' => sub {
 
     my $prepare_app = $mk_accessors->next;
     is(ref $prepare_app, 'Compiler::Parser::Node::Function');
-    is(ref $prepare_app->body, 'Compiler::Parser::Node::Leaf');
+    is(ref $prepare_app->body, 'Compiler::Parser::Node::Return');
 
     my $to_app = $prepare_app->next;
     is(ref $to_app, 'Compiler::Parser::Node::Function');

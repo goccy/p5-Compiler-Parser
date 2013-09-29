@@ -90,7 +90,7 @@ subtest 'call with &' => sub {
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
     is(ref $ast, 'Compiler::Parser::Node::Function');
-    is(ref $ast->body, 'Compiler::Parser::Node::HashRef');
+    is(ref $ast->body, '');
     is(ref $ast->next, 'Compiler::Parser::Node::SingleTermOperator');
     is(ref $ast->next->expr, 'Compiler::Parser::Node::FunctionCall');
     is(ref $ast->next->expr->{args}[0], 'Compiler::Parser::Node::Leaf');

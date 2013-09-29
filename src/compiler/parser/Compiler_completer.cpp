@@ -34,7 +34,7 @@ void Completer::complete(Token *root)
 	completeIncDecGlobExpr(root);
 	// **
 	completePowerExpr(root);
-	// !, ~, \, +, -, &
+	// !, ~, \, +, -, &, ~~
 	completeSingleTermOperatorExpr(root);
 	// =~, !~
 	completeRegexpMatchExpr(root);
@@ -55,6 +55,8 @@ void Completer::complete(Token *root)
 	completeBitOperatorExpr(root);
 	// &&, ||
 	completeAndOrOperatorExpr(root);
+	//?:
+	completeThreeTermOperatorExpr(root);
 	// =, +=, -=, *=, ...
 	completeAssignExpr(root);
 	// ,, =>
@@ -231,7 +233,7 @@ RESTART:;
 			tk_n -= 1;
 			goto RESTART;
 		} else if (tk_n > 2 && tk_n > i+1 && i > 0 &&
-				   (type == Add || type == Sub || type == BitAnd) &&
+				   (type == Add || type == Sub || type == BitAnd || type == PolymorphicCompare) &&
 				   (tks[i-1]->info.kind != TokenKind::Term &&
 					tks[i-1]->stype != SyntaxType::Term &&
 					tks[i-1]->stype != SyntaxType::Expr)) {
@@ -342,6 +344,28 @@ void Completer::completeBitOperatorExpr(Token *root)
 	completeExprFromLeft(root, TokenType::BitNot);
 }
 
+void Completer::completeThreeTermOperatorExpr(Token *root)
+{
+	Token **tks = root->tks;
+	size_t tk_n = root->token_num;
+RESTART:;
+	for (size_t i = tk_n - 1; i > 0; i--) {
+		if (tk_n > 4 && i > 4 &&
+			tks[i-1]->stype != SyntaxType::BlockStmt &&
+			tks[i-2]->info.type == TokenType::Colon &&
+			tks[i-3]->stype != SyntaxType::BlockStmt &&
+			tks[i-4]->info.type == TokenType::ThreeTermOperator &&
+			tks[i-5]->stype != SyntaxType::BlockStmt) {
+			insertExpr(root, i - 5, 5);
+			tk_n -= 4;
+			goto RESTART;
+		}
+		if (tks[i]->token_num > 0) {
+			completeThreeTermOperatorExpr(tks[i]);
+		}
+	}
+}
+
 void Completer::completeAndOrOperatorExpr(Token *root)
 {
 	completeExprFromLeft(root, TokenType::And);
@@ -407,6 +431,12 @@ RESTART:;
 			(tks[i+1]->stype == SyntaxType::Expr &&
 			 (tk->info.kind != TokenKind::Function || (tks[i+1]->tks[0]->info.type != LeftBrace && tks[i+1]->tks[0]->info.type != LeftBracket)))/* &&
 		  (!tks[i+2] || tks[i+2]->info.type != TokenType::Comma)*/) {
+			insertTerm(root, i, 2);
+			tk_n -= 1;
+			goto RESTART;
+		} else if (tk_n > 2 && tk_n > i+1 &&
+				   tk->info.kind == TokenKind::Modifier &&
+				   tks[i+1]->stype == SyntaxType::Expr) {
 			insertTerm(root, i, 2);
 			tk_n -= 1;
 			goto RESTART;
