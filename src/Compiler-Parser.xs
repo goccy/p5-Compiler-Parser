@@ -18,7 +18,9 @@ extern "C" {
 #ifdef __cplusplus
 };
 #endif
+
 SV *ast_to_sv(pTHX_ AST *ast);
+extern AST *sv_to_ast(pTHX_ SV *ast_);
 
 typedef Enum::Token::Type::Type TokenType;
 typedef Enum::Token::Kind::Kind TokenKind;
@@ -82,6 +84,19 @@ CODE:
 	AST *ast = self->parse(&tks);
 	//ast->dump();
 	RETVAL = ast_to_sv(aTHX_ ast);
+}
+OUTPUT:
+    RETVAL
+
+SV *
+deparse(self, ast_)
+	Compiler_Parser self
+	SV *ast_
+CODE:
+{
+	AST *ast = sv_to_ast(aTHX_ ast_);
+	const char *deparsed_src = self->deparse(ast);
+	RETVAL = set(new_String(deparsed_src, strlen(deparsed_src)));
 }
 OUTPUT:
     RETVAL

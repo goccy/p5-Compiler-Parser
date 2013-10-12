@@ -225,6 +225,8 @@ bool Parser::isExpr(Token *tk, Token *prev_tk, TokenType::Type type, TokenKind::
 			   ((prev_tk && prev_tk->stype == SyntaxType::Expr) && (type == RightBrace || type == RightBracket))) {
 		/* ->{ or $hash{ or map { or {key}{ or [idx]{ */
 		return true;
+	} else if (kind == TokenKind::Assign) {
+		return true;
 	}
 	return false;
 }
@@ -724,6 +726,13 @@ AST *Parser::parse(Tokens *tokens)
 		//catched exception
 		return new AST(NULL);
 	}
+}
+
+const char *Parser::deparse(AST *ast)
+{
+	//TODO : can switch deparser engine
+	Deparser deparser;
+	return deparser.deparse(ast);
 }
 
 Node *Parser::_parse(Token *root)

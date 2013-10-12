@@ -13,6 +13,13 @@ public:
 	virtual ~Node(void){};
 };
 
+class AST {
+public:
+	Node *root;
+	AST(Node *root);
+	void dump(void);
+};
+
 class Nodes : public std::vector<Node *> {
 public:
 	Nodes(void);
@@ -85,6 +92,7 @@ public:
 class ModuleNode : public Node {
 public:
 	Node *args;
+	AST *ast;
 	ModuleNode(Token *tk);
 	void dump(size_t depth);
 };
@@ -251,12 +259,7 @@ public:
 	Module(const char *name, const char *args);
 };
 
-class AST {
-public:
-	Node *root;
-	AST(Node *root);
-	void dump(void);
-};
+#include <deparser.hpp>
 
 class ParseContext {
 public:
@@ -287,6 +290,7 @@ public:
 	Enum::Parser::Syntax::Type cur_stype;
 
 	Parser(void);
+	const char *deparse(AST *ast);
 	void grouping(Tokens *tokens);
 	void replaceHereDocument(Tokens *tokens);
 	Token *parseSyntax(Token *start_token, Tokens *tokens);
