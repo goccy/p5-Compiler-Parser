@@ -2,6 +2,9 @@ Revision history for Perl extension Compiler-Parser.
 
 {{$NEXT}}
 
+0.08 2013-11-21T16:12:49Z
+    - modify for Compiler::Lexer's update.
+
 0.07 2013-09-29T09:55:43Z
     - support do statment
     - support three term operator

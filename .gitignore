@@ -24,3 +24,5 @@ lib/Compiler/Parser.xs
 GTAGS
 GRTAGS
 GPATH
+*.t
+src/compiler/parser/deparser
