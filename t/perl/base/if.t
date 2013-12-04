@@ -11,32 +11,32 @@ subtest '/perl/base/if' => sub {
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
 
-    is(ref $ast, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->{args}[0], 'Compiler::Parser::Node::Leaf');
 
-    is(ref $ast->next, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->next->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->next->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->next->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next->right, 'Compiler::Parser::Node::Leaf');
 
-    is(ref $ast->next->next, 'Compiler::Parser::Node::IfStmt');
-    is(ref $ast->next->next->expr, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->next->next->expr->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->next->next->expr->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->next->next->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->next->next->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->next->next->false_stmt, 'Compiler::Parser::Node::ElseStmt');
-    is(ref $ast->next->next->false_stmt->stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->next->next->false_stmt->stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next->next, 'Compiler::Parser::Node::IfStmt');
+    is(ref $ast->root->next->next->expr, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->next->next->expr->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next->next->expr->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next->next->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->next->next->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next->next->false_stmt, 'Compiler::Parser::Node::ElseStmt');
+    is(ref $ast->root->next->next->false_stmt->stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->next->next->false_stmt->stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
 
-    is(ref $ast->next->next->next, 'Compiler::Parser::Node::IfStmt');
-    is(ref $ast->next->next->next->expr, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->next->next->next->expr->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->next->next->next->expr->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->next->next->next->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->next->next->next->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->next->next->next->false_stmt, 'Compiler::Parser::Node::ElseStmt');
-    is(ref $ast->next->next->next->false_stmt->stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->next->next->next->false_stmt->stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next->next->next, 'Compiler::Parser::Node::IfStmt');
+    is(ref $ast->root->next->next->next->expr, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->next->next->next->expr->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next->next->next->expr->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next->next->next->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->next->next->next->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next->next->next->false_stmt, 'Compiler::Parser::Node::ElseStmt');
+    is(ref $ast->root->next->next->next->false_stmt->stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->next->next->next->false_stmt->stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
 
 };
 

@@ -6,7 +6,8 @@ use Compiler::Parser;
 
 my $tokens = Compiler::Lexer->new('-')->tokenize('use Data::Dumper');
 my $ast = Compiler::Parser->new->parse($tokens);
-is(ref $ast, 'Compiler::Parser::Node::Module');
-is($ast->token->data, 'Data::Dumper');
+my $root = $ast->root;
+is(ref $root, 'Compiler::Parser::Node::Module');
+is($root->token->data, 'Data::Dumper');
 
 done_testing;

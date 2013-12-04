@@ -13,12 +13,12 @@ if ($a != 2) {
 SCRIPT
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::IfStmt');
-    is(ref $ast->expr, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->expr->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->expr->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::IfStmt');
+    is(ref $ast->root->expr, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->expr->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->expr->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
 };
 
 subtest 'if statement 2' => sub {
@@ -31,15 +31,15 @@ if ($a != 2) {
 SCRIPT
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::IfStmt');
-    is(ref $ast->expr, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->expr->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->expr->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->false_stmt, 'Compiler::Parser::Node::ElseStmt');
-    is(ref $ast->false_stmt->stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->false_stmt->stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::IfStmt');
+    is(ref $ast->root->expr, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->expr->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->expr->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->false_stmt, 'Compiler::Parser::Node::ElseStmt');
+    is(ref $ast->root->false_stmt->stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->false_stmt->stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
 };
 
 subtest 'if statement 3' => sub {
@@ -56,27 +56,27 @@ if ($a != 2) {
 SCRIPT
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::IfStmt');
-    is(ref $ast->expr, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->expr->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->expr->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->false_stmt, 'Compiler::Parser::Node::IfStmt');
-    is(ref $ast->false_stmt->expr, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->false_stmt->expr->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->false_stmt->expr->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->false_stmt->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->false_stmt->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->false_stmt->false_stmt, 'Compiler::Parser::Node::IfStmt');
-    is(ref $ast->false_stmt->false_stmt->expr, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->false_stmt->false_stmt->expr->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->false_stmt->false_stmt->expr->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->false_stmt->false_stmt->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->false_stmt->false_stmt->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->false_stmt->false_stmt->false_stmt, 'Compiler::Parser::Node::ElseStmt');
-    is(ref $ast->false_stmt->false_stmt->false_stmt->stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->false_stmt->false_stmt->false_stmt->stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::IfStmt');
+    is(ref $ast->root->expr, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->expr->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->expr->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->false_stmt, 'Compiler::Parser::Node::IfStmt');
+    is(ref $ast->root->false_stmt->expr, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->false_stmt->expr->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->false_stmt->expr->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->false_stmt->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->false_stmt->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->false_stmt->false_stmt, 'Compiler::Parser::Node::IfStmt');
+    is(ref $ast->root->false_stmt->false_stmt->expr, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->false_stmt->false_stmt->expr->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->false_stmt->false_stmt->expr->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->false_stmt->false_stmt->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->false_stmt->false_stmt->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->false_stmt->false_stmt->false_stmt, 'Compiler::Parser::Node::ElseStmt');
+    is(ref $ast->root->false_stmt->false_stmt->false_stmt->stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->false_stmt->false_stmt->false_stmt->stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
 };
 
 done_testing;

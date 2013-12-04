@@ -271,7 +271,9 @@ static SV *node_to_sv(pTHX_ Node *node)
 
 SV *ast_to_sv(pTHX_ AST *ast)
 {
-	SV *ret = node_to_sv(aTHX_ ast->root);
-	set(ret);
+	SV *root = node_to_sv(aTHX_ ast->root);
+	HV *hash = (HV*)new_Hash();
+	hv_stores(hash, "root", set(root));
+	SV *ret = set(bless(aTHX_ hash, "Compiler::Parser::AST"));
 	return ret;
 }

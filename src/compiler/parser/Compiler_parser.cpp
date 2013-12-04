@@ -1431,9 +1431,9 @@ void Parser::parseFunctionCall(ParseContext *pctx, Token *tk)
 		FunctionCallNode *f = new FunctionCallNode(tk);
 		BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
 		TokenType::Type type = tk->info.type;
-		if (type == TokenType::Method ||
-			type == TokenType::Namespace /* Static Method Invocation */
-		) pctx->pushNode(f);
+//		if (type == TokenType::Method ||
+//			type == TokenType::Namespace /* Static Method Invocation */
+//		) pctx->pushNode(f);
 		return (!node) ? pctx->pushNode(f) : node->link(f);
 	}
 }

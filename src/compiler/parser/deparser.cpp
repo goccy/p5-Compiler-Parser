@@ -7,7 +7,7 @@ namespace SyntaxType = Enum::Parser::Syntax;
 
 Deparser::Deparser(void)
 {
-
+	needs_semicolon = true;
 }
 
 const char *Deparser::deparse(AST *ast)
@@ -15,7 +15,8 @@ const char *Deparser::deparse(AST *ast)
 	string ret = "";
 	Node *node = ast->root;
 	for (; node != NULL; node = node->next) {
-		ret += _deparse(node) + ";";
+		ret += _deparse(node);
+		if (needs_semicolon) ret += ";";
 		if (node->next) ret += "\n";
 	}
 	return ret.c_str();
@@ -23,6 +24,7 @@ const char *Deparser::deparse(AST *ast)
 
 string Deparser::_deparse(Node *node)
 {
+	needs_semicolon = true;
 	string ret = "";
 	if (TYPE_match(node, BranchNode)) {
 		ret = deparseBranch(dynamic_cast<BranchNode *>(node));
@@ -64,6 +66,8 @@ string Deparser::_deparse(Node *node)
 		ret = deparseBlock(dynamic_cast<BlockNode *>(node));
 	} else if (TYPE_match(node, IfStmtNode)) {
 		ret = deparseIfStmt(dynamic_cast<IfStmtNode *>(node));
+	} else if (TYPE_match(node, ElseStmtNode)) {
+		ret = deparseElseStmt(dynamic_cast<ElseStmtNode *>(node));
 	} else if (TYPE_match(node, ReturnNode)) {
 		ret = deparseReturn(dynamic_cast<ReturnNode *>(node));
 	} else if (TYPE_match(node, SingleTermOperatorNode)) {
@@ -172,6 +176,7 @@ string Deparser::deparseFunction(FunctionNode *node)
 	for (; body != NULL; body = body->next) {
 		func_body += "    " + _deparse(body) + ";\n";
 	}
+	needs_semicolon = false;
 	return "sub " + node->tk->data + prototype + " {\n" + func_body + "}";
 }
 
@@ -266,8 +271,20 @@ string Deparser::deparseIfStmt(IfStmtNode *node)
 	}
 	stmt = node->false_stmt;
 	for (; stmt != NULL; stmt = stmt->next) {
-		false_stmt += "    " + _deparse(stmt) + ";\n";
+		false_stmt += _deparse(stmt);
 	}
 	if (node->false_stmt) false_stmt += "}";
-	return node->tk->data + " (" + _deparse(node->expr) + ") {\n" + true_stmt + "}" + false_stmt;
+	string ret = node->tk->data + " (" + _deparse(node->expr) + ") {\n" + true_stmt + "}" + false_stmt;
+	needs_semicolon = false;
+	return ret;
+}
+
+string Deparser::deparseElseStmt(ElseStmtNode *node)
+{
+	string else_stmt = "";
+	Node *stmt = node->stmt;
+	for (; stmt != NULL; stmt = stmt->next) {
+		else_stmt += "    " + _deparse(stmt) + ";\n";
+	}
+	return else_stmt;
 }

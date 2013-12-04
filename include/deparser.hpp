@@ -1,5 +1,7 @@
 class Deparser {
 public:
+	bool needs_semicolon;
+
 	Deparser(void);
 	const char *deparse(AST *ast);
 	std::string _deparse(Node *node);
@@ -23,6 +25,7 @@ public:
 	std::string deparseFunctionCall(FunctionCallNode *node);
 	std::string deparseBlock(BlockNode *node);
 	std::string deparseIfStmt(IfStmtNode *node);
+	std::string deparseElseStmt(ElseStmtNode *node);
 	std::string deparseReturn(ReturnNode *node);
 	std::string deparseSingleTermOperator(SingleTermOperatorNode *node);
 	std::string deparseThreeTermOperator(ThreeTermOperatorNode *node);

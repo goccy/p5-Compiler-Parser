@@ -2,6 +2,7 @@ package Compiler::Parser;
 use 5.008_001;
 use strict;
 use warnings;
+use Compiler::Parser::AST;
 use Compiler::Parser::Node;
 use Compiler::Parser::Node::Branch;
 use Compiler::Parser::Node::Block;
@@ -65,8 +66,8 @@ sub __add_node {
     push @$module_nodes, @$nodes if (@$nodes);
 }
 
-sub __find_module_nodes {
-    my ($self, $node) = @_;
+sub __find {
+    my ($self, $node_name, $node) = @_;
     my @module_nodes;
     if (ref $node eq 'ARRAY') {
         $self->__add_node_from_array($node, \@module_nodes);

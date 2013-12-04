@@ -6,6 +6,5 @@ use Compiler::Parser;
 
 my $tokens = Compiler::Lexer->new('-')->tokenize('');
 my $ast = Compiler::Parser->new->parse($tokens);
-
-ok(scalar @$ast == 0);
+ok(not defined $ast);
 done_testing;

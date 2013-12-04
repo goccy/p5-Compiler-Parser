@@ -11,21 +11,21 @@ subtest 'Plack::Builder' => sub {
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
 
-    is(ref $ast, 'Compiler::Parser::Node::Package');
-    is(ref $ast->next, 'Compiler::Parser::Node::Module');
-    is(ref $ast->next->next, 'Compiler::Parser::Node::Module');
-    is(ref $ast->next->next->args, 'Compiler::Parser::Node::RegPrefix');
-    is(ref $ast->next->next->args->expr, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->next->next->next, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->next->next->next->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->next->next->next->right, 'Compiler::Parser::Node::RegPrefix');
-    is(ref $ast->next->next->next->right->expr, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->next->next->next->next, 'Compiler::Parser::Node::Module');
-    is(ref $ast->next->next->next->next->args, 'Compiler::Parser::Node::List');
-    is(ref $ast->next->next->next->next->next, 'Compiler::Parser::Node::Module');
-    is(ref $ast->next->next->next->next->next->next, 'Compiler::Parser::Node::Module');
+    is(ref $ast->root, 'Compiler::Parser::Node::Package');
+    is(ref $ast->root->next, 'Compiler::Parser::Node::Module');
+    is(ref $ast->root->next->next, 'Compiler::Parser::Node::Module');
+    is(ref $ast->root->next->next->args, 'Compiler::Parser::Node::RegPrefix');
+    is(ref $ast->root->next->next->args->expr, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next->next->next, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->next->next->next->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next->next->next->right, 'Compiler::Parser::Node::RegPrefix');
+    is(ref $ast->root->next->next->next->right->expr, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->next->next->next->next, 'Compiler::Parser::Node::Module');
+    is(ref $ast->root->next->next->next->next->args, 'Compiler::Parser::Node::List');
+    is(ref $ast->root->next->next->next->next->next, 'Compiler::Parser::Node::Module');
+    is(ref $ast->root->next->next->next->next->next->next, 'Compiler::Parser::Node::Module');
 
-    my $new_method = $ast->next->next->next->next->next->next->next;
+    my $new_method = $ast->root->next->next->next->next->next->next->next;
     is(ref $new_method, 'Compiler::Parser::Node::Function');
     is(ref $new_method->body, 'Compiler::Parser::Node::Branch');
     is(ref $new_method->body->left, 'Compiler::Parser::Node::Leaf');

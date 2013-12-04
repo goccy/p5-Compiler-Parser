@@ -13,17 +13,17 @@ for (my $i = 0; $i < 10; $i++) {
 SCRIPT
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::ForStmt');
-    is(ref $ast->init, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->init->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->init->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->cond, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->cond->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->cond->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->progress, 'Compiler::Parser::Node::SingleTermOperator');
-    is(ref $ast->progress->expr, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::ForStmt');
+    is(ref $ast->root->init, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->init->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->init->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->cond, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->cond->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->cond->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->progress, 'Compiler::Parser::Node::SingleTermOperator');
+    is(ref $ast->root->progress->expr, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
 };
 
 subtest 'while statement' => sub {
@@ -35,14 +35,14 @@ while ($j < 10) {
 SCRIPT
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::WhileStmt');
-    is(ref $ast->expr, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->expr->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->expr->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt->next, 'Compiler::Parser::Node::SingleTermOperator');
-    is(ref $ast->true_stmt->next->expr, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::WhileStmt');
+    is(ref $ast->root->expr, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->expr->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->expr->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt->next, 'Compiler::Parser::Node::SingleTermOperator');
+    is(ref $ast->root->true_stmt->next->expr, 'Compiler::Parser::Node::Leaf');
 };
 
 subtest 'foreach statement' => sub {
@@ -53,11 +53,11 @@ foreach my $itr (@a) {
 SCRIPT
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::ForeachStmt');
-    is(ref $ast->cond, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->itr, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::ForeachStmt');
+    is(ref $ast->root->cond, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->itr, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
 
     $tokens = Compiler::Lexer->new('')->tokenize(<<'SCRIPT');
 for my $itr (@a) {
@@ -66,11 +66,11 @@ for my $itr (@a) {
 SCRIPT
     $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::ForeachStmt');
-    is(ref $ast->cond, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->itr, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::ForeachStmt');
+    is(ref $ast->root->cond, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->itr, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
 };
 
 subtest 'foreach statement 2' => sub {
@@ -81,11 +81,11 @@ foreach $itr (@a) {
 SCRIPT
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::ForeachStmt');
-    is(ref $ast->cond, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->itr, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::ForeachStmt');
+    is(ref $ast->root->cond, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->itr, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
 
     $tokens = Compiler::Lexer->new('')->tokenize(<<'SCRIPT');
 for $itr (@a) {
@@ -94,11 +94,11 @@ for $itr (@a) {
 SCRIPT
     $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::ForeachStmt');
-    is(ref $ast->cond, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->itr, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::ForeachStmt');
+    is(ref $ast->root->cond, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->itr, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
 
 };
 
@@ -110,10 +110,10 @@ foreach (@a) {
 SCRIPT
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::ForeachStmt');
-    is(ref $ast->cond, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::ForeachStmt');
+    is(ref $ast->root->cond, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
 
     $tokens = Compiler::Lexer->new('')->tokenize(<<'SCRIPT');
 for (@a) {
@@ -122,10 +122,10 @@ for (@a) {
 SCRIPT
     $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::ForeachStmt');
-    is(ref $ast->cond, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::ForeachStmt');
+    is(ref $ast->root->cond, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->{args}[0], 'Compiler::Parser::Node::Leaf');
 };
 
 subtest 'double loop' => sub {
@@ -139,32 +139,32 @@ for (my $i = 1; $i < 10; $i++) {
 SCRIPT
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::ForStmt');
-    is(ref $ast->init, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->init->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->init->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->cond, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->cond->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->cond->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->progress, 'Compiler::Parser::Node::SingleTermOperator');
-    is(ref $ast->progress->expr, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt, 'Compiler::Parser::Node::ForStmt');
-    is(ref $ast->true_stmt->init, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->true_stmt->init->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt->init->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt->cond, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->true_stmt->cond->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt->cond->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt->progress, 'Compiler::Parser::Node::SingleTermOperator');
-    is(ref $ast->true_stmt->progress->expr, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt->true_stmt, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->true_stmt->{args}[0], 'Compiler::Parser::Node::Branch');
-    is(ref $ast->true_stmt->true_stmt->{args}[0]->left, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->true_stmt->true_stmt->{args}[0]->left->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt->true_stmt->{args}[0]->left->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt->true_stmt->{args}[0]->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->true_stmt->next, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->true_stmt->next->{args}[0], 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root, 'Compiler::Parser::Node::ForStmt');
+    is(ref $ast->root->init, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->init->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->init->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->cond, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->cond->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->cond->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->progress, 'Compiler::Parser::Node::SingleTermOperator');
+    is(ref $ast->root->progress->expr, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt, 'Compiler::Parser::Node::ForStmt');
+    is(ref $ast->root->true_stmt->init, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->true_stmt->init->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt->init->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt->cond, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->true_stmt->cond->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt->cond->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt->progress, 'Compiler::Parser::Node::SingleTermOperator');
+    is(ref $ast->root->true_stmt->progress->expr, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt->true_stmt, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->true_stmt->{args}[0], 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->true_stmt->true_stmt->{args}[0]->left, 'Compiler::Parser::Node::Branch');
+    is(ref $ast->root->true_stmt->true_stmt->{args}[0]->left->left, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt->true_stmt->{args}[0]->left->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt->true_stmt->{args}[0]->right, 'Compiler::Parser::Node::Leaf');
+    is(ref $ast->root->true_stmt->next, 'Compiler::Parser::Node::FunctionCall');
+    is(ref $ast->root->true_stmt->next->{args}[0], 'Compiler::Parser::Node::Leaf');
 };
 
 done_testing;

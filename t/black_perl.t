@@ -10,7 +10,7 @@ subtest 'Black Perl' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize($code);
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast, 'Compiler::Parser::Node::Label');
+    is(ref $ast->root, 'Compiler::Parser::Node::Label');
 };
 
 done_testing;

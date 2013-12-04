@@ -11,10 +11,11 @@ sub new {
 
 sub render {
     my ($self, $ast) = @_;
+    my $root = $ast->root;
     my $args = +{};
-    $args->{$_} = $ast->{$_} foreach @{$ast->branches};
+    $args->{$_} = $root->{$_} foreach @{$root->branches};
     print BOLD, '├── ';
-    $self->__print_data($ast);
+    $self->__print_data($root);
     print "\n";
     $self->__render($args, 1);
 }

@@ -233,7 +233,7 @@ RESTART:;
 			tk_n -= 1;
 			goto RESTART;
 		} else if (tk_n > 2 && tk_n > i+1 && i > 0 &&
-				   (type == Add || type == Sub || type == BitAnd || type == PolymorphicCompare) &&
+				   (type == Add || type == Sub || type == BitAnd || type == PolymorphicCompare || type == ArraySize) &&
 				   (tks[i-1]->info.kind != TokenKind::Term &&
 					tks[i-1]->stype != SyntaxType::Term &&
 					tks[i-1]->stype != SyntaxType::Expr)) {

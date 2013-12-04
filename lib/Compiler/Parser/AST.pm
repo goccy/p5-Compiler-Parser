@@ -1,19 +1,44 @@
 package Compiler::Parser::AST;
 use strict;
 use warnings;
-use Compiler::Parser::AST::Renderer;
+use parent 'Exporter';
+
+our @EXPORT_OK = qw/walk/;
 
 sub new {
     my $class = shift;
-    my $self = {
-        renderer => Compiler::Parser::AST::Renderer->new()
-    };
-    return bless($self, $class);
+    return bless({}, $class);
 }
 
-sub render {
-    my ($self) = @_;
-    $self->{renderer}->render($self);
+sub root { shift->{root} }
+
+sub find {
+    my ($self, %args) = @_;
+    return $self->root->find(%args);
+}
+
+sub walk(&$) {
+    my ($ast, $callback);
+    if (ref $_[0] eq 'Compiler::Parser::AST') {
+        ($ast, $callback) = @_;
+    } elsif (ref $_[1] eq 'Compiler::Parser::AST') {
+        ($callback, $ast) = @_;
+    }
+    $ast->__walk($ast->root, $callback);
+}
+
+sub __walk {
+    my ($self, $node, $callback) = @_;
+    $_ = $node;
+    &$callback($node);
+    my @sorted_names = grep { $_ !~ /next/ } @{$node->branches};
+    push @sorted_names, 'next';
+    foreach my $name (@sorted_names) {
+        my $child_node = $node->{$name};
+        next unless (defined $child_node);
+        $self->__walk($_, $callback)
+            foreach (ref $child_node eq 'ARRAY') ? @$child_node : ($child_node);
+    }
 }
 
 1;
