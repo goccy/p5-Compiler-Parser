@@ -12,26 +12,17 @@ sub branches {
     my ($self) = @_;
     my @keys = keys %$self;
     return [ grep {
-        $_ !~ /token/ && $_ !~ /find_param/ && $_ !~ /find_type/
+        $_ !~ /token/     && $_ !~ /find_param/ &&
+        $_ !~ /find_type/ && $_ !~ /indent/ && $_ !~ /parent/
     } @keys ];
 }
 
-sub token {
-    my ($self) = @_;
-    return $self->{token};
-}
-
-sub name {
-    my ($self) = @_;
-    return $self->{token}->{name};
-}
-
-sub data {
-    my ($self) = @_;
-    return $self->{token}->{data};
-}
-
-sub next { shift->{next} }
+sub token  { shift->{token} }
+sub name   { shift->{token}->{name} }
+sub data   { shift->{token}->{data} }
+sub indent { shift->{indent} }
+sub parent { shift->{parent} }
+sub next   { shift->{next} }
 
 sub find {
     my ($self, %args) = @_;

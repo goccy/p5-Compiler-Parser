@@ -17,6 +17,19 @@ sub find {
     return $self->root->find(%args);
 }
 
+sub remove {
+    my ($self, %args) = @_;
+    my $nodes = $self->root->find(%args);
+    foreach my $node (@$nodes) {
+        my $parent = $node->parent;
+        next unless $parent;
+        foreach my $branch (@{$parent->branches}, 'next') {
+            next unless ($parent->{$branch} == $node);
+            $parent->{$branch} = $node->next;
+        }
+    }
+}
+
 sub walk(&$) {
     my ($ast, $callback);
     if (ref $_[0] eq 'Compiler::Parser::AST') {
