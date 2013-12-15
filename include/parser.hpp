@@ -200,6 +200,11 @@ public:
 	LeafNode(Token *tk);
 };
 
+class ControlStmtNode : public Node {
+public:
+	ControlStmtNode(Token *tk);
+};
+
 class IfStmtNode : public Node {
 public:
 	Node *expr;
@@ -323,6 +328,7 @@ public:
 	void parseBranchType(ParseContext *pctx, Token *branch);
 	void parseSpecificKeyword(ParseContext *pctx, Token *stmt);
 	void parseSpecificStmt(ParseContext *pctx, Token *stmt);
+	void parseControlStmt(ParseContext *pctx, Token *stmt);
 	void parseDecl(ParseContext *pctx, Token *comma);
 	void parseModule(ParseContext *pctx, Token *mod);
 	void parseModuleArgument(ParseContext *pctx, Token *args);

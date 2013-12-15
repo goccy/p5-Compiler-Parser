@@ -848,6 +848,9 @@ void Parser::parseToken(ParseContext *pctx, Token *tk)
 		DBG_PL("STMT");
 		parseSpecificStmt(pctx, tk);
 		break;
+	case Control:
+		parseControlStmt(pctx, tk);
+		break;
 	case Return:
 		DBG_PL("RETURN");
 		pctx->returnToken = tk;
@@ -1118,6 +1121,11 @@ bool Parser::isForeach(ParseContext *pctx, Token *tk)
 		}
 	}
 	return ret;
+}
+
+void Parser::parseControlStmt(ParseContext *pctx, Token *tk)
+{
+	pctx->pushNode(new ControlStmtNode(tk));
 }
 
 void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)

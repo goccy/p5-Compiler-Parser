@@ -90,6 +90,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "idx", array->idx);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Array");
 		if (array->idx) add_parent(hash, "idx", ret);
+		if (array->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, HashNode)) {
 		HashNode *h = dynamic_cast<HashNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -97,6 +98,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "key", h->key);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Hash");
 		if (h->key) add_parent(hash, "key", ret);
+		if (h->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, DereferenceNode)) {
 		DereferenceNode *dref = dynamic_cast<DereferenceNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -104,6 +106,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "expr", dref->expr);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Dereference");
 		if (dref->expr) add_parent(hash, "expr", ret);
+		if (dref->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, FunctionNode)) {
 		FunctionNode *f = dynamic_cast<FunctionNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -113,6 +116,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Function");
 		if (f->body) add_parent(hash, "body", ret);
 		if (f->prototype) add_parent(hash, "prototype", ret);
+		if (f->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, BlockNode)) {
 		BlockNode *b = dynamic_cast<BlockNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -120,6 +124,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "body", b->body);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Block");
 		if (b->body) add_parent(hash, "body", ret);
+		if (b->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, ReturnNode)) {
 		ReturnNode *r = dynamic_cast<ReturnNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -128,6 +133,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Return");
 		if (r->body) add_parent(hash, "body", ret);
 		if (r->next)  add_parent(hash, "next", ret);
+		if (r->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, SingleTermOperatorNode)) {
 		SingleTermOperatorNode *s = dynamic_cast<SingleTermOperatorNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -135,6 +141,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "expr", s->expr);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::SingleTermOperator");
 		if (s->expr) add_parent(hash, "expr", ret);
+		if (s->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, DoubleTermOperatorNode)) {
 	} else if (TYPE_match(node, LeafNode)) {
 		LeafNode *leaf = dynamic_cast<LeafNode *>(node);
@@ -148,6 +155,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "data", list->data);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::List");
 		if (list->data) add_parent(hash, "data", ret);
+		if (list->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, ArrayRefNode)) {
 		ArrayRefNode *ref = dynamic_cast<ArrayRefNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -155,6 +163,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "data", ref->data);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::ArrayRef");
 		if (ref->data) add_parent(hash, "data", ret);
+		if (ref->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, HashRefNode)) {
 		HashRefNode *ref = dynamic_cast<HashRefNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -162,6 +171,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "data", ref->data);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::HashRef");
 		if (ref->data) add_parent(hash, "data", ret);
+		if (ref->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, IfStmtNode)) {
 		IfStmtNode *stmt = dynamic_cast<IfStmtNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -173,6 +183,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		if (stmt->expr) add_parent(hash, "expr", ret);
 		if (stmt->true_stmt)  add_parent(hash, "true_stmt", ret);
 		if (stmt->false_stmt) add_parent(hash, "false_stmt", ret);
+		if (stmt->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, ElseStmtNode)) {
 		ElseStmtNode *stmt = dynamic_cast<ElseStmtNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -180,6 +191,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "stmt", stmt->stmt);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::ElseStmt");
 		if (stmt->stmt) add_parent(hash, "stmt", ret);
+		if (stmt->next) add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, DoStmtNode)) {
 		DoStmtNode *stmt = dynamic_cast<DoStmtNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -187,6 +199,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "stmt", stmt->stmt);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::DoStmt");
 		if (stmt->stmt) add_parent(hash, "stmt", ret);
+		if (stmt->next) add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, ForStmtNode)) {
 		ForStmtNode *stmt = dynamic_cast<ForStmtNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -200,6 +213,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		if (stmt->cond) add_parent(hash, "cond", ret);
 		if (stmt->progress) add_parent(hash, "progress", ret);
 		if (stmt->true_stmt) add_parent(hash, "true_stmt", ret);
+		if (stmt->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, ForeachStmtNode)) {
 		ForeachStmtNode *stmt = dynamic_cast<ForeachStmtNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -211,6 +225,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		if (stmt->itr) add_parent(hash, "itr", ret);
 		if (stmt->cond) add_parent(hash, "cond", ret);
 		if (stmt->true_stmt) add_parent(hash, "true_stmt", ret);
+		if (stmt->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, WhileStmtNode)) {
 		WhileStmtNode *stmt = dynamic_cast<WhileStmtNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -220,6 +235,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::WhileStmt");
 		if (stmt->true_stmt) add_parent(hash, "true_stmt", ret);
 		if (stmt->expr) add_parent(hash, "expr", ret);
+		if (stmt->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, ModuleNode)) {
 		ModuleNode *mod = dynamic_cast<ModuleNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -227,12 +243,13 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "args", mod->args);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Module");
 		if (mod->args) add_parent(hash, "args", ret);
+		if (mod->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, PackageNode)) {
 		PackageNode *pkg = dynamic_cast<PackageNode *>(node);
 		HV *hash = (HV*)new_Hash();
 		append_common_pointer(aTHX_ hash, pkg);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Package");
-		add_parent(hash, "next", ret);
+		if (pkg->next) add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, RegPrefixNode)) {
 		RegPrefixNode *reg = dynamic_cast<RegPrefixNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -242,6 +259,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::RegPrefix");
 		if (reg->option) add_parent(hash, "option", ret);
 		if (reg->exp) add_parent(hash, "expr", ret);
+		if (reg->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, RegReplaceNode)) {
 		RegReplaceNode *reg = dynamic_cast<RegReplaceNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -253,6 +271,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		if (reg->from) add_parent(hash, "from", ret);
 		if (reg->to)   add_parent(hash, "to", ret);
 		if (reg->option) add_parent(hash, "option", ret);
+		if (reg->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, RegexpNode)) {
 		RegexpNode *reg = dynamic_cast<RegexpNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -260,6 +279,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "option", reg->option);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Regexp");
 		if (reg->option) add_parent(hash, "option", ret);
+		if (reg->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, LabelNode)) {
 		LabelNode *label = dynamic_cast<LabelNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -272,6 +292,7 @@ static SV *node_to_sv(pTHX_ Node *node)
 		add_key(hash, "expr", fh->expr);
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Handle");
 		if (fh->expr) add_parent(hash, "expr", ret);
+		if (fh->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, HandleReadNode)) {
 		HandleReadNode *fh = dynamic_cast<HandleReadNode *>(node);
 		HV *hash = (HV*)new_Hash();
@@ -288,6 +309,13 @@ static SV *node_to_sv(pTHX_ Node *node)
 		if (term->cond) add_parent(hash, "cond", ret);
 		if (term->true_expr)  add_parent(hash, "true_expr", ret);
 		if (term->false_expr) add_parent(hash, "false_expr", ret);
+		if (term->next)  add_parent(hash, "next", ret);
+	} else if (TYPE_match(node, ControlStmtNode)) {
+		ControlStmtNode *control = dynamic_cast<ControlStmtNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		append_common_pointer(aTHX_ hash, control);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::ControlStmt");
+		if (control->next)  add_parent(hash, "next", ret);
 	} else {
 		assert(0 && "node type is not found");
 	}

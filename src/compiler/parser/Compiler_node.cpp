@@ -292,6 +292,10 @@ void SingleTermOperatorNode::dump(size_t depth)
 	Node_dump(expr, "expr  : ", depth+1);
 }
 
+ControlStmtNode::ControlStmtNode(Token *tk) : Node(tk)
+{
+}
+
 IfStmtNode::IfStmtNode(Token *tk) : Node(tk)
 {
 	this->expr = NULL;

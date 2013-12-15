@@ -19,6 +19,7 @@ use Compiler::Parser::Node::ForeachStmt;
 use Compiler::Parser::Node::WhileStmt;
 use Compiler::Parser::Node::Function;
 use Compiler::Parser::Node::FunctionCall;
+use Compiler::Parser::Node::ControlStmt;
 use Compiler::Parser::Node::IfStmt;
 use Compiler::Parser::Node::ElseStmt;
 use Compiler::Parser::Node::DoStmt;
