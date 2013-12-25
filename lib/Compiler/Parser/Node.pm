@@ -109,3 +109,38 @@ sub __find {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Compiler::Parser::Node
+
+=head1 DESCRIPTION
+
+=head1 METHODS
+
+=over 1
+
+=item my $find_nodes = $node->find(type => 'Int');
+
+    $array_node is created by Compiler::Parser::parse.
+    Find node from 'node' or 'kind' or 'type' or 'data' parameter.
+    This method imported by Compiler::Parser::Node.
+
+=back
+
+=head1 AUTHOR
+
+Masaaki Goshima (goccy) <goccy54@gmail.com>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) Masaaki Goshima (goccy).
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
