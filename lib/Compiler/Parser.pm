@@ -40,7 +40,7 @@ our @ISA = qw(Exporter);
 our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw();
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 require XSLoader;
 XSLoader::load('Compiler::Parser', $VERSION);
 
@@ -123,7 +123,7 @@ Compiler::Parser creates abstract syntax tree for perl5.
 
 =item my $ast = $parser->parse($tokens);
 
-    Get array reference includes abstract syntax tree each statement.
+    Get blessed object of Compiler::Parser::AST.
     This method requires $tokens from Compiler::Lexer::tokenize.
 
 =item my $renderer = Compiler::Parser::AST::Renderer->new();

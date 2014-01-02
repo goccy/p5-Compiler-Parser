@@ -12,6 +12,7 @@ our @EXPORT = qw/
     dereference
     array
     array_ref
+    package
 /;
 
 sub node_ok {
@@ -75,6 +76,11 @@ sub array_ref(&) {
     my $property = get_property(@_);
     check_property($property, qw/data/);
     return bless $property, 'Compiler::Parser::Node::ArrayRef';
+}
+
+sub package(&) {
+    my $property = get_property(@_);
+    return bless $property, 'Compiler::Parser::Node::Package';
 }
 
 1;
