@@ -12,16 +12,58 @@ our @EXPORT = qw/
     dereference
     array
     array_ref
-    package
+    hash
+    hash_ref
+    function
+    function_call
+    single_term_operator
+    foreach_stmt
+    if_stmt
+    control_stmt
+    module
+    reg_prefix
 /;
 
+sub node_child_ok {
+    my ($node, $param) = @_;
+    if (ref $node eq 'ARRAY') {
+        foreach my $elem (@$node) {
+            node_ok($elem, $param);
+        }
+    } else {
+        my @branches = grep { $_ ne 'token_data' } keys %$param;
+        is($node->data, $param->{token_data}, 'data   == ' . $node->data);
+        foreach my $branch (@branches) {
+            if (ref($param->{$branch}) eq 'ARRAY') {
+                node_array_ok($node->{$branch}, $param->{$branch});
+            } else {
+                is(ref($param->{$branch}), ref($node->{$branch}), 'branch == ' . $branch);
+                node_ok($node->{$branch}, $param->{$branch});
+            }
+        }
+    }
+}
+
+sub node_array_ok {
+    my ($node, $params) = @_;
+    if (ref $node eq 'ARRAY') {
+        foreach my $elem (@$node) {
+            node_ok($elem, $params);
+        }
+    } else {
+        foreach my $param (@$params) {
+            node_ok($node, $param);
+            $node = $node->next;
+        }
+    }
+}
+
 sub node_ok {
-    my ($root, $blessed_node) = @_;
-    my @branches = grep { $_ ne 'token_data' } keys %$blessed_node;
-    is($root->data, $blessed_node->{token_data});
-    foreach my $branch (@branches) {
-        is(ref($root->{$branch}), ref($blessed_node->{$branch}));
-        node_ok($root->{$branch}, $blessed_node->{$branch});
+    my ($root, $param) = @_;
+    if (ref $param eq 'ARRAY') {
+        node_array_ok($root, $param);
+    } else {
+        node_child_ok($root, $param);
     }
 }
 
@@ -56,7 +98,6 @@ sub leaf($) {
 
 sub list(&) {
     my $property = get_property(@_);
-    check_property($property, qw/data/);
     return bless $property, 'Compiler::Parser::Node::List';
 }
 
@@ -74,13 +115,79 @@ sub array(&) {
 
 sub array_ref(&) {
     my $property = get_property(@_);
-    check_property($property, qw/data/);
     return bless $property, 'Compiler::Parser::Node::ArrayRef';
+}
+
+sub hash(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/key/);
+    return bless $property, 'Compiler::Parser::Node::Hash';
+}
+
+sub hash_ref(&) {
+    my $property = get_property(@_);
+    return bless $property, 'Compiler::Parser::Node::HashRef';
 }
 
 sub package(&) {
     my $property = get_property(@_);
     return bless $property, 'Compiler::Parser::Node::Package';
+}
+
+sub function(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/body/);
+    return bless $property, 'Compiler::Parser::Node::Function';
+}
+
+sub return(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/body/);
+    return bless $property, 'Compiler::Parser::Node::Return';
+}
+
+sub function_call(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/args/);
+    return bless $property, 'Compiler::Parser::Node::FunctionCall';
+}
+
+sub single_term_operator(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/expr/);
+    return bless $property, 'Compiler::Parser::Node::SingleTermOperator';
+}
+
+sub foreach_stmt(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/cond/);
+    check_property($property, qw/true_stmt/);
+    return bless $property, 'Compiler::Parser::Node::ForeachStmt';
+}
+
+sub if_stmt(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/expr/);
+    check_property($property, qw/true_stmt/);
+    return bless $property, 'Compiler::Parser::Node::IfStmt';
+}
+
+sub module(&) {
+    my $property = get_property(@_);
+    return bless $property, 'Compiler::Parser::Node::Module';
+}
+
+sub reg_prefix(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/expr/);
+    return bless $property, 'Compiler::Parser::Node::RegPrefix';
+}
+
+sub control_stmt($) {
+    my $token_data = shift;
+    return bless {
+        token_data => $token_data
+    }, 'Compiler::Parser::Node::ControlStmt';
 }
 
 1;

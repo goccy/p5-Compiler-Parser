@@ -4,95 +4,157 @@ use Test::More;
 use Compiler::Lexer;
 use Compiler::Parser;
 use Compiler::Parser::AST::Renderer;
+use Test::Compiler::Parser;
 
 subtest 'Plack::Builder' => sub {
     my $script = do { local $/; <DATA> };
     my $tokens = Compiler::Lexer->new('')->tokenize($script);
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
+    node_ok($ast->root, [
+        Test::Compiler::Parser::package { 'Plack::Builder' },
+        module { 'strict' },
+        module { 'parent',
+            args => reg_prefix { 'qw',
+                expr => leaf ' Exporter '
+            }
+        },
+        branch { '=',
+            left  => leaf '@EXPORT',
+            right => reg_prefix { 'qw',
+                expr => leaf ' builder add enable enable_if mount '
+            }
+        },
+        module { 'Carp',
+            args => list { '()' }
+        },
+        module { 'Plack::App::URLMap' },
+        module { 'Plack::Middleware::Conditional' },
+        function { 'new',
+            body => [
+                branch { '=',
+                    left  => leaf '$class',
+                    right => function_call { 'shift',
+                        args => []
+                    }
+                },
+                function_call { 'bless',
+                    args => [
+                        branch { ',',
+                            left  => hash_ref { '{}',
+                                data => branch { '=>',
+                                    left  => leaf 'middlewares',
+                                    right => array_ref { '[]' }
+                                }
+                            },
+                            right => leaf '$class'
+                        }
+                    ]
+                }
+            ]
+        },
+        function { 'add_middleware',
+            body => [
+                branch { '=',
+                    left  => list { '()',
+                        data => branch { ',',
+                            left  => branch { ',',
+                                left  => leaf '$self',
+                                right => leaf '$mw'
+                            },
+                            right => leaf '@args'
+                        }
+                    },
+                    right => leaf '@_'
+                },
+                if_stmt { 'if',
+                    expr => branch { 'ne',
+                        left  => function_call { 'ref',
+                            args => [
+                                leaf '$mw'
+                            ]
+                        },
+                        right => leaf 'CODE'
+                    },
+                    true_stmt => [
+                        branch { '=',
+                            left  => leaf '$mw_class',
+                            right => function_call { 'Plack::Util::load_class',
+                                args => [
+                                    list { '()',
+                                        data => branch { ',',
+                                            left  => leaf '$mw',
+                                            right => leaf 'Plack::Middleware'
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        branch { '=',
+                            left  => leaf '$mw',
+                            right => function { 'sub',
+                                body => branch { '->',
+                                    left  => leaf '$mw_class',
+                                    right => function_call { 'wrap',
+                                        args => [
+                                            list { '()',
+                                                data => branch { ',',
+                                                    left  => array { '$_',
+                                                        idx => array_ref { '[]',
+                                                            data => leaf '0'
+                                                        }
+                                                    },
+                                                    right => leaf '@args'
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                branch { ',',
+                    left  => function_call { 'push',
+                        args => [
+                            dereference { '@{',
+                                expr => branch { '->',
+                                    left  => leaf '$self',
+                                    right => hash_ref { '{}',
+                                        data => leaf 'middlewares'
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    right => leaf '$mw'
+                }
+            ]
+        },
+        function { 'add_middleware_if',
+            body => [
+                branch { '=',
+                    left  => list { '()',
+                        data => branch { ',',
+                            left  => branch { ',',
+                                left  => branch { ',',
+                                    left  => leaf '$self',
+                                    right => leaf '$cond'
+                                },
+                                right => leaf '$mw'
+                            },
+                            right => leaf '@args'
+                        }
+                    },
+                    right => leaf '@_'
+                }
+            ]
+        }
+    ]);
 
-    is(ref $ast->root, 'Compiler::Parser::Node::Package');
-    is(ref $ast->root->next, 'Compiler::Parser::Node::Module');
-    is(ref $ast->root->next->next, 'Compiler::Parser::Node::Module');
-    is(ref $ast->root->next->next->args, 'Compiler::Parser::Node::RegPrefix');
-    is(ref $ast->root->next->next->args->expr, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->next->next->next, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->root->next->next->next->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->next->next->next->right, 'Compiler::Parser::Node::RegPrefix');
-    is(ref $ast->root->next->next->next->right->expr, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->next->next->next->next, 'Compiler::Parser::Node::Module');
-    is(ref $ast->root->next->next->next->next->args, 'Compiler::Parser::Node::List');
-    is(ref $ast->root->next->next->next->next->next, 'Compiler::Parser::Node::Module');
-    is(ref $ast->root->next->next->next->next->next->next, 'Compiler::Parser::Node::Module');
-
-    my $new_method = $ast->root->next->next->next->next->next->next->next;
-    is(ref $new_method, 'Compiler::Parser::Node::Function');
-    is(ref $new_method->body, 'Compiler::Parser::Node::Branch');
-    is(ref $new_method->body->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $new_method->body->right, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $new_method->body->next, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $new_method->body->next->{args}[0], 'Compiler::Parser::Node::Branch');
-    is(ref $new_method->body->next->{args}[0]->left, 'Compiler::Parser::Node::HashRef');
-    is(ref $new_method->body->next->{args}[0]->left->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $new_method->body->next->{args}[0]->left->data_node->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $new_method->body->next->{args}[0]->left->data_node->right, 'Compiler::Parser::Node::ArrayRef');
-    is(ref $new_method->body->next->{args}[0]->right, 'Compiler::Parser::Node::Leaf');
-
-    my $add_middleware_method = $new_method->next;
-    is(ref $add_middleware_method, 'Compiler::Parser::Node::Function');
-    is(ref $add_middleware_method->body, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_method->body->left, 'Compiler::Parser::Node::List');
-    is(ref $add_middleware_method->body->left->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_method->body->left->data_node->left, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_method->body->left->data_node->left, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_method->body->left->data_node->left->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->left->data_node->left->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->left->data_node->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->next, 'Compiler::Parser::Node::IfStmt');
-    is(ref $add_middleware_method->body->next->expr, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_method->body->next->expr->left, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $add_middleware_method->body->next->expr->left->{args}[0], 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->next->expr->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->next->true_stmt, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_method->body->next->true_stmt->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->next->true_stmt->right, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $add_middleware_method->body->next->true_stmt->right->{args}[0], 'Compiler::Parser::Node::List');
-    is(ref $add_middleware_method->body->next->true_stmt->right->{args}[0]->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_method->body->next->true_stmt->right->{args}[0]->data_node->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->next->true_stmt->right->{args}[0]->data_node->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->next->true_stmt->next, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_method->body->next->true_stmt->next->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->next->true_stmt->next->right, 'Compiler::Parser::Node::Function');
-    is(ref $add_middleware_method->body->next->true_stmt->next->right->body, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_method->body->next->true_stmt->next->right->body->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->next->true_stmt->next->right->body->right, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $add_middleware_method->body->next->true_stmt->next->right->body->right->{args}[0], 'Compiler::Parser::Node::List');
-    is(ref $add_middleware_method->body->next->true_stmt->next->right->body->right->{args}[0]->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_method->body->next->true_stmt->next->right->body->right->{args}[0]->data_node->left, 'Compiler::Parser::Node::Array');
-    is(ref $add_middleware_method->body->next->true_stmt->next->right->body->right->{args}[0]->data_node->left->idx, 'Compiler::Parser::Node::ArrayRef');
-    is(ref $add_middleware_method->body->next->true_stmt->next->right->body->right->{args}[0]->data_node->left->idx->data_node, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->next->true_stmt->next->right->body->right->{args}[0]->data_node->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->next->next, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_method->body->next->next->left, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $add_middleware_method->body->next->next->left->{args}[0], 'Compiler::Parser::Node::Dereference');
-    is(ref $add_middleware_method->body->next->next->left->{args}[0]->expr, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_method->body->next->next->left->{args}[0]->expr->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->next->next->left->{args}[0]->expr->right, 'Compiler::Parser::Node::HashRef');
-    is(ref $add_middleware_method->body->next->next->left->{args}[0]->expr->right->data_node, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_method->body->next->next->right, 'Compiler::Parser::Node::Leaf');
-
+=hoge
     my $add_middleware_if = $add_middleware_method->next;
-    is(ref $add_middleware_if->body, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_if->body->left, 'Compiler::Parser::Node::List');
-    is(ref $add_middleware_if->body->left->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_if->body->left->data_node->left, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_if->body->left->data_node->left->left, 'Compiler::Parser::Node::Branch');
-    is(ref $add_middleware_if->body->left->data_node->left->left->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_if->body->left->data_node->left->left->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_if->body->left->data_node->left->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_if->body->left->data_node->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $add_middleware_if->body->right, 'Compiler::Parser::Node::Leaf');
+
     is(ref $add_middleware_if->body->next, 'Compiler::Parser::Node::IfStmt');
     is(ref $add_middleware_if->body->next->expr, 'Compiler::Parser::Node::Branch');
     is(ref $add_middleware_if->body->next->expr->left, 'Compiler::Parser::Node::FunctionCall');
@@ -367,6 +429,8 @@ subtest 'Plack::Builder' => sub {
     is(ref $body->next->next->next->next->right->{args}[0]->data_node, 'Compiler::Parser::Node::Leaf');
     is(ref $builder->prototype, 'Compiler::Parser::Node::Leaf');
     is(ref $builder->next, 'Compiler::Parser::Node::Leaf');
+=cut
+
 };
 
 done_testing;

@@ -322,6 +322,7 @@ public:
 	void parseToken(ParseContext *pctx, Token *tk);
 	void parseModifier(ParseContext *pctx, Token *term);
 	void parseTerm(ParseContext *pctx, Token *term);
+	void parseHandle(ParseContext *pctx, Token *handle);
 	void parseSymbol(ParseContext *pctx, Token *symbol);
 	void parseSingleTermOperator(ParseContext *pctx, Token *op);
 	void parseThreeTermOperator(ParseContext *pctx, Token *op);

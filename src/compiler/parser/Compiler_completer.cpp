@@ -201,7 +201,12 @@ RESTART:;
 			insertExpr(root, i-1, 2);
 			tk_n -= 1;
 			goto RESTART;
-		} else if (tk_n > 2 && i > 0 && tk->info.type == Glob && next_tk->info.type == Key) {
+		} else if (tk_n > 2 && tk->info.type == Glob && next_tk->info.type == Key) {
+			insertExpr(root, i, 2);
+			tk_n -= 1;
+			goto RESTART;
+		} else if (tk_n > 2 && i == 0 && tk->info.type == Mul && next_tk->info.type == Key) {
+			tk->info.type = Glob;
 			insertExpr(root, i, 2);
 			tk_n -= 1;
 			goto RESTART;
@@ -292,6 +297,13 @@ RESTART:;
 		} else if (tk_n > i + 1 && tk_n != 2 &&
 				   (tk->info.type == Redo || tk->info.type == Next || tk->info.type == Last) &&
 				   tks[i+1]->info.type == Key) {
+			insertExpr(root, i, 2);
+			tk_n -= 1;
+			goto RESTART;
+		} else if (tk_n > i + 1 && tk_n != 2 && tk->info.type == Handle && 
+				   (tks[i+1]->info.type == Key ||
+					tks[i+1]->info.type == Var ||
+					tks[i+1]->info.type == GlobalVar)) {
 			insertExpr(root, i, 2);
 			tk_n -= 1;
 			goto RESTART;
@@ -558,7 +570,9 @@ RESTART:;
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
 			((tk->stype == SyntaxType::Expr &&
-			 (tks[i+1]->stype == SyntaxType::Expr ||
+			  /* Expr Expr({ ... }) ===> expr{hashref chain} */
+			  /* Expr Expr([ ... ]) ===> expr[arrayref chain] */
+			  ((tks[i+1]->stype == SyntaxType::Expr && tks[i+1]->tks[0]->info.type != LeftBrace && tks[i+1]->tks[0]->info.type != LeftBracket) ||
 			  tks[i+1]->stype == SyntaxType::Term ||
 			  tks[i+1]->info.type == TokenType::ArrayVar)) ||
 			 (tk->stype == SyntaxType::Term &&
