@@ -218,7 +218,7 @@ bool Parser::isExpr(Token *tk, Token *prev_tk, TokenType::Type type, TokenKind::
 		/* hash reference */
 		return true;
 	} else if (type == Pointer ||
-			   type == Mul || type == Glob ||
+			   type == Mul || type == Glob || type == Return || type == Add ||
 			   kind == TokenKind::Term ||
 			   kind == TokenKind::Modifier ||
 			   kind == TokenKind::Function ||/* type == FunctionDecl ||*/
@@ -234,7 +234,7 @@ bool Parser::isExpr(Token *tk, Token *prev_tk, TokenType::Type type, TokenKind::
 bool Parser::isMissingSemicolon(TokenType::Type prev_type, TokenType::Type type, Tokens *tokens)
 {
 	using namespace TokenType;
-	if (type == RightBrace && prev_type != SemiColon) {
+	if (type == RightBrace && prev_type != LeftBrace && prev_type != SemiColon) {
 		size_t size = tokens->size();
 		for (size_t i = 0; i < size; i++) {
 			if (tokens->at(i)->stype == SyntaxType::Stmt) {
@@ -335,7 +335,13 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 		}
 		case RightBrace: case RightBracket: case RightParenthesis: {
 			if (isMissingSemicolon(prev_type, t->info.type, new_tokens)) {
+				Token *semicolon = new Token(";", t->finfo);
+				semicolon->info.type = TokenType::SemiColon;
+				semicolon->info.name = "SemiColon";
+				semicolon->info.kind = TokenKind::StmtEnd;
+				tokens->insert(pos-1, semicolon);
 				prev_syntax = replaceToStmt(new_tokens, t, pos - intermediate_pos);
+				pos++;
 			}
 			new_tokens->push_back(t);
 			return new Token(new_tokens);
@@ -359,7 +365,14 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 		pos++;
 	}
 	if (isMissingSemicolon(new_tokens)) {
+		Token *t = ITER_CAST(Token *, pos-1);
+		Token *semicolon = new Token(";", t->finfo);
+		semicolon->info.type = TokenType::SemiColon;
+		semicolon->info.name = "SemiColon";
+		semicolon->info.kind = TokenKind::StmtEnd;
+		tokens->insert(pos-1, semicolon);
 		replaceToStmt(new_tokens, new_tokens->back(), pos - intermediate_pos);
+		pos++;
 	}
 	return new Token(new_tokens);
 }
@@ -907,17 +920,6 @@ void Parser::link(ParseContext *pctx, Node *from_node, Node *to_node)
 		if (branch->right) {
 			if (TYPE_match(branch->right, FunctionCallNode)) {
 				branch->link(to_node);
-			} else if (TYPE_match(branch->right, HashRefNode) ||
-					   TYPE_match(branch->right, ArrayRefNode)) {
-				/* hashref or arrayref chain */
-				Token *pointer = new Token("->", pctx->tk->finfo);
-				pointer->info.type = TokenType::Pointer;
-				pointer->info.name = "Pointer";
-				pointer->info.kind = TokenKind::Operator;
-				BranchNode *parent = new BranchNode(pointer);
-				parent->left = branch;
-				parent->right = to_node;
-				pctx->nodes->swapLastNode(parent);
 			} else {
 				pctx->pushNode(to_node);
 			}
@@ -929,32 +931,10 @@ void Parser::link(ParseContext *pctx, Node *from_node, Node *to_node)
 		if (to_node) func->setArgs(to_node);
 	} else if (TYPE_match(from_node, ArrayNode)) {
 		ArrayNode *array = dynamic_cast<ArrayNode *>(from_node);
-		if (array->idx) {
-			Token *pointer = new Token("->", pctx->tk->finfo);
-			pointer->info.type = TokenType::Pointer;
-			pointer->info.name = "Pointer";
-			pointer->info.kind = TokenKind::Operator;
-			BranchNode *branch = new BranchNode(pointer);
-			branch->left = from_node;
-			branch->right = to_node;
-			pctx->nodes->swapLastNode(branch);
-		} else {
-			array->idx = to_node;
-		}
+		array->idx = to_node;
 	} else if (TYPE_match(from_node, HashNode)) {
 		HashNode *hash = dynamic_cast<HashNode *>(from_node);
-		if (hash->key) {
-			Token *pointer = new Token("->", pctx->tk->finfo);
-			pointer->info.type = TokenType::Pointer;
-			pointer->info.name = "Pointer";
-			pointer->info.kind = TokenKind::Operator;
-			BranchNode *branch = new BranchNode(pointer);
-			branch->left = from_node;
-			branch->right = to_node;
-			pctx->nodes->swapLastNode(branch);
-		} else {
-			hash->key = to_node;
-		}
+		hash->key = to_node;
 	} else {
 		//assert(0 && "syntax error!\n");
 		pctx->pushNode(to_node);
@@ -1193,13 +1173,13 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 	case TokenType::UnlessStmt: {
 		IfStmtNode *if_stmt = new IfStmtNode(tk);
 		pctx->pushNode(if_stmt);
-		_prev_stmt = if_stmt;
 		Node *expr_node = _parse(pctx->token(tk, 1))->getRoot();
 		cur_stype = SyntaxType::Value;
 		Token *block_or_stmt_end_node = pctx->token(tk, 2);
 		if (block_or_stmt_end_node->info.type != TokenType::SemiColon) {
 			Node *block_node = _parse(pctx->token(tk, 2));
 			if_stmt->true_stmt = (block_node) ? block_node->getRoot() : NULL;
+			_prev_stmt = if_stmt;
 		} else {
 			if (pctx->nodes->size() == 1 && pctx->returnToken) {
 				ReturnNode *ret = new ReturnNode(pctx->returnToken);

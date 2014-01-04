@@ -351,6 +351,8 @@ public:
 
 	Completer(void);
 	bool isUnaryKeyword(std::string target);
+	bool isPointerChain(Token *tk);
+	bool isArrayOrHashExpr(size_t start_idx, size_t idx, Token *tk, Token *next_tk);
 	void complete(Token *root);
 	void completeTerm(Token *root);
 	void insertExpr(Token *syntax, int idx, size_t grouping_num);
@@ -358,6 +360,8 @@ public:
 	void completeExprFromLeft(Token *root, Enum::Token::Type::Type type);
 	void completeExprFromRight(Token *root, Enum::Token::Type::Type type);
 	void completeExprFromRight(Token *root, Enum::Token::Kind::Kind kind);
+	void completeWithoutPointerChain(Token *root);
+	void insertPointerToken(Token *root);
 	void completePointerExpr(Token *root);
 	void completeIncDecGlobExpr(Token *root);
 	void completePowerExpr(Token *root);

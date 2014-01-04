@@ -35,4 +35,11 @@ subtest 'simple sub' => sub {
     ]);
 };
 
+subtest 'anonymous subroutine' => sub {
+    my $tokens = Compiler::Lexer->new('')->tokenize('my $a = sub { return $_[0] + 2; if (0) {} };');
+    my $ast = Compiler::Parser->new->parse($tokens);
+    Compiler::Parser::AST::Renderer->new->render($ast);
+    ok(1);
+};
+
 done_testing;

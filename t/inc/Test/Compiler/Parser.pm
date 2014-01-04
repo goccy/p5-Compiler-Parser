@@ -19,6 +19,7 @@ our @EXPORT = qw/
     single_term_operator
     foreach_stmt
     if_stmt
+    else_stmt
     control_stmt
     module
     reg_prefix
@@ -170,6 +171,12 @@ sub if_stmt(&) {
     check_property($property, qw/expr/);
     check_property($property, qw/true_stmt/);
     return bless $property, 'Compiler::Parser::Node::IfStmt';
+}
+
+sub else_stmt(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/stmt/);
+    return bless $property, 'Compiler::Parser::Node::ElseStmt';
 }
 
 sub module(&) {

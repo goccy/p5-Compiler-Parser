@@ -5,6 +5,19 @@ namespace TokenType = Enum::Token::Type;
 namespace SyntaxType = Enum::Parser::Syntax;
 namespace TokenKind = Enum::Token::Kind;
 
+template<typename T> T **Array_insert(T **array, size_t array_size, size_t idx, T *ptr)
+{
+	T **temp = (T **)realloc(array, sizeof(T *) * (array_size + 1));
+	if (!temp) {
+		fprintf(stderr, "[ERROR] Cannot allocate memrory");
+		exit(EXIT_FAILURE);
+	}
+	array = temp;
+	memmove(array+idx+1, array+idx, sizeof(T *) * (array_size - idx));
+	array[idx] = ptr;
+	return array;
+}
+
 Completer::Completer(void)
 {
 	named_unary_keywords = new vector<string>();
@@ -177,7 +190,64 @@ RESTART:;
 
 void Completer::completePointerExpr(Token *root)
 {
+	insertPointerToken(root);
 	completeExprFromLeft(root, TokenType::Pointer);
+}
+
+bool Completer::isPointerChain(Token *tk)
+{
+	using namespace TokenType;
+	Type type = tk->info.type;
+	SyntaxType::Type stype = tk->stype;
+	if (type == GlobalVar || type == Var || type == Method || type == Pointer || type == Namespace || type == SpecificKeyword ||
+		(stype == SyntaxType::Expr &&
+		 (tk->tks[0]->info.type == LeftBrace || tk->tks[0]->info.type == LeftBracket)) ||
+		 stype == SyntaxType::Term) {
+		return true;
+	}
+	return false;
+}
+
+bool Completer::isArrayOrHashExpr(size_t start_idx, size_t idx, Token *tk, Token *next_tk)
+{
+	using namespace TokenType;
+	if (start_idx != idx) return false;
+	if (tk->info.type != Var && tk->info.type != GlobalVar) return false;
+	if (next_tk->stype != SyntaxType::Expr) return false;
+	Type type = next_tk->tks[0]->info.type;
+	if (type == LeftBracket || type == LeftBrace) return true;
+	return false;
+}
+
+void Completer::insertPointerToken(Token *root)
+{
+	using namespace TokenType;
+	Token **tks = root->tks;
+	size_t tk_n = root->token_num;
+RESTART:;
+	for (size_t i = 0; i < tk_n; i++) {
+		Token *tk = tks[i];
+		if (isPointerChain(tk)) {
+			size_t start_idx = i;
+			while (i + 1 < tk_n && isPointerChain(tks[i+1])) {
+				Token *next_tk = tks[i+1];
+				if (!isArrayOrHashExpr(start_idx, i, tks[i], next_tk) && next_tk->info.type != Pointer) {
+					Token *pointer = new Token("->", next_tk->finfo);
+					pointer->info.type = TokenType::Pointer;
+					pointer->info.name = "Pointer";
+					pointer->info.kind = TokenKind::Operator;
+					tks = Array_insert(tks, tk_n, i + 1, pointer);
+					root->tks = tks;
+					tk_n++;
+					root->token_num = tk_n;
+				}
+				i += 2;
+			}
+		}
+		if (i < tk_n && tks[i]->token_num > 0) {
+			insertPointerToken(tks[i]);
+		}
+	}
 }
 
 void Completer::completeIncDecGlobExpr(Token *root)
@@ -201,7 +271,7 @@ RESTART:;
 			insertExpr(root, i-1, 2);
 			tk_n -= 1;
 			goto RESTART;
-		} else if (tk_n > 2 && tk->info.type == Glob && next_tk->info.type == Key) {
+		} else if (tk_n > 2 && tk->info.type == Glob && (next_tk->info.type == Key || next_tk->stype == SyntaxType::Expr)) {
 			insertExpr(root, i, 2);
 			tk_n -= 1;
 			goto RESTART;
@@ -439,9 +509,11 @@ RESTART:;
 			 tk->info.type == LocalVar || tk->info.type == SpecificValue ||
 			 tk->info.type == LocalArrayVar || tk->info.type == LocalHashVar ||
 			 tk->info.type == GlobalVar || tk->info.type == GlobalArrayVar ||
-			 tk->info.type == GlobalHashVar || tk->info.kind == TokenKind::Function) &&
+			 tk->info.type == GlobalHashVar/* || tk->info.kind == TokenKind::Function*/) &&
 			(tks[i+1]->stype == SyntaxType::Expr &&
-			 (tk->info.kind != TokenKind::Function || (tks[i+1]->tks[0]->info.type != LeftBrace && tks[i+1]->tks[0]->info.type != LeftBracket)))/* &&
+			 (tk->info.kind != TokenKind::Function ||
+			  (tks[i+1]->tks[0]->info.type != LeftBrace &&
+			   tks[i+1]->tks[0]->info.type != LeftBracket)))/* &&
 		  (!tks[i+2] || tks[i+2]->info.type != TokenType::Comma)*/) {
 			insertTerm(root, i, 2);
 			tk_n -= 1;
@@ -506,9 +578,9 @@ RESTART:;
 			goto RESTART;
 		} else if (tk_n > 2 && tk_n > i+1 &&
 				   (tk->info.type == Method || tk->info.type == Call || tk->info.type == BuiltinFunc) &&
-				   (tks[i+1]->stype == SyntaxType::Expr &&
-					(tks[i+1]->tks[0]->info.type != LeftBrace &&
-					 tks[i+1]->tks[0]->info.type != LeftBracket))) {
+				   (tks[i+1]->stype == SyntaxType::Expr && tks[i+1]->tks[0]->info.type == LeftParenthesis
+/*					(tks[i+1]->tks[0]->info.type != LeftBrace &&
+					tks[i+1]->tks[0]->info.type != LeftBracket)*/)) {
 			insertTerm(root, i, 2);
 			tk_n -= 1;
 			goto RESTART;
@@ -570,9 +642,7 @@ RESTART:;
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
 			((tk->stype == SyntaxType::Expr &&
-			  /* Expr Expr({ ... }) ===> expr{hashref chain} */
-			  /* Expr Expr([ ... ]) ===> expr[arrayref chain] */
-			  ((tks[i+1]->stype == SyntaxType::Expr && tks[i+1]->tks[0]->info.type != LeftBrace && tks[i+1]->tks[0]->info.type != LeftBracket) ||
+			  (tks[i+1]->stype == SyntaxType::Expr ||
 			  tks[i+1]->stype == SyntaxType::Term ||
 			  tks[i+1]->info.type == TokenType::ArrayVar)) ||
 			 (tk->stype == SyntaxType::Term &&
