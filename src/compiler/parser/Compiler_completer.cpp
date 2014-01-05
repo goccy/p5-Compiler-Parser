@@ -199,9 +199,12 @@ bool Completer::isPointerChain(Token *tk)
 	using namespace TokenType;
 	Type type = tk->info.type;
 	SyntaxType::Type stype = tk->stype;
-	if (type == GlobalVar || type == Var || type == Method || type == Pointer || type == Namespace || type == SpecificKeyword ||
+	if (type == GlobalVar || type == Var || type == Method ||
+		type == Pointer || type == Namespace || type == SpecificKeyword ||
 		(stype == SyntaxType::Expr &&
-		 (tk->tks[0]->info.type == LeftBrace || tk->tks[0]->info.type == LeftBracket)) ||
+		 (tk->tks[0]->info.type == LeftBrace ||
+		  tk->tks[0]->info.type == LeftBracket ||
+		  tk->tks[0]->info.type == ArrayDereference)) ||
 		 stype == SyntaxType::Term) {
 		return true;
 	}
@@ -303,7 +306,7 @@ RESTART:;
 		Token *tk = tks[i];
 		TokenType::Type type = tk->info.type;
 		if (tk_n > 3 && tk_n > i+2 &&
-			(type == IsNot || type == Ref || type == BitNot) && tks[i+1]->info.type != CallDecl) {
+			(type == IsNot || type == Not || type == Ref || type == BitNot) && tks[i+1]->info.type != CallDecl) {
 			insertExpr(root, i, 2);
 			tk_n -= 1;
 			goto RESTART;

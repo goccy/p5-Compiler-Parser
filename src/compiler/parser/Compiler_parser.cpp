@@ -8,6 +8,7 @@ namespace SyntaxType = Enum::Parser::Syntax;
 static jmp_buf jmp_point;
 static void Parser_exception(const char *msg, size_t line)
 {
+	asm("int3");
 	fprintf(stderr, "[ERROR]: syntax error : %s at %zd\n", msg, line);
 	longjmp(jmp_point, 1);
 }
@@ -728,10 +729,10 @@ AST *Parser::parse(Tokens *tokens)
 		setIndent(root, 0);
 		size_t block_id = 0;
 		setBlockIDWithDepthFirst(root, &block_id);
-		dumpSyntax(root, 0);
+		//dumpSyntax(root, 0);
 		Completer completer;
 		completer.complete(root);
-		dumpSyntax(root, 0);
+		//dumpSyntax(root, 0);
 		Node *last_stmt = _parse(root);
 		if (!last_stmt) Parser_exception("", 1);
 		return new AST(last_stmt->getRoot());
@@ -1295,7 +1296,7 @@ void Parser::parseSingleTermOperator(ParseContext *pctx, Token *tk)
 	using namespace TokenType;
 	TokenType::Type type = tk->info.type;
 	SingleTermOperatorNode *op_node = NULL;
-	if ((type == IsNot || type == Ref || type == Add || type == BitAnd ||
+	if ((type == IsNot || type == Not || type == Ref || type == Add || type == BitAnd ||
 		 type == ArraySize || type == Sub || type == CodeRef ||
 		 type == BitNot || type == Glob) ||
 		((type == Inc || type == Dec) && pctx->idx == 0)) {
@@ -1339,7 +1340,7 @@ bool Parser::isSingleTermOperator(ParseContext *pctx, Token *tk)
 {
 	using namespace TokenType;
 	TokenType::Type type = tk->info.type;
-	if (type == IsNot || type == Ref || type == CodeRef || type == Inc || type == ArraySize || type == Glob ||
+	if (type == IsNot || type == Not || type == Ref || type == CodeRef || type == Inc || type == ArraySize || type == Glob ||
 		type == Dec   || type == BitNot) return true;
 	if ((type == Add || type == Sub || type == BitAnd) && pctx->idx == 0) return true;
 	return false;
