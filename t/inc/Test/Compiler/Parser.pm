@@ -23,6 +23,10 @@ our @EXPORT = qw/
     control_stmt
     module
     reg_prefix
+    block
+    regexp
+    reg_replace
+    three_term_operator
 /;
 
 sub node_child_ok {
@@ -177,6 +181,29 @@ sub else_stmt(&) {
     my $property = get_property(@_);
     check_property($property, qw/stmt/);
     return bless $property, 'Compiler::Parser::Node::ElseStmt';
+}
+
+sub three_term_operator(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/cond/);
+    check_property($property, qw/true_expr/);
+    check_property($property, qw/false_expr/);
+    return bless $property, 'Compiler::Parser::Node::ThreeTermOperator';
+}
+
+sub block(&) {
+    my $property = get_property(@_);
+    return bless $property, 'Compiler::Parser::Node::Block';
+}
+
+sub regexp(&) {
+    my $property = get_property(@_);
+    return bless $property, 'Compiler::Parser::Node::Regexp';
+}
+
+sub reg_replace(&) {
+    my $property = get_property(@_);
+    return bless $property, 'Compiler::Parser::Node::RegReplace';
 }
 
 sub module(&) {
