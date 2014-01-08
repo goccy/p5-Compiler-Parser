@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Test::More;
 use parent 'Exporter';
+use Carp;
 
 our @EXPORT = qw/
     node_ok
@@ -84,7 +85,7 @@ sub get_property {
 sub check_property {
     my ($property, @branches) = @_;
     foreach (@branches) {
-        die "needs $_ property" unless (exists $property->{$_});
+        Carp::confess "needs $_ property" unless (exists $property->{$_});
     }
 }
 
@@ -141,13 +142,11 @@ sub package(&) {
 
 sub function(&) {
     my $property = get_property(@_);
-    check_property($property, qw/body/);
     return bless $property, 'Compiler::Parser::Node::Function';
 }
 
 sub return(&) {
     my $property = get_property(@_);
-    check_property($property, qw/body/);
     return bless $property, 'Compiler::Parser::Node::Return';
 }
 
