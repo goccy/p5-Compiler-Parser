@@ -498,100 +498,33 @@ void Completer::completeAlphabetBitOperatorExpr(Token *root)
 	completeExprFromLeft(root, TokenType::XOr);
 }
 
-void Completer::completeTerm(Token *root)
+void Completer::templateEvaluatedFromLeft(Token *root, SyntaxCompleter *completer)
 {
-	using namespace TokenType;
-	Token **tks = root->tks;
-	size_t tk_n = root->token_num;
 RESTART:;
-	for (size_t i = 0; i < tk_n; i++) {
-		Token *tk = tks[i];
-		if (tk_n > 2 && tk_n > i+1 && (tks[0]->info.type != ForStmt && tks[0]->info.type != ForeachStmt) &&
-			(tk->info.type == Var || tk->info.type == CodeVar ||
-			 tk->info.type == ArrayVar || tk->info.type == HashVar ||
-			 tk->info.type == LocalVar || tk->info.type == SpecificValue ||
-			 tk->info.type == LocalArrayVar || tk->info.type == LocalHashVar ||
-			 tk->info.type == GlobalVar || tk->info.type == GlobalArrayVar ||
-			 tk->info.type == GlobalHashVar/* || tk->info.kind == TokenKind::Function*/) &&
-			(tks[i+1]->stype == SyntaxType::Expr &&
-			 (tk->info.kind != TokenKind::Function ||
-			  (tks[i+1]->tks[0]->info.type != LeftBrace &&
-			   tks[i+1]->tks[0]->info.type != LeftBracket)))/* &&
-		  (!tks[i+2] || tks[i+2]->info.type != TokenType::Comma)*/) {
-			insertTerm(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 2 && tk_n > i+1 &&
-				   tk->info.kind == TokenKind::Modifier &&
-				   tks[i+1]->stype == SyntaxType::Expr) {
-			insertTerm(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 4 && tk_n > i+3 && i != 0 &&
-				   tk->info.kind == TokenKind::RegPrefix &&
-				   tks[i+1]->info.type == RegDelim &&
-				   tks[i+2]->info.type == RegExp &&
-				   tks[i+3]->info.type == RegDelim) {
-			if (tk_n > i + 4 && tks[i+4]->info.type == RegOpt) {
-				insertExpr(root, i, 5);
-				tk_n -= 4;
-			} else {
-				insertExpr(root, i, 4);
-				tk_n -= 3;
-			}
-			goto RESTART;
-		} else if (tk_n > 3 && tk_n > i+2 && (i > 0 && tks[i-1]->info.kind != TokenKind::RegPrefix) &&
-				   tk->info.type == RegDelim &&
-				   tks[i+1]->info.type == RegExp &&
-				   tks[i+2]->info.type == RegDelim) {
-			if (tk_n > i + 3 && tks[i+3]->info.type == RegOpt) {
-				insertExpr(root, i, 4);
-				tk_n -= 3;
-			} else {
-				insertExpr(root, i, 3);
-				tk_n -= 2;
-			}
-			goto RESTART;
-		} else if (tk_n > 6 && tk_n > i+5 && i != 0 &&
-				   tk->info.kind == TokenKind::RegReplacePrefix &&
-				   tks[i+1]->info.type == RegDelim &&
-				   tks[i+2]->info.type == RegReplaceFrom &&
-				   tks[i+3]->info.type == RegMiddleDelim &&
-				   tks[i+4]->info.type == RegReplaceTo &&
-				   tks[i+5]->info.type == RegDelim) {
-			if (tk_n > i + 6 && tks[i+6]->info.type == RegOpt) {
-				insertExpr(root, i, 7);
-				tk_n -= 6;
-			} else {
-				insertExpr(root, i, 6);
-				tk_n -= 5;
-			}
-			goto RESTART;
-		} else if (tk_n > 2 && tk_n > i+1 &&
-				   tk->info.type == FunctionDecl &&
-				   tks[i+1]->stype == SyntaxType::BlockStmt) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 3 && tk_n > i+2 &&
-				   tk->info.type == Ref &&
-				   tks[i+1]->info.type == CallDecl) {
-			insertTerm(root, i, 3);
-			tk_n -= 2;
-			goto RESTART;
-		} else if (tk_n > 2 && tk_n > i+1 &&
-				   (tk->info.type == Method || tk->info.type == Call || tk->info.type == BuiltinFunc) &&
-				   (tks[i+1]->stype == SyntaxType::Expr && tks[i+1]->tks[0]->info.type == LeftParenthesis
-/*					(tks[i+1]->tks[0]->info.type != LeftBrace &&
-					tks[i+1]->tks[0]->info.type != LeftBracket)*/)) {
-			insertTerm(root, i, 2);
-			tk_n -= 1;
+	for (size_t i = 0; i < root->token_num; i++) {
+		if (completer->complete(root, i)) {
 			goto RESTART;
 		}
-		if (tks[i]->token_num > 0) {
-			completeTerm(tks[i]);
+		if (root->tks[i]->token_num > 0) {
+			templateEvaluatedFromLeft(root->tks[i], completer);
 		}
 	}
+}
+
+SyntaxCompleter::SyntaxCompleter(void)
+{
+
+}
+
+bool SyntaxCompleter::complete(Token *, size_t)
+{
+	return false;
+}
+
+void Completer::completeTerm(Token *root)
+{
+	TermCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::recoveryNamedUnaryOperatorsArgument(Token *root)

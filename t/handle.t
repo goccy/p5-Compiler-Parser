@@ -12,6 +12,7 @@ return if -p $fh or -c _ or -b _;
 SCRIPT
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
+    ok(1);
 };
 
 done_testing;

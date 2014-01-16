@@ -8,7 +8,6 @@ namespace SyntaxType = Enum::Parser::Syntax;
 static jmp_buf jmp_point;
 static void Parser_exception(const char *msg, size_t line)
 {
-	asm("int3");
 	fprintf(stderr, "[ERROR]: syntax error : %s at %zd\n", msg, line);
 	longjmp(jmp_point, 1);
 }

@@ -345,11 +345,34 @@ private:
 	void insertParenthesis(Tokens *tokens);
 };
 
+class SyntaxCompleter {
+public:
+	SyntaxCompleter(void);
+	virtual bool complete(Token *root, size_t current_idx);
+};
+
+class TermCompleter : public SyntaxCompleter {
+public:
+	TermCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	bool isVariable(Token *tk);
+	bool isFunctionCall(Token *tk);
+	bool isBasicTerm(Token *tk, size_t current_idx);
+	bool isDereferenceTerm(Token *tk, size_t current_idx);
+	bool isRegexTerm(Token *tk, size_t current_idx);
+	bool isRegexWithoutPrefixTerm(Token *tk, size_t current_idx);
+	bool isRegexReplaceTerm(Token *tk, size_t current_idx);
+	bool isAnonymousFunctionTerm(Token *tk, size_t current_idx);
+	bool isCodeRefTerm(Token *tk, size_t current_idx);
+	bool isFunctionCallWithParenthesis(Token *tk, size_t current_idx);
+};
+
 class Completer {
 public:
 	std::vector<std::string> *named_unary_keywords;
 
 	Completer(void);
+	void templateEvaluatedFromLeft(Token *root, SyntaxCompleter *completer);
 	bool isUnaryKeyword(std::string target);
 	bool isPointerChain(Token *tk);
 	bool isArrayOrHashExpr(size_t start_idx, size_t idx, Token *tk, Token *next_tk);
