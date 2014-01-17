@@ -15,7 +15,11 @@ ThreeTermOperatorCompleter::ThreeTermOperatorCompleter(void)
 
 bool ThreeTermOperatorCompleter::complete(Token *tk, size_t current_idx)
 {
-	return (isThreeTermOperator(tk, current_idx)) ? true : false;
+	if (isThreeTermOperator(tk, current_idx)) {
+		insertExpr(tk, current_idx - 5, 5);
+		return true;
+	}
+	return false;
 }
 
 bool ThreeTermOperatorCompleter::isThreeTermOperator(Token *tk, size_t current_idx)
