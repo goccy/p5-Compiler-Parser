@@ -1449,7 +1449,7 @@ void Parser::parseModuleArgument(ParseContext *pctx, Token *tk)
 	using namespace TokenType;
 	Node *node = NULL;
 	TokenType::Type type = tk->info.type;
-	if (tk->stype == SyntaxType::Expr) {
+	if (tk->stype == SyntaxType::Expr || tk->stype == SyntaxType::Term) {
 		node = _parse(tk);
 	} else if (type == String || type == RawString || type == VersionString ||
 			   type == Int || type == Double) {

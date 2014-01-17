@@ -286,6 +286,20 @@ public:
 	void next(int progress);
 };
 
+class TokenManager {
+public:
+	TokenManager(void);
+	void insertToken(Token *tk, size_t idx, Token *target);
+	void closeToken(Token *tk, size_t base_idx, size_t start_idx, size_t close_num);
+};
+
+class TokenFactory {
+public:
+	TokenFactory(void);
+	Token *makeExprToken(Token **base, size_t start_idx, size_t end_idx);
+	Token *makeTermToken(Token **base, size_t start_idx, size_t end_idx);
+};
+
 class Parser {
 public:
 	TokenPos start_pos;
@@ -348,6 +362,8 @@ private:
 class SyntaxCompleter {
 public:
 	SyntaxCompleter(void);
+	void insertTerm(Token *tk, int idx, size_t grouping_num);
+	void insertExpr(Token *tk, int idx, size_t grouping_num);
 	virtual bool complete(Token *root, size_t current_idx);
 };
 
@@ -367,19 +383,31 @@ public:
 	bool isFunctionCallWithParenthesis(Token *tk, size_t current_idx);
 };
 
+class NamedUnaryOperatorCompleter : public SyntaxCompleter {
+public:
+	std::vector<std::string> *named_unary_keywords;
+	NamedUnaryOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	bool isNamedUnaryFunction(Token *tk, size_t current_idx);
+	bool isUnaryOperator(Token *tk, size_t current_idx);
+	bool isUnaryKeyword(std::string target);
+	bool isStatementController(Token *tk, size_t current_idx);
+	bool isStatementControlKeyword(Token *tk);
+	bool isHandle(Token *tk, size_t current_idx);
+};
+
 class Completer {
 public:
 	std::vector<std::string> *named_unary_keywords;
 
 	Completer(void);
-	void templateEvaluatedFromLeft(Token *root, SyntaxCompleter *completer);
 	bool isUnaryKeyword(std::string target);
+	void templateEvaluatedFromLeft(Token *root, SyntaxCompleter *completer);
 	bool isPointerChain(Token *tk);
 	bool isArrayOrHashExpr(size_t start_idx, size_t idx, Token *tk, Token *next_tk);
 	void complete(Token *root);
 	void completeTerm(Token *root);
 	void insertExpr(Token *syntax, int idx, size_t grouping_num);
-	void insertTerm(Token *syntax, int idx, size_t grouping_num);
 	void completeExprFromLeft(Token *root, Enum::Token::Type::Type type);
 	void completeExprFromRight(Token *root, Enum::Token::Type::Type type);
 	void completeExprFromRight(Token *root, Enum::Token::Kind::Kind kind);

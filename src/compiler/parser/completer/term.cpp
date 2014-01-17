@@ -8,33 +8,6 @@ namespace TokenKind = Enum::Token::Kind;
 #define type(tk) tk->info.type
 #define kind(tk) tk->info.kind
 
-void insertTerm(Token *syntax, int idx, size_t grouping_num)
-{
-	size_t tk_n = syntax->token_num;
-	Token **tks = syntax->tks;
-	Token *tk = tks[idx];
-	Tokens *term = new Tokens();
-	term->push_back(tk);
-	for (size_t i = 1; i < grouping_num; i++) {
-		term->push_back(tks[idx+i]);
-	}
-	Token *term_ = new Token(term);
-	term_->stype = SyntaxType::Term;
-	tks[idx] = term_;
-	if (tk_n == idx+grouping_num) {
-		for (size_t i = 1; i < grouping_num; i++) {
-			syntax->tks[idx+i] = NULL;
-		}
-	} else {
-		memmove(syntax->tks+(idx+1), syntax->tks+(idx+grouping_num),
-				sizeof(Token *) * (tk_n - (idx+grouping_num)));
-		for (size_t i = 1; i < grouping_num; i++) {
-			syntax->tks[tk_n-i] = NULL;
-		}
-	}
-	syntax->token_num -= (grouping_num - 1);
-}
-
 TermCompleter::TermCompleter(void)
 {
 
@@ -117,6 +90,7 @@ bool TermCompleter::isBasicTerm(Token *tk, size_t current_idx)
 	/* $a[...] or $a{...} */
 	using namespace TokenType;
 	if (tk->token_num <= 2) return false;
+	if (tk->token_num <= current_idx + 1) return false;
 	Token **tks    = tk->tks;
 	Token *next_tk = tk->tks[current_idx + 1];
 	if (tks[0] && (type(tks[0]) == ForStmt || type(tks[0]) == ForeachStmt)) return false;

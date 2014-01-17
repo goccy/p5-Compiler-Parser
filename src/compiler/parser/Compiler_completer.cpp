@@ -81,58 +81,14 @@ void Completer::complete(Token *root)
 	completeAlphabetBitOperatorExpr(root);
 }
 
-void Completer::insertExpr(Token *syntax, int idx, size_t grouping_num)
+void Completer::insertExpr(Token *tk, int idx, size_t grouping_num)
 {
-	size_t tk_n = syntax->token_num;
-	Token **tks = syntax->tks;
-	Token *tk = tks[idx];
-	Tokens *expr = new Tokens();
-	expr->push_back(tk);
-	for (size_t i = 1; i < grouping_num; i++) {
-		expr->push_back(tks[idx+i]);
-	}
-	Token *expr_ = new Token(expr);
-	expr_->stype = SyntaxType::Expr;
-	tks[idx] = expr_;
-	if (tk_n == idx+grouping_num) {
-		for (size_t i = 1; i < grouping_num; i++) {
-			syntax->tks[idx+i] = NULL;
-		}
-	} else {
-		memmove(syntax->tks+(idx+1), syntax->tks+(idx+grouping_num),
-				sizeof(Token *) * (tk_n - (idx+grouping_num)));
-		for (size_t i = 1; i < grouping_num; i++) {
-			syntax->tks[tk_n-i] = NULL;
-		}
-	}
-	syntax->token_num -= (grouping_num - 1);
-}
-
-void Completer::insertTerm(Token *syntax, int idx, size_t grouping_num)
-{
-	size_t tk_n = syntax->token_num;
-	Token **tks = syntax->tks;
-	Token *tk = tks[idx];
-	Tokens *term = new Tokens();
-	term->push_back(tk);
-	for (size_t i = 1; i < grouping_num; i++) {
-		term->push_back(tks[idx+i]);
-	}
-	Token *term_ = new Token(term);
-	term_->stype = SyntaxType::Term;
-	tks[idx] = term_;
-	if (tk_n == idx+grouping_num) {
-		for (size_t i = 1; i < grouping_num; i++) {
-			syntax->tks[idx+i] = NULL;
-		}
-	} else {
-		memmove(syntax->tks+(idx+1), syntax->tks+(idx+grouping_num),
-				sizeof(Token *) * (tk_n - (idx+grouping_num)));
-		for (size_t i = 1; i < grouping_num; i++) {
-			syntax->tks[tk_n-i] = NULL;
-		}
-	}
-	syntax->token_num -= (grouping_num - 1);
+	TokenFactory token_factory;
+	TokenManager token_manager;
+	Token **tks = tk->tks;
+	size_t end_idx = idx + grouping_num;
+	tks[idx] = token_factory.makeExprToken(tks, idx, grouping_num);
+	token_manager.closeToken(tk, idx + 1, end_idx, grouping_num);
 }
 
 void Completer::completeExprFromLeft(Token *root, TokenType::Type type)
@@ -140,6 +96,7 @@ void Completer::completeExprFromLeft(Token *root, TokenType::Type type)
 	using namespace TokenType;
 	Token **tks = root->tks;
 	size_t tk_n = root->token_num;
+	TokenFactory token_factory;
 RESTART:;
 	for (size_t i = 0; i < tk_n; i++) {
 		if (tk_n > 3 && tk_n > i+2 && tks[i+1]->info.type == type) {
@@ -352,40 +309,8 @@ void Completer::completeShiftOperatorExpr(Token *root)
 
 void Completer::completeNamedUnaryOperators(Token *root)
 {
-	//SpecificFunction
-	using namespace TokenType;
-	Token **tks = root->tks;
-	size_t tk_n = root->token_num;
-RESTART:;
-	for (size_t i = 0; i < tk_n; i++) {
-		Token *tk = tks[i];
-		if (tk_n > 2 && tk_n > i+1 &&
-			((tk->info.type == BuiltinFunc && isUnaryKeyword(tk->data)) ||
-			 (tks[0]->info.type != UseDecl && tk->info.type == Namespace)) &&
-			(tks[i+1]->stype == SyntaxType::Expr || tks[i+1]->stype == SyntaxType::Term ||
-			 tks[i+1]->info.kind == TokenKind::Term)) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > i + 1 && tk_n != 2 &&
-				   (tk->info.type == Redo || tk->info.type == Next || tk->info.type == Last) &&
-				   tks[i+1]->info.type == Key) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > i + 1 && tk_n != 2 && tk->info.type == Handle && 
-				   (tks[i+1]->info.type == Key ||
-					tks[i+1]->info.type == Var ||
-					tks[i+1]->info.type == GlobalVar)) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		}
-		if (tks[i]->token_num > 0) {
-			completeNamedUnaryOperators(tks[i]);
-		}
-	}
-	//FileHandle
+	NamedUnaryOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 bool Completer::isUnaryKeyword(string target)
@@ -509,16 +434,6 @@ RESTART:;
 			templateEvaluatedFromLeft(root->tks[i], completer);
 		}
 	}
-}
-
-SyntaxCompleter::SyntaxCompleter(void)
-{
-
-}
-
-bool SyntaxCompleter::complete(Token *, size_t)
-{
-	return false;
 }
 
 void Completer::completeTerm(Token *root)
