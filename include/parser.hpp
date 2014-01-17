@@ -396,6 +396,16 @@ public:
 	bool isHandle(Token *tk, size_t current_idx);
 };
 
+class SpecialOperatorCompleter : public SyntaxCompleter {
+public:
+	SpecialOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	bool isIncDecType(Token *tk);
+	bool isLeftIncDecExpr(Token *tk, size_t current_idx);
+	bool isRightIncDecExpr(Token *tk, size_t current_idx);
+	bool isGlobExpr(Token *tk, size_t current_idx);
+};
+
 class Completer {
 public:
 	std::vector<std::string> *named_unary_keywords;

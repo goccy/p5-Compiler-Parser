@@ -212,39 +212,8 @@ RESTART:;
 
 void Completer::completeIncDecGlobExpr(Token *root)
 {
-	using namespace TokenType;
-	Token **tks = root->tks;
-	size_t tk_n = root->token_num;
-RESTART:;
-	for (size_t i = 0; i < tk_n; i++) {
-		Token *tk = tks[i];
-		Token *next_tk = tks[i+1];
-		if (tk_n > 2 && tk_n > i+1 &&
-			(tk->info.type == Inc || tk->info.type == Dec) &&
-			(next_tk->info.kind == TokenKind::Term || next_tk->stype == SyntaxType::Expr)) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 2 && i > 0 &&
-				   (tk->info.type == Inc || tk->info.type == Dec) &&
-				   (tks[i-1]->info.kind == TokenKind::Term || tks[i-1]->stype == SyntaxType::Expr)) {
-			insertExpr(root, i-1, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 2 && tk->info.type == Glob && (next_tk->info.type == Key || next_tk->stype == SyntaxType::Expr)) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 2 && i == 0 && tk->info.type == Mul && next_tk->info.type == Key) {
-			tk->info.type = Glob;
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		}
-		if (tks[i]->token_num > 0) {
-			completeIncDecGlobExpr(tks[i]);
-		}
-	}
+	SpecialOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completePowerExpr(Token *root)
