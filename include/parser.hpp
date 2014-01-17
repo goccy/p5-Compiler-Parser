@@ -406,6 +406,28 @@ public:
 	bool isGlobExpr(Token *tk, size_t current_idx);
 };
 
+class SingleTermOperatorCompleter : public SyntaxCompleter {
+public:
+	SingleTermOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	bool isSimpleSingleTermOperator(Token *tk, size_t current_idx);
+	bool isSingleTermOperator(Token *tk, size_t current_idx);
+	bool isOperatorTarget(Token *tk);
+};
+
+class ThreeTermOperatorCompleter : public SyntaxCompleter {
+public:
+	ThreeTermOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	bool isThreeTermOperator(Token *tk, size_t current_idx);
+};
+
+class PointerCompleter : public SyntaxCompleter {
+public:
+	PointerCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+};
+
 class Completer {
 public:
 	std::vector<std::string> *named_unary_keywords;

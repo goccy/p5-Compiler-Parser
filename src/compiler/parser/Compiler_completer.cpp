@@ -91,6 +91,19 @@ void Completer::insertExpr(Token *tk, int idx, size_t grouping_num)
 	token_manager.closeToken(tk, idx + 1, end_idx, grouping_num);
 }
 
+void Completer::templateEvaluatedFromLeft(Token *root, SyntaxCompleter *completer)
+{
+RESTART:;
+	for (size_t i = 0; i < root->token_num; i++) {
+		if (completer->complete(root, i)) {
+			goto RESTART;
+		}
+		if (root->tks[i]->token_num > 0) {
+			templateEvaluatedFromLeft(root->tks[i], completer);
+		}
+	}
+}
+
 void Completer::completeExprFromLeft(Token *root, TokenType::Type type)
 {
 	using namespace TokenType;
@@ -224,30 +237,8 @@ void Completer::completePowerExpr(Token *root)
 void Completer::completeSingleTermOperatorExpr(Token *root)
 {
 	// !, ~, \, +, -
-	using namespace TokenType;
-	Token **tks = root->tks;
-	size_t tk_n = root->token_num;
-RESTART:;
-	for (size_t i = 0; i < tk_n; i++) {
-		Token *tk = tks[i];
-		TokenType::Type type = tk->info.type;
-		if (tk_n > 3 && tk_n > i+2 &&
-			(type == IsNot || type == Not || type == Ref || type == BitNot) && tks[i+1]->info.type != CallDecl) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 2 && tk_n > i+1 && i > 0 &&
-				   (type == Add || type == Sub || type == BitAnd || type == PolymorphicCompare || type == ArraySize) &&
-				   (tks[i-1]->info.kind != TokenKind::Term &&
-					tks[i-1]->stype != SyntaxType::Term &&
-					tks[i-1]->stype != SyntaxType::Expr)) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-		}
-		if (tks[i]->token_num > 0) {
-			completeSingleTermOperatorExpr(tks[i]);
-		}
-	}
+	SingleTermOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completeRegexpMatchExpr(Token *root)
@@ -325,24 +316,8 @@ void Completer::completeBitOperatorExpr(Token *root)
 
 void Completer::completeThreeTermOperatorExpr(Token *root)
 {
-	Token **tks = root->tks;
-	size_t tk_n = root->token_num;
-RESTART:;
-	for (size_t i = tk_n - 1; i > 0; i--) {
-		if (tk_n > 4 && i > 4 &&
-			tks[i-1]->stype != SyntaxType::BlockStmt &&
-			tks[i-2]->info.type == TokenType::Colon &&
-			tks[i-3]->stype != SyntaxType::BlockStmt &&
-			tks[i-4]->info.type == TokenType::ThreeTermOperator &&
-			tks[i-5]->stype != SyntaxType::BlockStmt) {
-			insertExpr(root, i - 5, 5);
-			tk_n -= 4;
-			goto RESTART;
-		}
-		if (tks[i]->token_num > 0) {
-			completeThreeTermOperatorExpr(tks[i]);
-		}
-	}
+	ThreeTermOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completeAndOrOperatorExpr(Token *root)
@@ -390,19 +365,6 @@ void Completer::completeAlphabetBitOperatorExpr(Token *root)
 	completeExprFromLeft(root, TokenType::And);
 	completeExprFromLeft(root, TokenType::Or);
 	completeExprFromLeft(root, TokenType::XOr);
-}
-
-void Completer::templateEvaluatedFromLeft(Token *root, SyntaxCompleter *completer)
-{
-RESTART:;
-	for (size_t i = 0; i < root->token_num; i++) {
-		if (completer->complete(root, i)) {
-			goto RESTART;
-		}
-		if (root->tks[i]->token_num > 0) {
-			templateEvaluatedFromLeft(root->tks[i], completer);
-		}
-	}
 }
 
 void Completer::completeTerm(Token *root)
