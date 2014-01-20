@@ -41,6 +41,7 @@ Completer::Completer(void)
 void Completer::complete(Token *root)
 {
 	completeTerm(root);
+	completeBlockArgsFunctionExpr(root);
 	// ->
 	completePointerExpr(root);
 	// ++, --, *
@@ -221,6 +222,12 @@ RESTART:;
 			insertPointerToken(tks[i]);
 		}
 	}
+}
+
+void Completer::completeBlockArgsFunctionExpr(Token *root)
+{
+	BlockArgsFunctionCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completeIncDecGlobExpr(Token *root)

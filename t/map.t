@@ -31,5 +31,3 @@ $self->{headers} = HTTP::Headers->new(
     }
         grep { /^(?:HTTP|CONTENT)/i } keys %$env
     );
-
-

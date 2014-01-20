@@ -422,6 +422,16 @@ public:
 	bool isThreeTermOperator(Token *tk, size_t current_idx);
 };
 
+class BlockArgsFunctionCompleter : public SyntaxCompleter {
+public:
+	std::vector<std::string> *block_args_function_keywords;
+	BlockArgsFunctionCompleter(void);
+	bool complete(Token *tk, size_t current_idx);
+	bool isBlockArgsFunction(Token *tk, size_t current_idx);
+	bool isOperatorTarget(Token *tk);
+	bool isBlockArgsFunctionKeyword(std::string target);
+};
+
 class PointerCompleter : public SyntaxCompleter {
 public:
 	PointerCompleter(void);
@@ -446,6 +456,7 @@ public:
 	void completeWithoutPointerChain(Token *root);
 	void insertPointerToken(Token *root);
 	void completePointerExpr(Token *root);
+	void completeBlockArgsFunctionExpr(Token *root);
 	void completeIncDecGlobExpr(Token *root);
 	void completePowerExpr(Token *root);
 	void completeSingleTermOperatorExpr(Token *root);
