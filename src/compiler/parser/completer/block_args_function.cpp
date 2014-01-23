@@ -17,16 +17,17 @@ BlockArgsFunctionCompleter::BlockArgsFunctionCompleter(void)
 
 bool BlockArgsFunctionCompleter::complete(Token *tk, size_t current_idx)
 {
-	if (isBlockArgsFunction(tk, current_idx)) {
-		insertExpr(tk, current_idx, 3);
+	if (isBlockArgsFunction(tk, current_idx - 2)) {
+		insertExpr(tk, current_idx - 2, 3);
 		return true;
 	}
 	return false;
 }
 
-bool BlockArgsFunctionCompleter::isBlockArgsFunction(Token *tk, size_t current_idx)
+bool BlockArgsFunctionCompleter::isBlockArgsFunction(Token *tk, int current_idx)
 {
 	using namespace TokenType;
+	if (current_idx < 0)    return false;
 	if (tk->token_num <= 3) return false;
 	if (tk->token_num <= current_idx + 2) return false;
 	Token *current_tk = tk->tks[current_idx];

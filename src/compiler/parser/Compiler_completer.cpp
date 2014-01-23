@@ -41,7 +41,6 @@ Completer::Completer(void)
 void Completer::complete(Token *root)
 {
 	completeTerm(root);
-	completeBlockArgsFunctionExpr(root);
 	// ->
 	completePointerExpr(root);
 	// ++, --, *
@@ -80,6 +79,7 @@ void Completer::complete(Token *root)
 	recoveryFunctionArgument(root);
 	// not, and, or, xor
 	completeAlphabetBitOperatorExpr(root);
+	completeBlockArgsFunctionExpr(root);
 }
 
 void Completer::insertExpr(Token *tk, int idx, size_t grouping_num)
@@ -101,6 +101,19 @@ RESTART:;
 		}
 		if (root->tks[i]->token_num > 0) {
 			templateEvaluatedFromLeft(root->tks[i], completer);
+		}
+	}
+}
+
+void Completer::templateEvaluatedFromRight(Token *root, SyntaxCompleter *completer)
+{
+RESTART:;
+	for (int i = root->token_num - 1; i >= 0; i--) {
+		if (completer->complete(root, i)) {
+			goto RESTART;
+		}
+		if (root->tks[i]->token_num > 0) {
+			templateEvaluatedFromRight(root->tks[i], completer);
 		}
 	}
 }
@@ -205,7 +218,9 @@ RESTART:;
 			size_t start_idx = i;
 			while (i + 1 < tk_n && isPointerChain(tks[i+1])) {
 				Token *next_tk = tks[i+1];
-				if (!isArrayOrHashExpr(start_idx, i, tks[i], next_tk) && next_tk->info.type != Pointer) {
+				if (!isArrayOrHashExpr(start_idx, i, tks[i], next_tk) &&
+					!(next_tk->stype == SyntaxType::Term && next_tk->tks[0]->info.type == BuiltinFunc) &&
+					next_tk->info.type != Pointer) {
 					Token *pointer = new Token("->", next_tk->finfo);
 					pointer->info.type = TokenType::Pointer;
 					pointer->info.name = "Pointer";
@@ -227,7 +242,7 @@ RESTART:;
 void Completer::completeBlockArgsFunctionExpr(Token *root)
 {
 	BlockArgsFunctionCompleter completer;
-	templateEvaluatedFromLeft(root, &completer);
+	templateEvaluatedFromRight(root, &completer);
 }
 
 void Completer::completeIncDecGlobExpr(Token *root)
@@ -355,6 +370,9 @@ RESTART:;
 		if (tk_n > 2 && tk_n > i+1 &&
 			tk->info.type == TokenType::BuiltinFunc &&
 			(tks[i+1]->stype == SyntaxType::Expr ||
+			 tks[i+1]->info.type == ShortHashDereference ||
+			 tks[i+1]->info.type == ShortArrayDereference ||
+			 tks[i+1]->info.type == ShortScalarDereference ||
 			 tks[i+1]->info.kind == TokenKind::Term)) {
 			insertExpr(root, i, 2);
 			tk_n -= 1;

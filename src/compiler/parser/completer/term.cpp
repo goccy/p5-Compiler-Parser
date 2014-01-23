@@ -111,6 +111,13 @@ bool TermCompleter::isDereferenceTerm(Token *tk, size_t current_idx)
 	return false;
 }
 
+bool TermCompleter::isOperatorTarget(Token *tk)
+{
+	if (tk->stype == SyntaxType::Expr || tk->stype == SyntaxType::Term ||
+		kind(tk)  == TokenKind::Term) return true;
+	return false;
+}
+
 bool TermCompleter::isRegexTerm(Token *tk, size_t current_idx)
 {
 	/* m|...| */

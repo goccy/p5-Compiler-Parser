@@ -372,6 +372,7 @@ public:
 	TermCompleter(void);
 	bool complete(Token *root, size_t current_idx);
 	bool isVariable(Token *tk);
+	bool isOperatorTarget(Token *tk);
 	bool isFunctionCall(Token *tk);
 	bool isBasicTerm(Token *tk, size_t current_idx);
 	bool isDereferenceTerm(Token *tk, size_t current_idx);
@@ -427,7 +428,7 @@ public:
 	std::vector<std::string> *block_args_function_keywords;
 	BlockArgsFunctionCompleter(void);
 	bool complete(Token *tk, size_t current_idx);
-	bool isBlockArgsFunction(Token *tk, size_t current_idx);
+	bool isBlockArgsFunction(Token *tk, int current_idx);
 	bool isOperatorTarget(Token *tk);
 	bool isBlockArgsFunctionKeyword(std::string target);
 };
@@ -445,6 +446,7 @@ public:
 	Completer(void);
 	bool isUnaryKeyword(std::string target);
 	void templateEvaluatedFromLeft(Token *root, SyntaxCompleter *completer);
+	void templateEvaluatedFromRight(Token *root, SyntaxCompleter *completer);
 	bool isPointerChain(Token *tk);
 	bool isArrayOrHashExpr(size_t start_idx, size_t idx, Token *tk, Token *next_tk);
 	void complete(Token *root);

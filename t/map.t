@@ -16,7 +16,7 @@ subtest 'map' => sub {
 done_testing;
 
 __DATA__
-my $a = map { $_ * 2 } @b;
+my $a = map { $_ * 2; 1 * 2; } @b;
 my ($key, $value) = map URI::Escape::uri_unescape($_), split( "=", $pair, 2 );
 
 @query =
