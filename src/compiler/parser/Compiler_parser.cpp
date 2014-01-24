@@ -1491,10 +1491,12 @@ void Parser::parseIrregularFunction(ParseContext *pctx, Token *tk)
 {
 	FunctionCallNode *f = new FunctionCallNode(tk);
 	Token *next_tk = pctx->nextToken();
+	SyntaxType::Type stype = cur_stype;
+	cur_stype = SyntaxType::BlockStmt;
 	Node *block_node = _parse(next_tk);
 	pctx->next();
+	cur_stype = stype;
 	assert(block_node && "syntax error near by irregular function");
-	asm("int3");
 	f->setArgs(block_node->getRoot());
 	if (extra_node) f->setArgs(extra_node);
 	extra_node = NULL;
