@@ -799,9 +799,16 @@ Node *Parser::_parse(Token *root)
 	}
 	Node *node = pctx->lastNode();
 	if (pctx->returnToken) {
-		ReturnNode *ret = new ReturnNode(pctx->returnToken);
-		ret->body = node;
-		return ret;
+		if (node && TYPE_match(node, BranchNode) && !(dynamic_cast<BranchNode *>(node))->right) {
+			ReturnNode *ret = new ReturnNode(pctx->returnToken);
+			BranchNode *branch = dynamic_cast<BranchNode *>(node);
+			branch->right = ret;
+			return branch;
+		} else {
+			ReturnNode *ret = new ReturnNode(pctx->returnToken);
+			ret->body = node;
+			return ret;
+		}
 	}
 	if (pctx->nodes->size() > 1) {
 		assert(pctx->nodes->size() == 2 && "parse error!! nodes too large size");

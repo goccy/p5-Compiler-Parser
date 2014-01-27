@@ -19,6 +19,7 @@ our @EXPORT = qw/
     function_call
     single_term_operator
     foreach_stmt
+    while_stmt
     if_stmt
     else_stmt
     control_stmt
@@ -171,6 +172,13 @@ sub foreach_stmt(&) {
     check_property($property, qw/cond/);
     check_property($property, qw/true_stmt/);
     return bless $property, 'Compiler::Parser::Node::ForeachStmt';
+}
+
+sub while_stmt(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/expr/);
+    check_property($property, qw/true_stmt/);
+    return bless $property, 'Compiler::Parser::Node::WhileStmt';
 }
 
 sub if_stmt(&) {
