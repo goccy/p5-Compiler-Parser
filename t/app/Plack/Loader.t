@@ -6,13 +6,6 @@ use Compiler::Parser;
 use Compiler::Parser::AST::Renderer;
 use Test::Compiler::Parser;
 
-=TODO
-
-return $env->{PLACK_SERVER} if $env->{PLACK_SERVER};
-
-=cut
-
-
 subtest 'parse Plack/Loader.pm' => sub {
     my $script = do { local $/; <DATA> };
     my $tokens = Compiler::Lexer->new('')->tokenize($script);
@@ -281,15 +274,15 @@ subtest 'parse Plack/Loader.pm' => sub {
                         },
                     },
                 },
-                Test::Compiler::Parser::return { 'return',
-                    body => if_stmt { 'if',
-                        expr => branch { '->',
-                            left => leaf '$env',
-                            right => hash_ref { '{}',
-                                data => leaf 'PLACK_SERVER',
-                            },
+                if_stmt { 'if',
+                    expr => branch { '->',
+                        left => leaf '$env',
+                        right => hash_ref { '{}',
+                            data => leaf 'PLACK_SERVER',
                         },
-                        true_stmt => branch { '->',
+                    },
+                    true_stmt => Test::Compiler::Parser::return { 'return',
+                        body => branch { '->',
                             left => leaf '$env',
                             right => hash_ref { '{}',
                                 data => leaf 'PLACK_SERVER',

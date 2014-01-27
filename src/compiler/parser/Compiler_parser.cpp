@@ -1189,7 +1189,14 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 			}
 			assert(pctx->nodes->size() == 2 && "syntax error! near by postposition if statement");
 			Node *true_stmt_node = pctx->nodes->at(0);
-			if_stmt->true_stmt = true_stmt_node;
+			if (pctx->returnToken) {
+				ReturnNode *ret = new ReturnNode(pctx->returnToken);
+				ret->body = true_stmt_node;
+				if_stmt->true_stmt = ret;
+				pctx->returnToken = NULL;
+			} else {
+				if_stmt->true_stmt = true_stmt_node;
+			}
 			pctx->nodes->clear();
 			pctx->pushNode(if_stmt);
 		}
