@@ -54,7 +54,11 @@ sub node_array_ok {
     my ($node, $params) = @_;
     if (ref $node eq 'ARRAY') {
         foreach my $elem (@$node) {
-            node_ok($elem, $params);
+            if (ref $params eq 'ARRAY') {
+                node_ok($elem, shift @$params);
+            } else {
+                node_ok($elem, $params);
+            }
         }
     } else {
         foreach my $param (@$params) {

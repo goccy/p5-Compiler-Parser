@@ -369,7 +369,8 @@ RESTART:;
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
 			tk->info.type == TokenType::BuiltinFunc &&
-			(tks[i+1]->stype == SyntaxType::Expr ||
+			((tks[i+1]->stype == SyntaxType::Expr &&
+			  tks[i+1]->tks[0]->info.type != TokenType::LeftBrace) ||
 			 tks[i+1]->info.type == ShortHashDereference ||
 			 tks[i+1]->info.type == ShortArrayDereference ||
 			 tks[i+1]->info.type == ShortScalarDereference ||
@@ -449,6 +450,7 @@ RESTART:;
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
 			((tk->stype == SyntaxType::Expr &&
+			  tk->tks[0]->info.type != LeftBrace &&
 			  (tks[i+1]->stype == SyntaxType::Expr ||
 			  tks[i+1]->stype == SyntaxType::Term ||
 			  tks[i+1]->info.type == TokenType::ArrayVar)) ||

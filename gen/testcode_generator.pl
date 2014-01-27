@@ -74,12 +74,39 @@ sub print_block_end {
     $body .= indent($depth) .  "},\n" unless $node_name eq 'leaf';
 }
 
+sub print_node {
+    my ($branch_name, $node, $depth) = @_;
+
+    my $multiple = 0;
+    if ($node->{next}) {
+        $multiple = 1;
+    }
+    my $node_name = print_block_start_with_branch($node, $branch_name, $depth, $multiple);
+    $depth++ if ($multiple);
+    __generate($_ => $node->{$_}, $depth+1) foreach grep { $_ !~ /next/ } @{$node->branches};
+    print_block_end($node_name, $depth);
+    __generate_next($node->{next}, $depth) if $node->{next};
+    if ($node->{next}) {
+        $body .= indent($depth-1) . "],\n";
+    }
+}
+
 sub __generate_array {
     my ($node, $depth) = @_;
     my $node_name;
     foreach my $arg (@$node) {
-        $node_name = print_block_start($arg, $depth+1);
+        if ($arg->{next}) {
+            $depth++;
+            $body .= indent($depth) . "[\n";
+        }
+        my $node_name = print_block_start($arg, $depth+1);
         __generate($_ => $arg->{$_}, $depth+2) foreach grep { $_ !~ /next/ } @{$arg->branches};
+        print_block_end($node_name, $depth + 1);
+        __generate_next($arg->{next}, $depth + 1) if $arg->{next};
+        if ($arg->{next}) {
+            $body .= indent($depth) . "],\n";
+            $depth--;
+        }
     }
     return $node_name;
 }
@@ -93,18 +120,7 @@ sub __generate {
         print_block_end('', $depth+1) if ($node_name && $node_name ne 'leaf');
         $body .= indent($depth) . "],\n";
     } else {
-        my $multiple = 0;
-        if ($node->{next}) {
-            $multiple = 1;
-        }
-        my $node_name = print_block_start_with_branch($node, $branch_name, $depth, $multiple);
-        $depth++ if ($multiple);
-        __generate($_ => $node->{$_}, $depth+1) foreach grep { $_ !~ /next/ } @{$node->branches};
-         print_block_end($node_name, $depth);
-        __generate_next($node->{next}, $depth) if $node->{next};
-        if ($node->{next}) {
-            $body .= indent($depth-1) . "],\n";
-        }
+        print_node($branch_name, $node, $depth);
      }
 }
 

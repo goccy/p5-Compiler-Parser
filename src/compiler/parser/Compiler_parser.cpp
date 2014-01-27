@@ -731,7 +731,7 @@ AST *Parser::parse(Tokens *tokens)
 		//dumpSyntax(root, 0);
 		Completer completer;
 		completer.complete(root);
-		dumpSyntax(root, 0);
+		//dumpSyntax(root, 0);
 		Node *last_stmt = _parse(root);
 		if (!last_stmt) Parser_exception("", 1);
 		return new AST(last_stmt->getRoot());
@@ -813,7 +813,7 @@ Node *Parser::_parse(Token *root)
 			return child;
 			//return node->next;
 		} else {
-			extra_node = pctx->nodes->at(1);
+			//extra_node = pctx->nodes->at(1);
 		}
 	} else if (node && TYPE_match(node, LabelNode)) {
 		Node *child = node->next;
@@ -1020,7 +1020,7 @@ void Parser::parseSymbol(ParseContext *pctx, Token *tk)
 				if (pctx->token()->info.type == TokenType::RightBrace) break;
 			}
 			if (!pctx->end() && pctx->nextToken()) {
-				extra_node = _parse(pctx->nextToken());
+				//_parse(pctx->nextToken());
 			}
 		}
 	}
@@ -1498,8 +1498,6 @@ void Parser::parseIrregularFunction(ParseContext *pctx, Token *tk)
 	cur_stype = stype;
 	assert(block_node && "syntax error near by irregular function");
 	f->setArgs(block_node->getRoot());
-	if (extra_node) f->setArgs(extra_node);
-	extra_node = NULL;
 	BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
 	return (!node) ? pctx->pushNode(f) : node->link(f);
 }
