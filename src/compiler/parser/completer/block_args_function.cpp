@@ -20,6 +20,9 @@ bool BlockArgsFunctionCompleter::complete(Token *tk, size_t current_idx)
 	if (isBlockArgsFunction(tk, current_idx - 2)) {
 		insertExpr(tk, current_idx - 2, 3);
 		return true;
+	} else if (isOnlyBlockArgFunction(tk, current_idx - 1)) {
+		insertExpr(tk, current_idx - 1, 2);
+		return true;
 	}
 	return false;
 }
@@ -35,6 +38,20 @@ bool BlockArgsFunctionCompleter::isBlockArgsFunction(Token *tk, int current_idx)
 	if (type(current_tk) == BuiltinFunc && isBlockArgsFunctionKeyword(current_tk->data)) {
 		if ((next_tk->stype == SyntaxType::Expr && type(next_tk->tks[0]) == LeftBrace) &&
 			isOperatorTarget(tk->tks[current_idx + 2])) return true;
+	}
+	return false;
+}
+
+bool BlockArgsFunctionCompleter::isOnlyBlockArgFunction(Token *tk, int current_idx)
+{
+	using namespace TokenType;
+	if (current_idx < 0)    return false;
+	if (tk->token_num <= 2) return false;
+	if (tk->token_num <= current_idx + 1) return false;
+	Token *current_tk = tk->tks[current_idx];
+	Token *next_tk    = tk->tks[current_idx + 1];
+	if (type(current_tk) == BuiltinFunc || type(current_tk) == Key) {
+		if (next_tk->stype == SyntaxType::Expr && type(next_tk->tks[0]) == LeftBrace) return true;
 	}
 	return false;
 }

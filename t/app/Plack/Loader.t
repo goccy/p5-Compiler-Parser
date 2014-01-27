@@ -8,16 +8,10 @@ use Test::Compiler::Parser;
 
 =TODO
 
-1)
-    my $server = try {
-        ....
-    } catch {
-        ....
-    }
-2)
-    return $env->{PLACK_SERVER} if $env->{PLACK_SERVER};
+return $env->{PLACK_SERVER} if $env->{PLACK_SERVER};
 
 =cut
+
 
 subtest 'parse Plack/Loader.pm' => sub {
     my $script = do { local $/; <DATA> };
@@ -87,6 +81,92 @@ subtest 'parse Plack/Loader.pm' => sub {
                         },
                     },
                 },
+                branch { '=',
+                    left => leaf '$server',
+                    right => function_call { 'try',
+                        args => [
+                            branch { '->',
+                                left => leaf '$class',
+                                right => function_call { 'load',
+                                    args => [
+                                        list { '()',
+                                            data => branch { ',',
+                                                left => leaf '$backend',
+                                                right => leaf '@args',
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                            function_call { 'catch',
+                                args => [
+                                    [
+                                        if_stmt { 'if',
+                                            expr => branch { 'or',
+                                                left => branch { 'eq',
+                                                    left => branch { '||',
+                                                        left => hash { '$ENV',
+                                                            key => hash_ref { '{}',
+                                                                data => leaf 'PLACK_ENV',
+                                                            },
+                                                        },
+                                                        right => leaf '',
+                                                    },
+                                                    right => leaf 'development',
+                                                },
+                                                right => single_term_operator { '!',
+                                                    expr => regexp { '^Can\'t locate ',
+                                                    },
+                                                },
+                                            },
+                                            true_stmt => if_stmt { 'if',
+                                                expr => branch { '&&',
+                                                    left => hash { '$ENV',
+                                                        key => hash_ref { '{}',
+                                                            data => leaf 'PLACK_ENV',
+                                                        },
+                                                    },
+                                                    right => branch { 'eq',
+                                                        left => hash { '$ENV',
+                                                            key => hash_ref { '{}',
+                                                                data => leaf 'PLACK_ENV',
+                                                            },
+                                                        },
+                                                        right => leaf 'development',
+                                                    },
+                                                },
+                                                true_stmt => function_call { 'warn',
+                                                    args => [
+                                                        branch { ',',
+                                                            left => leaf 'Autoloading \'$backend\' backend failed. Falling back to the Standalone. ',
+                                                            right => leaf '(You might need to install Plack::Handler::$backend from CPAN.  Caught error was: $_)\n',
+                                                        },
+                                                    ],
+                                                },
+                                            },
+                                        },
+                                        branch { '->',
+                                            left => leaf '$class',
+                                            right => function_call { 'load',
+                                                args => [
+                                                    list { '()',
+                                                        data => branch { '=>',
+                                                            left => leaf 'Standalone',
+                                                            right => leaf '@args',
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                ],
+                            },
+                        ],
+                    },
+                },
+                Test::Compiler::Parser::return { 'return',
+                    body => leaf '$server',
+                },
             ],
         },
         function { 'load',
@@ -109,13 +189,30 @@ subtest 'parse Plack/Loader.pm' => sub {
                         right => leaf '$error',
                     },
                 },
-                hash { 'try',
-                    key => hash_ref { '{}',
-                        data => branch { '||=',
-                            left => leaf '$error',
-                            right => leaf '$_',
+                function_call { 'try',
+                    args => [
+                        branch { '=',
+                            left => leaf '$server_class',
+                            right => function_call { 'Plack::Util::load_class',
+                                args => [
+                                    list { '()',
+                                        data => branch { ',',
+                                            left => leaf '$server',
+                                            right => leaf 'Plack::Handler',
+                                        },
+                                    },
+                                ],
+                            },
                         },
-                    },
+                        function_call { 'catch',
+                            args => [
+                                branch { '||=',
+                                    left => leaf '$error',
+                                    right => leaf '$_',
+                                },
+                            ],
+                        },
+                    ],
                 },
                 if_stmt { 'if',
                     expr => list { '()',

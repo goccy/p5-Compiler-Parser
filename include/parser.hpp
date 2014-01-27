@@ -429,6 +429,7 @@ public:
 	BlockArgsFunctionCompleter(void);
 	bool complete(Token *tk, size_t current_idx);
 	bool isBlockArgsFunction(Token *tk, int current_idx);
+	bool isOnlyBlockArgFunction(Token *tk, int current_idx);
 	bool isOperatorTarget(Token *tk);
 	bool isBlockArgsFunctionKeyword(std::string target);
 };

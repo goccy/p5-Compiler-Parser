@@ -77,9 +77,9 @@ void Completer::complete(Token *root)
 	// function args ....
 	completeFunctionListExpr(root);
 	recoveryFunctionArgument(root);
+	completeBlockArgsFunctionExpr(root);
 	// not, and, or, xor
 	completeAlphabetBitOperatorExpr(root);
-	completeBlockArgsFunctionExpr(root);
 }
 
 void Completer::insertExpr(Token *tk, int idx, size_t grouping_num)

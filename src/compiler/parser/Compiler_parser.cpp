@@ -731,7 +731,7 @@ AST *Parser::parse(Tokens *tokens)
 		//dumpSyntax(root, 0);
 		Completer completer;
 		completer.complete(root);
-		//dumpSyntax(root, 0);
+		dumpSyntax(root, 0);
 		Node *last_stmt = _parse(root);
 		if (!last_stmt) Parser_exception("", 1);
 		return new AST(last_stmt->getRoot());
@@ -1526,6 +1526,9 @@ void Parser::parseTerm(ParseContext *pctx, Token *tk)
 		if (next_tk->tks[0]->info.type == TokenType::LeftBracket) {
 			term = new ArrayNode(tk);
 		} else if (next_tk->tks[0]->info.type == TokenType::LeftBrace) {
+			if (tk->info.type == TokenType::Key) {
+				return parseIrregularFunction(pctx, tk);
+			}
 			term = new HashNode(tk);
 		} else {
 			term = _parse(next_tk);

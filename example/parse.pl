@@ -22,5 +22,5 @@ foreach my $filename (@ARGV) {
         exit;
     }
 =cut
-    #Compiler::Parser::AST::Renderer->new->render($ast);
+    Compiler::Parser::AST::Renderer->new->render($ast);
 }
