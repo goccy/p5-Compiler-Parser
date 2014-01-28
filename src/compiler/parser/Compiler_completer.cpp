@@ -5,6 +5,19 @@ namespace TokenType = Enum::Token::Type;
 namespace SyntaxType = Enum::Parser::Syntax;
 namespace TokenKind = Enum::Token::Kind;
 
+template<typename T> T **Array_insert(T **array, size_t array_size, size_t idx, T *ptr)
+{
+	T **temp = (T **)realloc(array, sizeof(T *) * (array_size + 1));
+	if (!temp) {
+		fprintf(stderr, "[ERROR] Cannot allocate memrory");
+		exit(EXIT_FAILURE);
+	}
+	array = temp;
+	memmove(array+idx+1, array+idx, sizeof(T *) * (array_size - idx));
+	array[idx] = ptr;
+	return array;
+}
+
 Completer::Completer(void)
 {
 	named_unary_keywords = new vector<string>();
@@ -64,62 +77,45 @@ void Completer::complete(Token *root)
 	// function args ....
 	completeFunctionListExpr(root);
 	recoveryFunctionArgument(root);
+	completeBlockArgsFunctionExpr(root);
 	// not, and, or, xor
 	completeAlphabetBitOperatorExpr(root);
 }
 
-void Completer::insertExpr(Token *syntax, int idx, size_t grouping_num)
+void Completer::insertExpr(Token *tk, int idx, size_t grouping_num)
 {
-	size_t tk_n = syntax->token_num;
-	Token **tks = syntax->tks;
-	Token *tk = tks[idx];
-	Tokens *expr = new Tokens();
-	expr->push_back(tk);
-	for (size_t i = 1; i < grouping_num; i++) {
-		expr->push_back(tks[idx+i]);
-	}
-	Token *expr_ = new Token(expr);
-	expr_->stype = SyntaxType::Expr;
-	tks[idx] = expr_;
-	if (tk_n == idx+grouping_num) {
-		for (size_t i = 1; i < grouping_num; i++) {
-			syntax->tks[idx+i] = NULL;
-		}
-	} else {
-		memmove(syntax->tks+(idx+1), syntax->tks+(idx+grouping_num),
-				sizeof(Token *) * (tk_n - (idx+grouping_num)));
-		for (size_t i = 1; i < grouping_num; i++) {
-			syntax->tks[tk_n-i] = NULL;
-		}
-	}
-	syntax->token_num -= (grouping_num - 1);
+	TokenFactory token_factory;
+	TokenManager token_manager;
+	Token **tks = tk->tks;
+	size_t end_idx = idx + grouping_num;
+	tks[idx] = token_factory.makeExprToken(tks, idx, grouping_num);
+	token_manager.closeToken(tk, idx + 1, end_idx, grouping_num);
 }
 
-void Completer::insertTerm(Token *syntax, int idx, size_t grouping_num)
+void Completer::templateEvaluatedFromLeft(Token *root, SyntaxCompleter *completer)
 {
-	size_t tk_n = syntax->token_num;
-	Token **tks = syntax->tks;
-	Token *tk = tks[idx];
-	Tokens *term = new Tokens();
-	term->push_back(tk);
-	for (size_t i = 1; i < grouping_num; i++) {
-		term->push_back(tks[idx+i]);
-	}
-	Token *term_ = new Token(term);
-	term_->stype = SyntaxType::Term;
-	tks[idx] = term_;
-	if (tk_n == idx+grouping_num) {
-		for (size_t i = 1; i < grouping_num; i++) {
-			syntax->tks[idx+i] = NULL;
+RESTART:;
+	for (size_t i = 0; i < root->token_num; i++) {
+		if (completer->complete(root, i)) {
+			goto RESTART;
 		}
-	} else {
-		memmove(syntax->tks+(idx+1), syntax->tks+(idx+grouping_num),
-				sizeof(Token *) * (tk_n - (idx+grouping_num)));
-		for (size_t i = 1; i < grouping_num; i++) {
-			syntax->tks[tk_n-i] = NULL;
+		if (root->tks[i]->token_num > 0) {
+			templateEvaluatedFromLeft(root->tks[i], completer);
 		}
 	}
-	syntax->token_num -= (grouping_num - 1);
+}
+
+void Completer::templateEvaluatedFromRight(Token *root, SyntaxCompleter *completer)
+{
+RESTART:;
+	for (int i = root->token_num - 1; i >= 0; i--) {
+		if (completer->complete(root, i)) {
+			goto RESTART;
+		}
+		if (root->tks[i]->token_num > 0) {
+			templateEvaluatedFromRight(root->tks[i], completer);
+		}
+	}
 }
 
 void Completer::completeExprFromLeft(Token *root, TokenType::Type type)
@@ -127,6 +123,7 @@ void Completer::completeExprFromLeft(Token *root, TokenType::Type type)
 	using namespace TokenType;
 	Token **tks = root->tks;
 	size_t tk_n = root->token_num;
+	TokenFactory token_factory;
 RESTART:;
 	for (size_t i = 0; i < tk_n; i++) {
 		if (tk_n > 3 && tk_n > i+2 && tks[i+1]->info.type == type) {
@@ -177,10 +174,39 @@ RESTART:;
 
 void Completer::completePointerExpr(Token *root)
 {
+	insertPointerToken(root);
 	completeExprFromLeft(root, TokenType::Pointer);
 }
 
-void Completer::completeIncDecGlobExpr(Token *root)
+bool Completer::isPointerChain(Token *tk)
+{
+	using namespace TokenType;
+	Type type = tk->info.type;
+	SyntaxType::Type stype = tk->stype;
+	if (type == GlobalVar || type == Var || type == Method ||
+		type == Pointer || type == Namespace || type == SpecificKeyword ||
+		(stype == SyntaxType::Expr &&
+		 (tk->tks[0]->info.type == LeftBrace ||
+		  tk->tks[0]->info.type == LeftBracket ||
+		  tk->tks[0]->info.type == ArrayDereference)) ||
+		 stype == SyntaxType::Term) {
+		return true;
+	}
+	return false;
+}
+
+bool Completer::isArrayOrHashExpr(size_t start_idx, size_t idx, Token *tk, Token *next_tk)
+{
+	using namespace TokenType;
+	if (start_idx != idx) return false;
+	if (tk->info.type != Var && tk->info.type != GlobalVar) return false;
+	if (next_tk->stype != SyntaxType::Expr) return false;
+	Type type = next_tk->tks[0]->info.type;
+	if (type == LeftBracket || type == LeftBrace) return true;
+	return false;
+}
+
+void Completer::insertPointerToken(Token *root)
 {
 	using namespace TokenType;
 	Token **tks = root->tks;
@@ -188,28 +214,41 @@ void Completer::completeIncDecGlobExpr(Token *root)
 RESTART:;
 	for (size_t i = 0; i < tk_n; i++) {
 		Token *tk = tks[i];
-		Token *next_tk = tks[i+1];
-		if (tk_n > 2 && tk_n > i+1 &&
-			(tk->info.type == Inc || tk->info.type == Dec) &&
-			(next_tk->info.kind == TokenKind::Term || next_tk->stype == SyntaxType::Expr)) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 2 && i > 0 &&
-				   (tk->info.type == Inc || tk->info.type == Dec) &&
-				   (tks[i-1]->info.kind == TokenKind::Term || tks[i-1]->stype == SyntaxType::Expr)) {
-			insertExpr(root, i-1, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 2 && i > 0 && tk->info.type == Glob && next_tk->info.type == Key) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
+		if (isPointerChain(tk)) {
+			size_t start_idx = i;
+			while (i + 1 < tk_n && isPointerChain(tks[i+1])) {
+				Token *next_tk = tks[i+1];
+				if (!isArrayOrHashExpr(start_idx, i, tks[i], next_tk) &&
+					!(next_tk->stype == SyntaxType::Term && next_tk->tks[0]->info.type == BuiltinFunc) &&
+					next_tk->info.type != Pointer) {
+					Token *pointer = new Token("->", next_tk->finfo);
+					pointer->info.type = TokenType::Pointer;
+					pointer->info.name = "Pointer";
+					pointer->info.kind = TokenKind::Operator;
+					tks = Array_insert(tks, tk_n, i + 1, pointer);
+					root->tks = tks;
+					tk_n++;
+					root->token_num = tk_n;
+				}
+				i += 2;
+			}
 		}
-		if (tks[i]->token_num > 0) {
-			completeIncDecGlobExpr(tks[i]);
+		if (i < tk_n && tks[i]->token_num > 0) {
+			insertPointerToken(tks[i]);
 		}
 	}
+}
+
+void Completer::completeBlockArgsFunctionExpr(Token *root)
+{
+	BlockArgsFunctionCompleter completer;
+	templateEvaluatedFromRight(root, &completer);
+}
+
+void Completer::completeIncDecGlobExpr(Token *root)
+{
+	SpecialOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completePowerExpr(Token *root)
@@ -220,30 +259,8 @@ void Completer::completePowerExpr(Token *root)
 void Completer::completeSingleTermOperatorExpr(Token *root)
 {
 	// !, ~, \, +, -
-	using namespace TokenType;
-	Token **tks = root->tks;
-	size_t tk_n = root->token_num;
-RESTART:;
-	for (size_t i = 0; i < tk_n; i++) {
-		Token *tk = tks[i];
-		TokenType::Type type = tk->info.type;
-		if (tk_n > 3 && tk_n > i+2 &&
-			(type == IsNot || type == Ref || type == BitNot) && tks[i+1]->info.type != CallDecl) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 2 && tk_n > i+1 && i > 0 &&
-				   (type == Add || type == Sub || type == BitAnd || type == PolymorphicCompare || type == ArraySize) &&
-				   (tks[i-1]->info.kind != TokenKind::Term &&
-					tks[i-1]->stype != SyntaxType::Term &&
-					tks[i-1]->stype != SyntaxType::Expr)) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-		}
-		if (tks[i]->token_num > 0) {
-			completeSingleTermOperatorExpr(tks[i]);
-		}
-	}
+	SingleTermOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completeRegexpMatchExpr(Token *root)
@@ -274,33 +291,8 @@ void Completer::completeShiftOperatorExpr(Token *root)
 
 void Completer::completeNamedUnaryOperators(Token *root)
 {
-	//SpecificFunction
-	using namespace TokenType;
-	Token **tks = root->tks;
-	size_t tk_n = root->token_num;
-RESTART:;
-	for (size_t i = 0; i < tk_n; i++) {
-		Token *tk = tks[i];
-		if (tk_n > 2 && tk_n > i+1 &&
-			((tk->info.type == BuiltinFunc && isUnaryKeyword(tk->data)) ||
-			 (tks[0]->info.type != UseDecl && tk->info.type == Namespace)) &&
-			(tks[i+1]->stype == SyntaxType::Expr || tks[i+1]->stype == SyntaxType::Term ||
-			 tks[i+1]->info.kind == TokenKind::Term)) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > i + 1 && tk_n != 2 &&
-				   (tk->info.type == Redo || tk->info.type == Next || tk->info.type == Last) &&
-				   tks[i+1]->info.type == Key) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		}
-		if (tks[i]->token_num > 0) {
-			completeNamedUnaryOperators(tks[i]);
-		}
-	}
-	//FileHandle
+	NamedUnaryOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 bool Completer::isUnaryKeyword(string target)
@@ -346,24 +338,8 @@ void Completer::completeBitOperatorExpr(Token *root)
 
 void Completer::completeThreeTermOperatorExpr(Token *root)
 {
-	Token **tks = root->tks;
-	size_t tk_n = root->token_num;
-RESTART:;
-	for (size_t i = tk_n - 1; i > 0; i--) {
-		if (tk_n > 4 && i > 4 &&
-			tks[i-1]->stype != SyntaxType::BlockStmt &&
-			tks[i-2]->info.type == TokenType::Colon &&
-			tks[i-3]->stype != SyntaxType::BlockStmt &&
-			tks[i-4]->info.type == TokenType::ThreeTermOperator &&
-			tks[i-5]->stype != SyntaxType::BlockStmt) {
-			insertExpr(root, i - 5, 5);
-			tk_n -= 4;
-			goto RESTART;
-		}
-		if (tks[i]->token_num > 0) {
-			completeThreeTermOperatorExpr(tks[i]);
-		}
-	}
+	ThreeTermOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completeAndOrOperatorExpr(Token *root)
@@ -393,7 +369,11 @@ RESTART:;
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
 			tk->info.type == TokenType::BuiltinFunc &&
-			(tks[i+1]->stype == SyntaxType::Expr ||
+			((tks[i+1]->stype == SyntaxType::Expr &&
+			  tks[i+1]->tks[0]->info.type != TokenType::LeftBrace) ||
+			 tks[i+1]->info.type == ShortHashDereference ||
+			 tks[i+1]->info.type == ShortArrayDereference ||
+			 tks[i+1]->info.type == ShortScalarDereference ||
 			 tks[i+1]->info.kind == TokenKind::Term)) {
 			insertExpr(root, i, 2);
 			tk_n -= 1;
@@ -415,96 +395,8 @@ void Completer::completeAlphabetBitOperatorExpr(Token *root)
 
 void Completer::completeTerm(Token *root)
 {
-	using namespace TokenType;
-	Token **tks = root->tks;
-	size_t tk_n = root->token_num;
-RESTART:;
-	for (size_t i = 0; i < tk_n; i++) {
-		Token *tk = tks[i];
-		if (tk_n > 2 && tk_n > i+1 && (tks[0]->info.type != ForStmt && tks[0]->info.type != ForeachStmt) &&
-			(tk->info.type == Var || tk->info.type == CodeVar ||
-			 tk->info.type == ArrayVar || tk->info.type == HashVar ||
-			 tk->info.type == LocalVar || tk->info.type == SpecificValue ||
-			 tk->info.type == LocalArrayVar || tk->info.type == LocalHashVar ||
-			 tk->info.type == GlobalVar || tk->info.type == GlobalArrayVar ||
-			 tk->info.type == GlobalHashVar || tk->info.kind == TokenKind::Function) &&
-			(tks[i+1]->stype == SyntaxType::Expr &&
-			 (tk->info.kind != TokenKind::Function || (tks[i+1]->tks[0]->info.type != LeftBrace && tks[i+1]->tks[0]->info.type != LeftBracket)))/* &&
-		  (!tks[i+2] || tks[i+2]->info.type != TokenType::Comma)*/) {
-			insertTerm(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 2 && tk_n > i+1 &&
-				   tk->info.kind == TokenKind::Modifier &&
-				   tks[i+1]->stype == SyntaxType::Expr) {
-			insertTerm(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 4 && tk_n > i+3 && i != 0 &&
-				   tk->info.kind == TokenKind::RegPrefix &&
-				   tks[i+1]->info.type == RegDelim &&
-				   tks[i+2]->info.type == RegExp &&
-				   tks[i+3]->info.type == RegDelim) {
-			if (tk_n > i + 4 && tks[i+4]->info.type == RegOpt) {
-				insertExpr(root, i, 5);
-				tk_n -= 4;
-			} else {
-				insertExpr(root, i, 4);
-				tk_n -= 3;
-			}
-			goto RESTART;
-		} else if (tk_n > 3 && tk_n > i+2 && (i > 0 && tks[i-1]->info.kind != TokenKind::RegPrefix) &&
-				   tk->info.type == RegDelim &&
-				   tks[i+1]->info.type == RegExp &&
-				   tks[i+2]->info.type == RegDelim) {
-			if (tk_n > i + 3 && tks[i+3]->info.type == RegOpt) {
-				insertExpr(root, i, 4);
-				tk_n -= 3;
-			} else {
-				insertExpr(root, i, 3);
-				tk_n -= 2;
-			}
-			goto RESTART;
-		} else if (tk_n > 6 && tk_n > i+5 && i != 0 &&
-				   tk->info.kind == TokenKind::RegReplacePrefix &&
-				   tks[i+1]->info.type == RegDelim &&
-				   tks[i+2]->info.type == RegReplaceFrom &&
-				   tks[i+3]->info.type == RegMiddleDelim &&
-				   tks[i+4]->info.type == RegReplaceTo &&
-				   tks[i+5]->info.type == RegDelim) {
-			if (tk_n > i + 6 && tks[i+6]->info.type == RegOpt) {
-				insertExpr(root, i, 7);
-				tk_n -= 6;
-			} else {
-				insertExpr(root, i, 6);
-				tk_n -= 5;
-			}
-			goto RESTART;
-		} else if (tk_n > 2 && tk_n > i+1 &&
-				   tk->info.type == FunctionDecl &&
-				   tks[i+1]->stype == SyntaxType::BlockStmt) {
-			insertExpr(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		} else if (tk_n > 3 && tk_n > i+2 &&
-				   tk->info.type == Ref &&
-				   tks[i+1]->info.type == CallDecl) {
-			insertTerm(root, i, 3);
-			tk_n -= 2;
-			goto RESTART;
-		} else if (tk_n > 2 && tk_n > i+1 &&
-				   (tk->info.type == Method || tk->info.type == Call || tk->info.type == BuiltinFunc) &&
-				   (tks[i+1]->stype == SyntaxType::Expr &&
-					(tks[i+1]->tks[0]->info.type != LeftBrace &&
-					 tks[i+1]->tks[0]->info.type != LeftBracket))) {
-			insertTerm(root, i, 2);
-			tk_n -= 1;
-			goto RESTART;
-		}
-		if (tks[i]->token_num > 0) {
-			completeTerm(tks[i]);
-		}
-	}
+	TermCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::recoveryNamedUnaryOperatorsArgument(Token *root)
@@ -558,7 +450,8 @@ RESTART:;
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
 			((tk->stype == SyntaxType::Expr &&
-			 (tks[i+1]->stype == SyntaxType::Expr ||
+			  tk->tks[0]->info.type != LeftBrace &&
+			  (tks[i+1]->stype == SyntaxType::Expr ||
 			  tks[i+1]->stype == SyntaxType::Term ||
 			  tks[i+1]->info.type == TokenType::ArrayVar)) ||
 			 (tk->stype == SyntaxType::Term &&

@@ -12,6 +12,6 @@ on 'build' => sub {
 };
 
 on 'test' => sub {
-    requires 'Compiler::Lexer', '>=0.13';
+    requires 'Compiler::Lexer', '>=0.17';
     requires 'Test::More';
 };

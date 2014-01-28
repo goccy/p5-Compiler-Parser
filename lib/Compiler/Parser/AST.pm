@@ -24,7 +24,8 @@ sub remove {
         my $parent = $node->parent;
         next unless $parent;
         foreach my $branch (@{$parent->branches}, 'next') {
-            next unless ($parent->{$branch} == $node);
+            my $child = $parent->{$branch};
+            next unless ($child && $child == $node);
             $parent->{$branch} = $node->next;
         }
     }
@@ -55,3 +56,61 @@ sub __walk {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Compiler::Parser::AST
+
+=head1 DESCRIPTION
+
+=head1 METHODS
+
+=over 1
+
+=item my $ast = Compiler::Parser->new->parse($tokens);
+
+    Get blessed object of Compiler::Parser::AST.
+    This method requires $tokens from Compiler::Lexer::tokenize.
+
+=item my $root_node = $ast->root;
+
+    Get root node from AST.
+    $ast is created by Compiler::Parser::parse.
+
+=item my $find_nodes = $ast->find(type => 'Int');
+
+    Find node from 'node' or 'kind' or 'type' or 'data' parameter.
+
+=item $ast->walk(sub { my $node = shift; });
+
+    Walk AST. This method requires anonymous subroutine as argument.
+    Subroutine's first argument is instance inherited Compiler::Parser::Node.
+
+=item walk { my $node = $_; } $ast;
+
+    Walk AST. This method must be exported by 'use Compiler::Parser::AST qw/walk/;'
+    $_ is instance inherited Compiler::Parser::Node.
+
+=item $ast->remove(node => 'Function');
+
+    Remove nodes from 'node' or 'kind' or 'type' or 'data' parameter.
+
+=back
+
+=head1 AUTHOR
+
+Masaaki Goshima (goccy) <goccy54@gmail.com>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) Masaaki Goshima (goccy).
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
+

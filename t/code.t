@@ -4,25 +4,42 @@ use Test::More;
 use Compiler::Lexer;
 use Compiler::Parser;
 use Compiler::Parser::AST::Renderer;
+use Test::Compiler::Parser;
 
 subtest 'simple sub' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize('sub f { return $_[0] + 2; } my $code = \&f; &$code(3);');
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    my $root = $ast->root;
-    is(ref $root, 'Compiler::Parser::Node::Function');
-    is(ref $root->body, 'Compiler::Parser::Node::Return');
-    is(ref $root->body->body, 'Compiler::Parser::Node::Branch');
-    is(ref $root->body->body->left, 'Compiler::Parser::Node::Array');
-    is(ref $root->body->body->left->idx, 'Compiler::Parser::Node::ArrayRef');
-    is(ref $root->body->body->left->idx->data_node, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->body->body->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->next, 'Compiler::Parser::Node::Branch');
-    is(ref $root->next->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->next->right, 'Compiler::Parser::Node::SingleTermOperator');
-    is(ref $root->next->right->expr, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $root->next->next, 'Compiler::Parser::Node::Dereference');
-    is(ref $root->next->next->expr, 'Compiler::Parser::Node::Leaf');
+    node_ok($ast->root, [
+        function { 'f',
+            body => Test::Compiler::Parser::return { 'return',
+                body => branch { '+',
+                    left => array { '$_',
+                        idx => array_ref { '[]',
+                            data => leaf '0'
+                        }
+                    },
+                    right => leaf '2'
+                }
+            }
+        },
+        branch { '=',
+            left => leaf '$code',
+            right => single_term_operator { '\&',
+                expr => function_call { 'f', args => [] }
+            }
+        },
+        dereference { '&$code',
+            expr => leaf '3'
+        }
+    ]);
+};
+
+subtest 'anonymous subroutine' => sub {
+    my $tokens = Compiler::Lexer->new('')->tokenize('my $a = sub { return $_[0] + 2; if (0) {} };');
+    my $ast = Compiler::Parser->new->parse($tokens);
+    Compiler::Parser::AST::Renderer->new->render($ast);
+    ok(1);
 };
 
 done_testing;

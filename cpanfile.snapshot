@@ -1,17 +1,19 @@
 # carton snapshot format: version 1.0
 DISTRIBUTIONS
-  Compiler-Lexer-0.13
-    pathname: G/GO/GOCCY/Compiler-Lexer-0.13.tar.gz
+  Compiler-Lexer-0.17
+    pathname: G/GO/GOCCY/Compiler-Lexer-0.17.tar.gz
     provides:
-      Compiler::Lexer 0.13
-      Compiler::Lexer::Kind undef
-      Compiler::Lexer::SyntaxType undef
+      Compiler::Lexer 0.17
       Compiler::Lexer::Token undef
-      Compiler::Lexer::TokenType undef
     requirements:
+      CPAN::Meta 0
+      CPAN::Meta::Prereqs 0
       Devel::PPPort 3.19
+      ExtUtils::CBuilder 0
       ExtUtils::MakeMaker 6.59
       ExtUtils::ParseXS 2.21
+      Module::Build 0.38
+      Module::Build::XSUtil 0.02
       Test::More 0
       XSLoader 0.02
       perl 5.008001

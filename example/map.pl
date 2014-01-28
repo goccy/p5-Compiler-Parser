@@ -1,5 +1,16 @@
-my @a = (1, 2, 3, 4);
-my @b = map {$_ * 2} map { $_ * 3; $_; } @a;
-my @chars = map(chr, @a);
-my @c = map +( $_ => 1 ), @a;
-print @b, "\n";
+my $a = map { $_ + 2; 1 * 2; } @b;
+my ($key, $value) = map URI::Escape::uri_unescape($_), split( "=", $pair, 2 );
+
+@query = map {
+    s/\+/ /g; URI::Escape::uri_unescape($_)
+} map {
+ /=/ ? split(/=/, $_, 2) : ($_ => '')
+} split(/[&;]/, $query_string);
+
+$self->{headers} = HTTP::Headers->new(
+    map {
+        (my $field = $_) =~ s/^HTTPS?_//;
+        ( $field => $env->{$_} );
+    } grep { /^(?:HTTP|CONTENT)/i } keys %$env
+);
+

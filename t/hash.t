@@ -4,125 +4,161 @@ use Test::More;
 use Compiler::Lexer;
 use Compiler::Parser;
 use Compiler::Parser::AST::Renderer;
+use Test::Compiler::Parser;
 
 subtest 'make list' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize('my %a = (a => 2, b => 4);');
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    my $root = $ast->root;
-    is(ref $root, 'Compiler::Parser::Node::Branch');
-    is(ref $root->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right, 'Compiler::Parser::Node::List');
-    is(ref $root->right->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $root->right->data_node->left, 'Compiler::Parser::Node::Branch');
-    is(ref $root->right->data_node->left->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right->data_node->left->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right->data_node->right, 'Compiler::Parser::Node::Branch');
-    is(ref $root->right->data_node->right->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right->data_node->right->right, 'Compiler::Parser::Node::Leaf');
+    node_ok($ast->root, branch { '=',
+        left => leaf '%a',
+        right => list { '()',
+            data => branch { ',',
+                left  => branch { '=>',
+                    left  => leaf 'a',
+                    right => leaf '2'
+                },
+                right => branch { '=>',
+                    left  => leaf 'b',
+                    right => leaf '4'
+                }
+            }
+        }
+    });
 };
 
 subtest 'hash dereference' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize('%$a');
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    my $root = $ast->root;
-    is(ref $root, 'Compiler::Parser::Node::Dereference');
-    is(ref $root->expr, 'Compiler::Parser::Node::Leaf');
+    node_ok($ast->root, dereference { '%$a',
+        expr => leaf '%$a'
+    });
 
     $tokens = Compiler::Lexer->new('')->tokenize('%{$a}');
     $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast->root, 'Compiler::Parser::Node::Dereference');
-    is(ref $ast->root->expr, 'Compiler::Parser::Node::Leaf');
+    node_ok($ast->root, dereference { '%{',
+        expr => leaf '$a'
+    });
 };
 
 subtest 'hash get access' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize('$a{$b + 1}');
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast->root, 'Compiler::Parser::Node::Hash');
-    is(ref $ast->root->key, 'Compiler::Parser::Node::HashRef');
-    is(ref $ast->root->key->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->root->key->data_node->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->key->data_node->right, 'Compiler::Parser::Node::Leaf');
+    node_ok($ast->root, hash { '$a',
+        key => hash_ref { '{}',
+            data => branch { '+',
+                left  => leaf '$b',
+                right => leaf '1'
+            }
+        }
+    });
 };
 
 subtest 'hash set access' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize('$a{$b + 1} = 2');
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    my $root = $ast->root;
-    is(ref $root, 'Compiler::Parser::Node::Branch');
-    is(ref $root->left, 'Compiler::Parser::Node::Hash');
-    is(ref $root->left->key, 'Compiler::Parser::Node::HashRef');
-    is(ref $root->left->key->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $root->left->key->data_node->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->left->key->data_node->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right, 'Compiler::Parser::Node::Leaf');
+    node_ok($ast->root, branch { '=',
+        left  => hash { '$a',
+            key => hash_ref { '{}',
+                data => branch { '+',
+                    left  => leaf '$b',
+                    right => leaf '1'
+                }
+            }
+        },
+        right => leaf '2'
+    });
 };
 
-subtest 'nested array reference' => sub {
+subtest 'nested hash reference' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize('my $a = { a => 1, b => { d => 8 }, c => 2 }');
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    my $root = $ast->root;
-    is(ref $root, 'Compiler::Parser::Node::Branch');
-    is(ref $root->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right, 'Compiler::Parser::Node::HashRef');
-    is(ref $root->right->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $root->right->data_node->left, 'Compiler::Parser::Node::Branch');
-    is(ref $root->right->data_node->left->left, 'Compiler::Parser::Node::Branch');
-    is(ref $root->right->data_node->left->left->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right->data_node->left->left->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right->data_node->left->right, 'Compiler::Parser::Node::Branch');
-    is(ref $root->right->data_node->left->right->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right->data_node->left->right->right, 'Compiler::Parser::Node::HashRef');
-    is(ref $root->right->data_node->left->right->right->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $root->right->data_node->left->right->right->data_node->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right->data_node->left->right->right->data_node->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right->data_node->right, 'Compiler::Parser::Node::Branch');
-    is(ref $root->right->data_node->right->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right->data_node->right->right, 'Compiler::Parser::Node::Leaf');
+    node_ok($ast->root, branch { '=',
+        left  => leaf '$a',
+        right => hash_ref { '{}',
+            data => branch { ',',
+                left  => branch { ',',
+                    left  => branch { '=>',
+                        left  => leaf 'a',
+                        right => leaf '1'
+                    },
+                    right => branch { '=>',
+                        left  => leaf 'b',
+                        right => hash_ref { '{}',
+                            data => branch { '=>',
+                                left  => leaf 'd',
+                                right => leaf '8'
+                            }
+                        }
+                    }
+                },
+                right => branch { '=>',
+                    left  => leaf 'c',
+                    right => leaf '2'
+                }
+            }
+        }
+
+    });
 };
 
 subtest 'hash reference chain' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize('$a{$b + 1}->{$c + 2}->{d}');
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    my $root = $ast->root;
-    is(ref $root, 'Compiler::Parser::Node::Branch');
-    is(ref $root->left, 'Compiler::Parser::Node::Branch');
-    is(ref $root->left->left, 'Compiler::Parser::Node::Hash');
-    is(ref $root->left->left->key, 'Compiler::Parser::Node::HashRef');
-    is(ref $root->left->left->key->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $root->left->left->key->data_node->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->left->left->key->data_node->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->left->right, 'Compiler::Parser::Node::HashRef');
-    is(ref $root->left->right->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $root->left->right->data_node->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->left->right->data_node->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->right, 'Compiler::Parser::Node::HashRef');
-    is(ref $root->right->data_node, 'Compiler::Parser::Node::Leaf');
+    node_ok($ast->root, branch { '->',
+        left  => branch { '->',
+            left  => hash { '$a',
+                key => hash_ref { '{}',
+                    data => branch { '+',
+                        left  => leaf '$b',
+                        right => leaf '1'
+                    }
+                }
+            },
+            right => hash_ref { '{}',
+                data => branch { '+',
+                    left  => leaf '$c',
+                    right => leaf '2'
+                }
+            }
+        },
+        right => hash_ref { '{}',
+            data => leaf 'd'
+        }
+    });
 };
 
 subtest 'hash short dereference' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize('print "\t", $key, ":", $$token{$key}, "\n";');
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    my $root = $ast->root;
-    is(ref $root, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $root->{args}[0], 'Compiler::Parser::Node::Branch');
-    is(ref $root->{args}[0]->left, 'Compiler::Parser::Node::Branch');
-    is(ref $root->{args}[0]->left->left, 'Compiler::Parser::Node::Branch');
-    is(ref $root->{args}[0]->left->left->left, 'Compiler::Parser::Node::Branch');
-    is(ref $root->{args}[0]->left->left->left->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->{args}[0]->left->left->left->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->{args}[0]->left->left->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->{args}[0]->left->right, 'Compiler::Parser::Node::Dereference');
-    is(ref $root->{args}[0]->left->right->expr, 'Compiler::Parser::Node::HashRef');
-    is(ref $root->{args}[0]->left->right->expr->data_node, 'Compiler::Parser::Node::Leaf');
-    is(ref $root->{args}[0]->right, 'Compiler::Parser::Node::Leaf');
+    node_ok($ast->root, function_call { 'print',
+        args => [
+            branch { ',',
+                left  => branch { ',',
+                    left  => branch { ',',
+                        left  => branch { ',',
+                            left  => leaf '\t',
+                            right => leaf '$key'
+                        },
+                        right => leaf ':'
+                    },
+                    right => dereference { '$$token',
+                        expr => hash_ref { '{}',
+                            data => leaf '$key'
+                        }
+                    }
+                },
+                right => leaf '\n'
+            }
+        ]
+    });
 };
 
 done_testing;

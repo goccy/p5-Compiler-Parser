@@ -286,6 +286,20 @@ public:
 	void next(int progress);
 };
 
+class TokenManager {
+public:
+	TokenManager(void);
+	void insertToken(Token *tk, size_t idx, Token *target);
+	void closeToken(Token *tk, size_t base_idx, size_t start_idx, size_t close_num);
+};
+
+class TokenFactory {
+public:
+	TokenFactory(void);
+	Token *makeExprToken(Token **base, size_t start_idx, size_t end_idx);
+	Token *makeTermToken(Token **base, size_t start_idx, size_t end_idx);
+};
+
 class Parser {
 public:
 	TokenPos start_pos;
@@ -322,6 +336,7 @@ public:
 	void parseToken(ParseContext *pctx, Token *tk);
 	void parseModifier(ParseContext *pctx, Token *term);
 	void parseTerm(ParseContext *pctx, Token *term);
+	void parseHandle(ParseContext *pctx, Token *handle);
 	void parseSymbol(ParseContext *pctx, Token *symbol);
 	void parseSingleTermOperator(ParseContext *pctx, Token *op);
 	void parseThreeTermOperator(ParseContext *pctx, Token *op);
@@ -344,20 +359,107 @@ private:
 	void insertParenthesis(Tokens *tokens);
 };
 
+class SyntaxCompleter {
+public:
+	SyntaxCompleter(void);
+	void insertTerm(Token *tk, int idx, size_t grouping_num);
+	void insertExpr(Token *tk, int idx, size_t grouping_num);
+	virtual bool complete(Token *root, size_t current_idx);
+};
+
+class TermCompleter : public SyntaxCompleter {
+public:
+	TermCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	bool isVariable(Token *tk);
+	bool isOperatorTarget(Token *tk);
+	bool isFunctionCall(Token *tk);
+	bool isBasicTerm(Token *tk, size_t current_idx);
+	bool isDereferenceTerm(Token *tk, size_t current_idx);
+	bool isRegexTerm(Token *tk, size_t current_idx);
+	bool isRegexWithoutPrefixTerm(Token *tk, size_t current_idx);
+	bool isRegexReplaceTerm(Token *tk, size_t current_idx);
+	bool isAnonymousFunctionTerm(Token *tk, size_t current_idx);
+	bool isCodeRefTerm(Token *tk, size_t current_idx);
+	bool isFunctionCallWithParenthesis(Token *tk, size_t current_idx);
+};
+
+class NamedUnaryOperatorCompleter : public SyntaxCompleter {
+public:
+	std::vector<std::string> *named_unary_keywords;
+	NamedUnaryOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	bool isNamedUnaryFunction(Token *tk, size_t current_idx);
+	bool isUnaryOperator(Token *tk, size_t current_idx);
+	bool isUnaryKeyword(std::string target);
+	bool isStatementController(Token *tk, size_t current_idx);
+	bool isStatementControlKeyword(Token *tk);
+	bool isHandle(Token *tk, size_t current_idx);
+};
+
+class SpecialOperatorCompleter : public SyntaxCompleter {
+public:
+	SpecialOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	bool isIncDecType(Token *tk);
+	bool isLeftIncDecExpr(Token *tk, size_t current_idx);
+	bool isRightIncDecExpr(Token *tk, size_t current_idx);
+	bool isGlobExpr(Token *tk, size_t current_idx);
+};
+
+class SingleTermOperatorCompleter : public SyntaxCompleter {
+public:
+	SingleTermOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	bool isSimpleSingleTermOperator(Token *tk, size_t current_idx);
+	bool isSingleTermOperator(Token *tk, size_t current_idx);
+	bool isOperatorTarget(Token *tk);
+};
+
+class ThreeTermOperatorCompleter : public SyntaxCompleter {
+public:
+	ThreeTermOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	bool isThreeTermOperator(Token *tk, size_t current_idx);
+};
+
+class BlockArgsFunctionCompleter : public SyntaxCompleter {
+public:
+	std::vector<std::string> *block_args_function_keywords;
+	BlockArgsFunctionCompleter(void);
+	bool complete(Token *tk, size_t current_idx);
+	bool isBlockArgsFunction(Token *tk, int current_idx);
+	bool isOnlyBlockArgFunction(Token *tk, int current_idx);
+	bool isOperatorTarget(Token *tk);
+	bool isBlockArgsFunctionKeyword(std::string target);
+};
+
+class PointerCompleter : public SyntaxCompleter {
+public:
+	PointerCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+};
+
 class Completer {
 public:
 	std::vector<std::string> *named_unary_keywords;
 
 	Completer(void);
 	bool isUnaryKeyword(std::string target);
+	void templateEvaluatedFromLeft(Token *root, SyntaxCompleter *completer);
+	void templateEvaluatedFromRight(Token *root, SyntaxCompleter *completer);
+	bool isPointerChain(Token *tk);
+	bool isArrayOrHashExpr(size_t start_idx, size_t idx, Token *tk, Token *next_tk);
 	void complete(Token *root);
 	void completeTerm(Token *root);
 	void insertExpr(Token *syntax, int idx, size_t grouping_num);
-	void insertTerm(Token *syntax, int idx, size_t grouping_num);
 	void completeExprFromLeft(Token *root, Enum::Token::Type::Type type);
 	void completeExprFromRight(Token *root, Enum::Token::Type::Type type);
 	void completeExprFromRight(Token *root, Enum::Token::Kind::Kind kind);
+	void completeWithoutPointerChain(Token *root);
+	void insertPointerToken(Token *root);
 	void completePointerExpr(Token *root);
+	void completeBlockArgsFunctionExpr(Token *root);
 	void completeIncDecGlobExpr(Token *root);
 	void completePowerExpr(Token *root);
 	void completeSingleTermOperatorExpr(Token *root);
