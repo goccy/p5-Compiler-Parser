@@ -79,6 +79,11 @@ bool TermCompleter::isVariable(Token *tk)
 bool TermCompleter::isFunctionCall(Token *tk)
 {
 	using namespace TokenType;
+	if (type(tk) == Key) {
+		type(tk) = TokenType::Call;
+		kind(tk) = TokenKind::Function;
+		return true;
+	}
 	if (type(tk) == Method ||
 		type(tk) == Call   ||
 		type(tk) == BuiltinFunc) return true;

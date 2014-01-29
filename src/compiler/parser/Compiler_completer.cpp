@@ -374,6 +374,7 @@ RESTART:;
 			 tks[i+1]->info.type == ShortHashDereference ||
 			 tks[i+1]->info.type == ShortArrayDereference ||
 			 tks[i+1]->info.type == ShortScalarDereference ||
+			 tks[i+1]->stype     == SyntaxType::Term ||
 			 tks[i+1]->info.kind == TokenKind::Term)) {
 			insertExpr(root, i, 2);
 			tk_n -= 1;
