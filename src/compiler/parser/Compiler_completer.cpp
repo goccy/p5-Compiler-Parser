@@ -218,7 +218,7 @@ RESTART:;
 			size_t start_idx = i;
 			while (i + 1 < tk_n && isPointerChain(tks[i+1])) {
 				Token *next_tk = tks[i+1];
-				if (!isArrayOrHashExpr(start_idx, i, tks[i], next_tk) &&
+				if (tk->info.type != Pointer && !isArrayOrHashExpr(start_idx, i, tks[i], next_tk) &&
 					!(next_tk->stype == SyntaxType::Term && next_tk->tks[0]->info.type == BuiltinFunc) &&
 					next_tk->info.type != Pointer) {
 					Token *pointer = new Token("->", next_tk->finfo);
