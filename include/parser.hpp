@@ -384,6 +384,14 @@ public:
 	bool isFunctionCallWithParenthesis(Token *tk, size_t current_idx);
 };
 
+class ReturnCompleter : public SyntaxCompleter {
+public:
+	ReturnCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	bool isOperatorTarget(Token *tk);
+	bool isReturnTerm(Token *tk, size_t current_idx);
+};
+
 class NamedUnaryOperatorCompleter : public SyntaxCompleter {
 public:
 	std::vector<std::string> *named_unary_keywords;
@@ -476,6 +484,7 @@ public:
 	void completeAssignExpr(Token *root);
 	void completeCommaArrowExpr(Token *root);
 	void completeFunctionListExpr(Token *root);
+	void completeReturn(Token *root);
 	void completeAlphabetBitOperatorExpr(Token *root);
 	void recoveryFunctionArgument(Token *root);
 	void recoveryNamedUnaryOperatorsArgument(Token *root);

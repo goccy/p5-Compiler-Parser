@@ -4,6 +4,7 @@ use Test::More;
 use Compiler::Lexer;
 use Compiler::Parser;
 use Compiler::Parser::AST::Renderer;
+use Test::Compiler::Parser;
 
 subtest 'pointer' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize('$a->{b}->c->[0]');
@@ -286,19 +287,31 @@ subtest 'unary operator includes or' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize('$v = $a->{b}->c($a) or die "died"');
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast->root, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->root->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->right, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->root->right->left, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->root->right->left->left, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->root->right->left->left->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->right->left->left->right, 'Compiler::Parser::Node::HashRef');
-    is(ref $ast->root->right->left->left->right->data_node, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->right->left->right, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->root->right->left->right->{args}[0], 'Compiler::Parser::Node::List');
-    is(ref $ast->root->right->left->right->{args}[0]->data_node, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->right->right, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->root->right->right->{args}[0], 'Compiler::Parser::Node::Leaf');
+    node_ok($ast->root, branch { 'or',
+        left  => branch { '=',
+            left  => leaf '$v',
+            right => branch { '->',
+                left  => branch { '->',
+                    left  => leaf '$a',
+                    right => hash_ref { '{}',
+                        data => leaf 'b'
+                    }
+                },
+                right => function_call { 'c',
+                    args => [
+                        list { '()',
+                            data => leaf '$a'
+                        }
+                    ]
+                }
+            }
+        },
+        right => function_call { 'die',
+            args => [
+                leaf 'died'
+            ]
+        }
+    });
 };
 
 subtest 'defined and term' => sub {

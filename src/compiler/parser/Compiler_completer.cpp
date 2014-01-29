@@ -78,6 +78,9 @@ void Completer::complete(Token *root)
 	completeFunctionListExpr(root);
 	recoveryFunctionArgument(root);
 	completeBlockArgsFunctionExpr(root);
+
+	completeReturn(root);
+
 	// not, and, or, xor
 	completeAlphabetBitOperatorExpr(root);
 }
@@ -144,7 +147,7 @@ void Completer::completeExprFromRight(Token *root, TokenType::Type type)
 	size_t tk_n = root->token_num;
 RESTART:;
 	for (int i = tk_n - 1; i >= 0; i--) {
-		if (tk_n > 3 && i-2 > 0 && tks[i-1]->info.type == type) {
+		if (tk_n > 3 && i-2 >= 0 && tks[i-1]->info.type == type) {
 			insertExpr(root, i - 2, 3);
 			tk_n -= 2;
 			goto RESTART;
@@ -160,8 +163,8 @@ void Completer::completeExprFromRight(Token *root, TokenKind::Kind kind)
 	Token **tks = root->tks;
 	size_t tk_n = root->token_num;
 RESTART:;
-	for (size_t i = tk_n - 1; i > 0; i--) {
-		if (tk_n > 3 && i-2 > 0 && tks[i-1]->info.kind == kind) {
+	for (int i = tk_n - 1; i >= 0; i--) {
+		if (tk_n > 3 && i-2 >= 0 && tks[i-1]->info.kind == kind) {
 			insertExpr(root, i - 2, 3);
 			tk_n -= 2;
 			goto RESTART;
@@ -389,14 +392,20 @@ RESTART:;
 void Completer::completeAlphabetBitOperatorExpr(Token *root)
 {
 	completeExprFromRight(root, TokenType::Not);
-	completeExprFromLeft(root, TokenType::And);
-	completeExprFromLeft(root, TokenType::Or);
-	completeExprFromLeft(root, TokenType::XOr);
+	completeExprFromLeft(root, TokenType::AlphabetAnd);
+	completeExprFromLeft(root, TokenType::AlphabetOr);
+	completeExprFromLeft(root, TokenType::AlphabetXOr);
 }
 
 void Completer::completeTerm(Token *root)
 {
 	TermCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
+}
+
+void Completer::completeReturn(Token *root)
+{
+	ReturnCompleter completer;
 	templateEvaluatedFromLeft(root, &completer);
 }
 

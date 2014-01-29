@@ -812,6 +812,8 @@ Node *Parser::_parse(Token *root)
 	}
 	if (pctx->nodes->size() > 1) {
 		assert(pctx->nodes->size() == 2 && "parse error!! nodes too large size");
+
+
 		node = pctx->nodes->at(0);
 		if (TYPE_match(node, LabelNode)) {
 			Node *child = pctx->nodes->at(1);
@@ -1312,7 +1314,7 @@ void Parser::parseSingleTermOperator(ParseContext *pctx, Token *tk)
 	using namespace TokenType;
 	TokenType::Type type = tk->info.type;
 	SingleTermOperatorNode *op_node = NULL;
-	if ((type == IsNot || type == Not || type == Ref || type == Add || type == BitAnd ||
+	if ((type == Not || type == Not || type == Ref || type == Add || type == BitAnd ||
 		 type == ArraySize || type == Sub || type == CodeRef ||
 		 type == BitNot || type == Glob) ||
 		((type == Inc || type == Dec) && pctx->idx == 0)) {
@@ -1356,7 +1358,7 @@ bool Parser::isSingleTermOperator(ParseContext *pctx, Token *tk)
 {
 	using namespace TokenType;
 	TokenType::Type type = tk->info.type;
-	if (type == IsNot || type == Not || type == Ref || type == CodeRef || type == Inc || type == ArraySize || type == Glob ||
+	if (type == Not || type == Not || type == Ref || type == CodeRef || type == Inc || type == ArraySize || type == Glob ||
 		type == Dec   || type == BitNot) return true;
 	if ((type == Add || type == Sub || type == BitAnd) && pctx->idx == 0) return true;
 	return false;
