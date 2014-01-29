@@ -51,6 +51,11 @@ bool TermCompleter::complete(Token *root, size_t current_idx)
 		insertTerm(root, current_idx, 3);
 		return true;
 	} else if (isFunctionCallWithParenthesis(root, current_idx)) {
+		Token *tk = root->tks[current_idx];
+		if (type(tk) == Key) {
+			type(tk) = Call;
+			kind(tk) = TokenKind::Function;
+		}
 		insertTerm(root, current_idx, 2);
 		return true;
 	}
@@ -79,12 +84,8 @@ bool TermCompleter::isVariable(Token *tk)
 bool TermCompleter::isFunctionCall(Token *tk)
 {
 	using namespace TokenType;
-	if (type(tk) == Key) {
-		type(tk) = TokenType::Call;
-		kind(tk) = TokenKind::Function;
-		return true;
-	}
-	if (type(tk) == Method ||
+	if (type(tk) == Key    ||
+		type(tk) == Method ||
 		type(tk) == Call   ||
 		type(tk) == BuiltinFunc) return true;
 	return false;
