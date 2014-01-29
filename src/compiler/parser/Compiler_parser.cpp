@@ -511,7 +511,7 @@ void Parser::parseSpecificStmt(Token *syntax)
 			if (tk_n > i+1 &&
 				tks[i+1]->stype == SyntaxType::BlockStmt) {
 				/* do BlockStmt */
-				insertStmt(syntax, i, 2);
+				insertExpr(syntax, i, 2);
 				tk_n -= 1;
 				parseSpecificStmt(tks[i]->tks[1]);
 			} else if (tk_n > i+3 &&
@@ -1170,7 +1170,10 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 		DoStmtNode *do_stmt = new DoStmtNode(tk);
 		Token *next_tk = pctx->nextToken();
 		if (!next_tk) Parser_exception("near by do statement", tk->finfo.start_line_num);
+		SyntaxType::Type stype = cur_stype;
+		cur_stype = SyntaxType::BlockStmt;
 		Node *stmt = _parse(next_tk);
+		cur_stype = stype;
 		do_stmt->stmt = (stmt) ? stmt->getRoot() : NULL;
 		pctx->pushNode(do_stmt);
 		pctx->next();

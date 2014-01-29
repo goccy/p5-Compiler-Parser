@@ -189,7 +189,7 @@ bool Completer::isPointerChain(Token *tk)
 		 (tk->tks[0]->info.type == LeftBrace ||
 		  tk->tks[0]->info.type == LeftBracket ||
 		  tk->tks[0]->info.type == ArrayDereference)) ||
-		 stype == SyntaxType::Term) {
+		(stype == SyntaxType::Term && tk->tks[0]->info.kind != TokenKind::RegPrefix)) {
 		return true;
 	}
 	return false;

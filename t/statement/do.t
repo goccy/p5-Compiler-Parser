@@ -4,26 +4,46 @@ use Test::More;
 use Compiler::Lexer;
 use Compiler::Parser;
 use Compiler::Parser::AST::Renderer;
+use Test::Compiler::Parser;
 
 subtest 'do statement' => sub {
     my $tokens = Compiler::Lexer->new('')->tokenize('open (my $fh, "<", $filename) or die ($filename . ": cannot find"); my $script = do { local $/ ; <$fh> };');
     my $ast = Compiler::Parser->new->parse($tokens);
     Compiler::Parser::AST::Renderer->new->render($ast);
-    is(ref $ast->root, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->root->left, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->root->left->{args}[0], 'Compiler::Parser::Node::List');
-    is(ref $ast->root->left->{args}[0]->data_node, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->root->left->{args}[0]->data_node->left, 'Compiler::Parser::Node::Branch');
-    is(ref $ast->root->left->{args}[0]->data_node->left->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->left->{args}[0]->data_node->left->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->left->{args}[0]->data_node->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->right, 'Compiler::Parser::Node::FunctionCall');
-    is(ref $ast->root->right->{args}[0], 'Compiler::Parser::Node::Branch');
-    is(ref $ast->root->right->{args}[0]->left, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->right->{args}[0]->right, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->next, 'Compiler::Parser::Node::DoStmt');
-    is(ref $ast->root->next->stmt, 'Compiler::Parser::Node::Leaf');
-    is(ref $ast->root->next->stmt->next, 'Compiler::Parser::Node::HandleRead');
+    node_ok($ast->root, [
+        branch { 'or',
+            left  => function_call { 'open',
+                args => [
+                    list { '()',
+                        data => branch { ',',
+                            left  => branch { ',',
+                                left  => leaf '$fh',
+                                right => leaf '<'
+                            },
+                            right => leaf '$filename'
+                        }
+                    }
+                ]
+            },
+            right => function_call { 'die',
+                args => [
+                    branch { '.',
+                        left  => leaf '$filename',
+                        right => leaf ': cannot find'
+                    }
+                ]
+            }
+        },
+        branch { '=',
+            left  => leaf '$script',
+            right => do_stmt { 'do',
+                stmt => [
+                    leaf '$/',
+                    leaf '$fh'
+                ]
+            }
+        }
+    ]);
 };
 
 done_testing;

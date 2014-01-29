@@ -23,6 +23,7 @@ our @EXPORT = qw/
     if_stmt
     else_stmt
     control_stmt
+    do_stmt
     module
     reg_prefix
     block
@@ -226,6 +227,12 @@ sub reg_prefix(&) {
     my $property = get_property(@_);
     check_property($property, qw/expr/);
     return bless $property, 'Compiler::Parser::Node::RegPrefix';
+}
+
+sub do_stmt(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/stmt/);
+    return bless $property, 'Compiler::Parser::Node::DoStmt';
 }
 
 sub control_stmt($) {
