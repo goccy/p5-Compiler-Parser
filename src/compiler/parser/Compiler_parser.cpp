@@ -919,6 +919,34 @@ void Parser::parseExpr(ParseContext *pctx, Node *expr)
 	return (!node) ? pctx->pushNode(expr) : link(pctx, node, expr);
 }
 
+bool Parser::needsCompleteListForArray(ParseContext *pctx, BranchNode *branch, Node *node)
+{
+	TokenKind::Kind branch_kind = branch->tk->info.kind;
+	TokenType::Type left_type   = branch->left->tk->info.type;
+	ListNode *list = dynamic_cast<ListNode *>(node);
+	Token *tk = pctx->token();
+	if (list) return false;
+	if (tk->stype   != SyntaxType::Expr)  return false;
+	if (branch_kind != TokenKind::Assign) return false;
+	if ((left_type == TokenType::LocalArrayVar ||
+		 left_type == TokenType::ArrayVar) &&
+		tk->tks[0]->info.type == TokenType::LeftParenthesis && !list) return true;
+	return false;
+}
+
+bool Parser::needsCompleteListForExecutionCodeRef(ParseContext *pctx, BranchNode *branch, Node *node)
+{
+	TokenType::Type branch_type = branch->tk->info.type;
+	TokenType::Type left_type   = branch->left->tk->info.type;
+	ListNode *list = dynamic_cast<ListNode *>(node);
+	Token *tk = pctx->token();
+	if (list) return false;
+	if (tk->stype   != SyntaxType::Expr)  return false;
+	if (branch_type != TokenType::Pointer) return false;
+	if (tk->tks[0]->info.type == TokenType::LeftParenthesis && !list) return true;
+	return false;
+}
+
 void Parser::link(ParseContext *pctx, Node *from_node, Node *to_node)
 {
 	assert((from_node || to_node) && "link target is NULL");
@@ -932,6 +960,15 @@ void Parser::link(ParseContext *pctx, Node *from_node, Node *to_node)
 			} else {
 				pctx->pushNode(to_node);
 			}
+		} else if (needsCompleteListForArray(pctx, branch, to_node) ||
+				   needsCompleteListForExecutionCodeRef(pctx, branch, to_node)) {
+			Token *list_tk = new Token("()", to_node->tk->finfo);
+			list_tk->info.type = TokenType::LeftParenthesis;
+			list_tk->info.name = "LeftParenthesis";
+			list_tk->info.kind = TokenKind::Symbol;
+			ListNode *list = new ListNode(list_tk);
+			list->data = to_node;
+			branch->link(list);
 		} else {
 			branch->link(to_node);
 		}
@@ -975,14 +1012,11 @@ void Parser::parseSymbol(ParseContext *pctx, Token *tk)
 			pctx->pushNode(list);
 			for (; !pctx->end(); pctx->next()) {}
 		} else if (node->tk->info.type == Comma ||
-				   node->tk->info.type == Arrow ||
-				   node->tk->info.type == GlobalVar ||
-				   node->tk->info.type == Var) {
+				   node->tk->info.type == Arrow) {
 			tk->data = "()";
 			ListNode *list = new ListNode(tk);
 			list->data = node;
 			pctx->pushNode(list);
-			for (; !pctx->end(); pctx->next()) {}
 		}
 	} else if (tk->info.type == LeftBracket) {
 		Node *node = _parse(pctx->nextToken());

@@ -83,10 +83,12 @@ subtest 'parse Plack/MIME.pm' => sub {
                     },
                     right => branch { '->',
                         left => leaf '$fallback',
-                        right => function_call { 'lc',
-                            args => [
-                                leaf '$1',
-                            ],
+                        right => list { '()',
+                            data => function_call { 'lc',
+                                args => [
+                                    leaf '$1',
+                                ],
+                            },
                         },
                     },
                 },

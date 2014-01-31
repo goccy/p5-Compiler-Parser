@@ -6,7 +6,7 @@ use Compiler::Parser;
 use Compiler::Parser::AST::Renderer;
 use Test::Compiler::Parser;
 
-subtest 'parse /Users/masaaki.goshima/perl5/perlbrew/perls/perl-5.16.2/lib/site_perl/5.16.2/Plack/Request.pm' => sub {
+subtest 'parse Plack/Request.pm' => sub {
     my $script = do { local $/; <DATA> };
     my $tokens = Compiler::Lexer->new('')->tokenize($script);
     my $ast = Compiler::Parser->new->parse($tokens);
@@ -22,7 +22,15 @@ subtest 'parse /Users/masaaki.goshima/perl5/perlbrew/perls/perl-5.16.2/lib/site_
         },
         branch { '=',
             left => leaf '$VERSION',
-            right => leaf '1.0030',
+            right => leaf '1.0024',
+        },
+        branch { '=',
+            left => leaf '$VERSION',
+            right => function_call { 'eval',
+                args => [
+                    leaf '$VERSION',
+                ],
+            },
         },
         module { 'HTTP::Headers',
         },
@@ -65,9 +73,7 @@ subtest 'parse /Users/masaaki.goshima/perl5/perlbrew/perls/perl-5.16.2/lib/site_
                         right => branch { 'eq',
                             left => function_call { 'ref',
                                 args => [
-                                    list { '()',
-                                        data => leaf '$env',
-                                    },
+                                    leaf '$env',
                                 ],
                             },
                             right => leaf 'HASH',
@@ -933,9 +939,7 @@ subtest 'parse /Users/masaaki.goshima/perl5/perlbrew/perls/perl-5.16.2/lib/site_
                             list { '()',
                                 data => branch { ',',
                                     left => branch { ',',
-                                        left => list { '()',
-                                            data => leaf '$content',
-                                        },
+                                        left => leaf '$content',
                                         right => leaf '$cl',
                                     },
                                     right => leaf '0',
@@ -1392,9 +1396,7 @@ subtest 'parse /Users/masaaki.goshima/perl5/perlbrew/perls/perl-5.16.2/lib/site_
                         },
                         right => function_call { 'get_all',
                             args => [
-                                list { '()',
-                                    data => leaf '$key',
-                                },
+                                leaf '$key',
                             ],
                         },
                     },
@@ -1469,9 +1471,7 @@ subtest 'parse /Users/masaaki.goshima/perl5/perlbrew/perls/perl-5.16.2/lib/site_
                         },
                         right => function_call { 'get_all',
                             args => [
-                                list { '()',
-                                    data => leaf '$key',
-                                },
+                                leaf '$key',
                             ],
                         },
                     },
@@ -1926,9 +1926,7 @@ subtest 'parse /Users/masaaki.goshima/perl5/perlbrew/perls/perl-5.16.2/lib/site_
                                 left => leaf 'Stream::Buffered',
                                 right => function_call { 'new',
                                     args => [
-                                        list { '()',
-                                            data => leaf '$cl',
-                                        },
+                                        leaf '$cl',
                                     ],
                                 },
                             },
@@ -1940,9 +1938,7 @@ subtest 'parse /Users/masaaki.goshima/perl5/perlbrew/perls/perl-5.16.2/lib/site_
                     right => leaf '0',
                 },
                 while_stmt { 'while',
-                    expr => list { '()',
-                        data => leaf '$cl',
-                    },
+                    expr => leaf '$cl',
                     true_stmt => [
                         branch { '->',
                             left => leaf '$input',
@@ -1980,9 +1976,7 @@ subtest 'parse /Users/masaaki.goshima/perl5/perlbrew/perls/perl-5.16.2/lib/site_
                             left => leaf '$body',
                             right => function_call { 'add',
                                 args => [
-                                    list { '()',
-                                        data => leaf '$chunk',
-                                    },
+                                    leaf '$chunk',
                                 ],
                             },
                         },
@@ -1992,9 +1986,7 @@ subtest 'parse /Users/masaaki.goshima/perl5/perlbrew/perls/perl-5.16.2/lib/site_
                                 left => leaf '$buffer',
                                 right => function_call { 'print',
                                     args => [
-                                        list { '()',
-                                            data => leaf '$chunk',
-                                        },
+                                        leaf '$chunk',
                                     ],
                                 },
                             },
@@ -2021,9 +2013,7 @@ subtest 'parse /Users/masaaki.goshima/perl5/perlbrew/perls/perl-5.16.2/lib/site_
                     ],
                 },
                 if_stmt { 'if',
-                    expr => list { '()',
-                        data => leaf '$buffer',
-                    },
+                    expr => leaf '$buffer',
                     true_stmt => [
                         branch { '=',
                             left => branch { '->',
@@ -2161,9 +2151,7 @@ subtest 'parse /Users/masaaki.goshima/perl5/perlbrew/perls/perl-5.16.2/lib/site_
                                     left => leaf '$self',
                                     right => function_call { '_make_upload',
                                         args => [
-                                            list { '()',
-                                                data => leaf '$v',
-                                            },
+                                            leaf '$v',
                                         ],
                                     },
                                 },
@@ -2256,7 +2244,8 @@ package Plack::Request;
 use strict;
 use warnings;
 use 5.008_001;
-our $VERSION = '1.0030';
+our $VERSION = '1.0024';
+$VERSION = eval $VERSION;
 
 use HTTP::Headers;
 use Carp ();

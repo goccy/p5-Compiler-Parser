@@ -330,6 +330,8 @@ public:
 	bool isMissingSemicolon(Enum::Token::Type::Type prev_type, Enum::Token::Type::Type type, Tokens *tokens);
 	bool isMissingSemicolon(Tokens *tokens);
 	bool canGrouping(Token *tk, Token *next_tk);
+	bool needsCompleteListForArray(ParseContext *pctx, BranchNode *brancb, Node *node);
+	bool needsCompleteListForExecutionCodeRef(ParseContext *pctx, BranchNode *brancb, Node *node);
 	Token *replaceToStmt(Tokens *tokens, Token *cur_tk, size_t offset);
 	void parseStmt(ParseContext *pctx, Node *stmt);
 	void parseExpr(ParseContext *pctx, Node *expr);
@@ -373,7 +375,7 @@ public:
 	bool complete(Token *root, size_t current_idx);
 	bool isVariable(Token *tk);
 	bool isOperatorTarget(Token *tk);
-	bool isFunctionCall(Token *tk);
+	bool isFunctionCall(Token *prev_tk, Token *tk);
 	bool isBasicTerm(Token *tk, size_t current_idx);
 	bool isDereferenceTerm(Token *tk, size_t current_idx);
 	bool isRegexTerm(Token *tk, size_t current_idx);

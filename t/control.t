@@ -14,9 +14,7 @@ subtest 'break' => sub {
         cond => leaf '@array',
         itr  => leaf '$itr',
         true_stmt => if_stmt { 'if',
-            expr => list { '()',
-                data => leaf '$itr'
-            },
+            expr => leaf '$itr',
             true_stmt => control_stmt 'break'
         }
     });
@@ -30,9 +28,7 @@ subtest 'next' => sub {
         cond => leaf '@array',
         itr  => leaf '$itr',
         true_stmt => if_stmt { 'if',
-            expr => list { '()',
-                data => leaf '$itr'
-            },
+            expr => leaf '$itr',
             true_stmt => control_stmt 'next'
         }
     });
@@ -46,9 +42,7 @@ subtest 'last' => sub {
         cond => leaf '@array',
         itr  => leaf '$itr',
         true_stmt => if_stmt { 'if',
-            expr => list { '()',
-                data => leaf '$itr'
-            },
+            expr => leaf '$itr',
             true_stmt => control_stmt 'last'
         }
     });

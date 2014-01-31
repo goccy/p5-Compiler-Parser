@@ -142,9 +142,7 @@ subtest 'parse Plack/Component.pm' => sub {
                             left => leaf '$class',
                             right => function_call { 'ref',
                                 args => [
-                                    list { '()',
-                                        data => leaf '$self',
-                                    },
+                                    leaf '$self',
                                 ],
                             },
                         },
@@ -187,9 +185,7 @@ subtest 'parse Plack/Component.pm' => sub {
                                 left => branch { '||',
                                     left => function_call { 'ref',
                                         args => [
-                                            list { '()',
-                                                data => leaf '$self',
-                                            },
+                                            leaf '$self',
                                         ],
                                     },
                                     right => leaf '$self',

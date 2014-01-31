@@ -97,7 +97,6 @@ sub check_property {
 
 sub branch(&) {
     my $property = get_property(@_);
-    check_property($property, qw/left right/);
     return bless $property, 'Compiler::Parser::Node::Branch';
 }
 

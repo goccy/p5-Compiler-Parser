@@ -81,9 +81,13 @@ bool TermCompleter::isVariable(Token *tk)
 	return false;
 }
 
-bool TermCompleter::isFunctionCall(Token *tk)
+bool TermCompleter::isFunctionCall(Token *prev_tk, Token *tk)
 {
 	using namespace TokenType;
+	if (prev_tk && 
+		type(prev_tk) != UseDecl     &&
+		type(prev_tk) != RequireDecl &&
+		type(tk) == Namespace) return true;
 	if (type(tk) == Key    ||
 		type(tk) == Method ||
 		type(tk) == Call   ||
@@ -203,9 +207,10 @@ bool TermCompleter::isFunctionCallWithParenthesis(Token *tk, size_t current_idx)
 	if (tk->token_num <= 2) return false;
 	if (tk->token_num <= current_idx + 1) return false;
 	Token **tks = tk->tks;
+	Token *prev_tk    = (current_idx > 0) ? tks[current_idx - 1] : NULL;
 	Token *current_tk = tks[current_idx];
 	Token *next_tk    = tks[current_idx + 1];
-	if (isFunctionCall(current_tk) &&
+	if (isFunctionCall(prev_tk, current_tk) &&
 		next_tk->stype == SyntaxType::Expr &&
 		type(next_tk->tks[0]) == LeftParenthesis) return true;
 	return false;
