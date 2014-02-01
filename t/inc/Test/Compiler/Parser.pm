@@ -30,6 +30,7 @@ our @EXPORT = qw/
     regexp
     reg_replace
     three_term_operator
+    handle
 /;
 
 sub node_child_ok {
@@ -232,6 +233,11 @@ sub do_stmt(&) {
     my $property = get_property(@_);
     check_property($property, qw/stmt/);
     return bless $property, 'Compiler::Parser::Node::DoStmt';
+}
+
+sub handle(&) {
+    my $property = get_property(@_);
+    return bless $property, 'Compiler::Parser::Node::Handle';
 }
 
 sub control_stmt($) {

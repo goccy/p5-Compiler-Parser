@@ -298,6 +298,7 @@ public:
 	TokenFactory(void);
 	Token *makeExprToken(Token **base, size_t start_idx, size_t end_idx);
 	Token *makeTermToken(Token **base, size_t start_idx, size_t end_idx);
+	Token *makeListToken(Token *base);
 };
 
 class Parser {
@@ -332,6 +333,7 @@ public:
 	bool canGrouping(Token *tk, Token *next_tk);
 	bool needsCompleteListForArray(ParseContext *pctx, BranchNode *brancb, Node *node);
 	bool needsCompleteListForExecutionCodeRef(ParseContext *pctx, BranchNode *brancb, Node *node);
+	bool needsCompleteListForListDeclaration(ParseContext *pctx, BranchNode *brancb, Node *node);
 	Token *replaceToStmt(Tokens *tokens, Token *cur_tk, size_t offset);
 	void parseStmt(ParseContext *pctx, Node *stmt);
 	void parseExpr(ParseContext *pctx, Node *expr);
@@ -384,6 +386,7 @@ public:
 	bool isAnonymousFunctionTerm(Token *tk, size_t current_idx);
 	bool isCodeRefTerm(Token *tk, size_t current_idx);
 	bool isFunctionCallWithParenthesis(Token *tk, size_t current_idx);
+	bool isVariableDecl(Token *tk, size_t current_idx);
 };
 
 class ReturnCompleter : public SyntaxCompleter {

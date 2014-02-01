@@ -58,6 +58,9 @@ bool TermCompleter::complete(Token *root, size_t current_idx)
 		}
 		insertTerm(root, current_idx, 2);
 		return true;
+	} else if (isVariableDecl(root, current_idx)) {
+		insertTerm(root, current_idx, 2);
+		return true;
 	}
 	return false;
 }
@@ -213,5 +216,16 @@ bool TermCompleter::isFunctionCallWithParenthesis(Token *tk, size_t current_idx)
 	if (isFunctionCall(prev_tk, current_tk) &&
 		next_tk->stype == SyntaxType::Expr &&
 		type(next_tk->tks[0]) == LeftParenthesis) return true;
+	return false;
+}
+
+bool TermCompleter::isVariableDecl(Token *tk, size_t current_idx)
+{
+	using namespace TokenType;
+	if (tk->token_num <= 2) return false;
+	if (tk->token_num <= current_idx + 1) return false;
+	if ((type(tk->tks[current_idx]) == VarDecl ||
+		 type(tk->tks[current_idx]) == LocalVarDecl) &&
+		isVariable(tk->tks[current_idx + 1])) return true;
 	return false;
 }

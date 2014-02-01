@@ -226,6 +226,14 @@ RESTART:;
 					(next_tk->info.type == GlobalVar ||
 					 next_tk->info.type == Var ||
 					 next_tk->info.type == ArrayDereference)) {
+				} else if ((tk->info.type == Namespace ||
+							tk->info.type == Var ||
+							tk->info.type == GlobalVar ||
+							tk->info.type == ArrayDereference) &&
+						   (next_tk->info.type == GlobalVar ||
+							next_tk->info.type == Var ||
+							next_tk->info.type == ArrayDereference ||
+							next_tk->info.type == Namespace)) {
 				} else if (tk->info.type != Pointer && !isArrayOrHashExpr(start_idx, i, tks[i], next_tk) &&
 					!(next_tk->stype == SyntaxType::Term && next_tk->tks[0]->info.type == BuiltinFunc) &&
 					next_tk->info.type != Pointer) {
