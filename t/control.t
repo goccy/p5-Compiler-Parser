@@ -15,7 +15,7 @@ subtest 'break' => sub {
         itr  => leaf '$itr',
         true_stmt => if_stmt { 'if',
             expr => leaf '$itr',
-            true_stmt => control_stmt 'break'
+            true_stmt => control_stmt { 'break' }
         }
     });
 };
@@ -29,7 +29,7 @@ subtest 'next' => sub {
         itr  => leaf '$itr',
         true_stmt => if_stmt { 'if',
             expr => leaf '$itr',
-            true_stmt => control_stmt 'next'
+            true_stmt => control_stmt { 'next' }
         }
     });
 };
@@ -43,7 +43,7 @@ subtest 'last' => sub {
         itr  => leaf '$itr',
         true_stmt => if_stmt { 'if',
             expr => leaf '$itr',
-            true_stmt => control_stmt 'last'
+            true_stmt => control_stmt { 'last' }
         }
     });
 };

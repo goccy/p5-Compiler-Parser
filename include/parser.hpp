@@ -46,6 +46,14 @@ public:
 	void dump(size_t depth);
 };
 
+class CodeDereferenceNode : public Node {
+public:
+	Node *name;
+	Node *args;
+	CodeDereferenceNode(Token *tk);
+	void dump(size_t depth);
+};
+
 class ArrayNode : public Node {
 public:
 	Node *idx;
@@ -383,6 +391,7 @@ public:
 	bool isRegexTerm(Token *tk, size_t current_idx);
 	bool isRegexWithoutPrefixTerm(Token *tk, size_t current_idx);
 	bool isRegexReplaceTerm(Token *tk, size_t current_idx);
+	bool isHandleTerm(Token *tk, size_t current_idx);
 	bool isAnonymousFunctionTerm(Token *tk, size_t current_idx);
 	bool isCodeRefTerm(Token *tk, size_t current_idx);
 	bool isFunctionCallWithParenthesis(Token *tk, size_t current_idx);
@@ -462,6 +471,7 @@ public:
 	void templateEvaluatedFromLeft(Token *root, SyntaxCompleter *completer);
 	void templateEvaluatedFromRight(Token *root, SyntaxCompleter *completer);
 	bool isPointerChain(Token *tk);
+	bool notNeedsPointer(Token *tk);
 	bool isArrayOrHashExpr(size_t start_idx, size_t idx, Token *tk, Token *next_tk);
 	void complete(Token *root);
 	void completeTerm(Token *root);

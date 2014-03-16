@@ -44,6 +44,9 @@ bool TermCompleter::complete(Token *root, size_t current_idx)
 			insertTerm(root, current_idx, 6);
 		}
 		return true;
+	} else if (isHandleTerm(root, current_idx)) {
+		insertTerm(root, current_idx, 3);
+		return true;
 	} else if (isAnonymousFunctionTerm(root, current_idx)) {
 		insertTerm(root, current_idx, 2);
 		return true;
@@ -176,6 +179,19 @@ bool TermCompleter::isRegexReplaceTerm(Token *tk, size_t current_idx)
 		type(tks[current_idx + 3]) == RegMiddleDelim &&
 		type(tks[current_idx + 4]) == RegReplaceTo &&
 		type(tks[current_idx + 5]) == RegDelim) return true;
+	return false;
+}
+
+bool TermCompleter::isHandleTerm(Token *tk, size_t current_idx)
+{
+	/* <$fh> */
+	using namespace TokenType;
+	if (current_idx == 0) return false;
+	if (tk->token_num <= 2) return false;
+	if (tk->token_num <= current_idx + 2) return false;
+	if (type(tk->tks[current_idx]) == HandleDelim  &&
+		isOperatorTarget(tk->tks[current_idx + 1]) &&
+		type(tk->tks[current_idx + 2]) == HandleDelim) return true;
 	return false;
 }
 

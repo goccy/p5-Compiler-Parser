@@ -31,7 +31,7 @@ bool SingleTermOperatorCompleter::isSimpleSingleTermOperator(Token *tk, size_t c
 	if (tk->token_num <= 3) return false;
 	if (tk->token_num <= current_idx + 2) return false;
 	TokenType::Type type = type(tk->tks[current_idx]);
-	if ((type == Not || type == Not || type == Ref || type == BitNot) &&
+	if ((type == Not || type == AlphabetNot || type == Not || type == Ref || type == BitNot) &&
 		type(tk->tks[current_idx + 1]) != CallDecl) return true;
 	return false;
 }

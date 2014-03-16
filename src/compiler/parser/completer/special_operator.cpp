@@ -68,8 +68,10 @@ bool SpecialOperatorCompleter::isGlobExpr(Token *tk, size_t current_idx)
 	if (tk->token_num <= 2) return false;
 	Token *current_tk = tk->tks[current_idx];
 	Token *next_tk    = tk->tks[current_idx + 1];
-	if ((type(current_tk) == Glob) &&
-		(type(next_tk) == Key || next_tk->stype == SyntaxType::Expr)) return true;
+	if (type(current_tk) == Glob &&
+		(type(next_tk) == Key ||
+		 kind(next_tk) == TokenKind::Term ||
+		 next_tk->stype == SyntaxType::Expr)) return true;
 	if (current_idx != 0) return false;
 	if (type(current_tk) == Mul && type(next_tk) == Key) {
 		current_tk->info.type = Glob;

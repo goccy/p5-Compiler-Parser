@@ -299,7 +299,7 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 		TokenKind::Kind kind = t->info.kind;
 		switch (type) {
 		case LeftBracket: case LeftParenthesis:
-		case ArrayDereference: case HashDereference:
+		case ArrayDereference: case HashDereference: case CodeDereference:
 		case ScalarDereference: case ArraySizeDereference: {
 			if (pos + 1 == end_pos) Parser_exception("nothing end flagment", t->finfo.start_line_num);
 			pos++;
@@ -731,7 +731,7 @@ AST *Parser::parse(Tokens *tokens)
 		//dumpSyntax(root, 0);
 		Completer completer;
 		completer.complete(root);
-		//dumpSyntax(root, 0);
+		dumpSyntax(root, 0);
 		Node *last_stmt = _parse(root);
 		if (!last_stmt) Parser_exception("", 1);
 		return new AST(last_stmt->getRoot());
@@ -1005,11 +1005,19 @@ void Parser::parseHandle(ParseContext *pctx, Token *tk)
 {
 	HandleNode *handle = new HandleNode(tk);
 	Token *target_tk = pctx->nextToken();
-	assert(target_tk && "not declare handle's target");
-	handle->expr = new LeafNode(target_tk);
-	pctx->next();
-	FunctionCallNode *node = dynamic_cast<FunctionCallNode *>(pctx->lastNode());
-	return (!node) ? pctx->pushNode(handle) : node->setArgs(handle);
+	if (target_tk &&
+		(target_tk->info.type == TokenType::Arrow  ||
+		 target_tk->info.type == TokenType::Comma  ||
+		 target_tk->info.kind == TokenKind::Symbol ||
+		 target_tk->info.type == TokenType::SemiColon)) {
+		BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
+		return (!node) ? pctx->pushNode(handle) : node->link(handle);
+	} else {
+		handle->expr = new LeafNode(target_tk);
+		pctx->next();
+		FunctionCallNode *node = dynamic_cast<FunctionCallNode *>(pctx->lastNode());
+		return (!node) ? pctx->pushNode(handle) : node->setArgs(handle);
+	}
 }
 
 void Parser::parseSymbol(ParseContext *pctx, Token *tk)
@@ -1364,7 +1372,7 @@ void Parser::parseSingleTermOperator(ParseContext *pctx, Token *tk)
 	using namespace TokenType;
 	TokenType::Type type = tk->info.type;
 	SingleTermOperatorNode *op_node = NULL;
-	if ((type == Not || type == Not || type == Ref || type == Add || type == BitAnd ||
+	if ((type == Not || type == AlphabetNot || type == Not || type == Ref || type == Add || type == BitAnd ||
 		 type == ArraySize || type == Sub || type == CodeRef ||
 		 type == BitNot || type == Glob) ||
 		((type == Inc || type == Dec) && pctx->idx == 0)) {
@@ -1408,7 +1416,7 @@ bool Parser::isSingleTermOperator(ParseContext *pctx, Token *tk)
 {
 	using namespace TokenType;
 	TokenType::Type type = tk->info.type;
-	if (type == Not || type == Not || type == Ref || type == CodeRef || type == Inc || type == ArraySize || type == Glob ||
+	if (type == Not || type == AlphabetNot || type == Ref || type == CodeRef || type == Inc || type == ArraySize || type == Glob ||
 		type == Dec   || type == BitNot) return true;
 	if ((type == Add || type == Sub || type == BitAnd) && pctx->idx == 0) return true;
 	return false;
@@ -1470,7 +1478,8 @@ void Parser::parseFunction(ParseContext *pctx, Token *tk)
 	using namespace SyntaxType;
 	FunctionNode *f = new FunctionNode(tk);
 	Token *next_tk = pctx->nextToken();
-	if ((tk->info.type == TokenType::Function || tk->info.type == TokenType::Namespace) &&
+	if ((tk->info.type == TokenType::Function ||
+		 tk->info.type == TokenType::Namespace) &&
 		next_tk && next_tk->stype == Expr) {
 		/* sub name () {} */
 		Token *after_next_tk = pctx->token(tk, 2);
@@ -1548,15 +1557,15 @@ void Parser::parseFunctionCall(ParseContext *pctx, Token *tk)
 		parseIrregularFunction(pctx, tk);
 	} else {
 		FunctionCallNode *f = new FunctionCallNode(tk);
-		BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
-		return (!node) ? pctx->pushNode(f) : node->link(f);
+		Node *node = pctx->lastNode();
+		return (!node) ? pctx->pushNode(f) : link(pctx, node, f);
 	}
 }
 
 bool Parser::isIrregularFunction(ParseContext *pctx, Token *tk)
 {
 	if (tk->info.type == TokenType::Method) return false;
-	if (tk->data == "map" || tk->data == "grep") return true;
+	if (tk->data == "map" || tk->data == "grep" || tk->data == "sort") return true;
 	Token *next_tk = pctx->nextToken();
 	if (next_tk && next_tk->stype == SyntaxType::Expr &&
 		next_tk->tks[0]->info.type == TokenType::LeftBrace) return true;
@@ -1582,15 +1591,33 @@ void Parser::parseModifier(ParseContext *pctx, Token *tk)
 {
 	using namespace SyntaxType;
 	Token *next_tk = pctx->nextToken();
-	//assert(next_tk && "syntax error! near by dereference operator");
-	DereferenceNode *dref = new DereferenceNode(tk);
-	if (next_tk && (next_tk->stype == Expr || next_tk->stype == Term || next_tk->info.kind == TokenKind::Term)) {
-		dref->expr = _parse(next_tk);
+	Node *target;
+	if (tk->info.type == TokenType::CodeDereference) {
+		CodeDereferenceNode *dref = new CodeDereferenceNode(tk);
+		Node *name_node = _parse(pctx->token(tk, 1))->getRoot();
+		dref->name = name_node;
+		Token *right_brace = pctx->token(tk, 2);
+		if (!right_brace || right_brace->info.type != TokenType::RightBrace) {
+			Parser_exception("[ERROR]: syntax error. needs right brace for code dereference", tk->finfo.start_line_num);
+		}
+		Token *expr = pctx->token(tk, 3);
+		if (expr && expr->stype == Expr) {
+			dref->args = _parse(expr)->getRoot();
+			pctx->next();
+		}
+		pctx->next(2);
+		target = dref;
 	} else {
-		dref->expr = new LeafNode(tk);
+		DereferenceNode *dref = new DereferenceNode(tk);
+		if (next_tk && (next_tk->stype == Expr || next_tk->stype == Term || next_tk->info.kind == TokenKind::Term)) {
+			dref->expr = _parse(next_tk);
+		} else {
+			dref->expr = new LeafNode(tk);
+		}
+		target = dref;
 	}
 	Node *node = pctx->lastNode();
-	return (!node) ? pctx->pushNode(dref) : link(pctx, node, dref);
+	return (!node) ? pctx->pushNode(target) : link(pctx, node, target);
 }
 
 void Parser::parseTerm(ParseContext *pctx, Token *tk)
@@ -1598,7 +1625,14 @@ void Parser::parseTerm(ParseContext *pctx, Token *tk)
 	using namespace SyntaxType;
 	Token *next_tk = pctx->nextToken();
 	Node *term = NULL;
-	if (next_tk && next_tk->stype == Expr) {
+	if (tk->info.type == TokenType::Key && next_tk &&
+		(next_tk->info.kind == TokenKind::Term ||
+		 (next_tk->stype == Expr &&
+		  next_tk->tks[0]->info.type != TokenType::LeftParenthesis &&
+		  next_tk->tks[0]->info.type != TokenType::LeftBrace))) {
+		/* Key is judged Function */
+		term = new FunctionCallNode(tk);
+	} else if (next_tk && next_tk->stype == Expr) {
 		if (next_tk->tks[0]->info.type == TokenType::LeftBracket) {
 			term = new ArrayNode(tk);
 		} else if (next_tk->tks[0]->info.type == TokenType::LeftBrace) {

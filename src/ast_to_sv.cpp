@@ -107,6 +107,16 @@ static SV *node_to_sv(pTHX_ Node *node)
 		ret = bless(aTHX_ hash, "Compiler::Parser::Node::Dereference");
 		if (dref->expr) add_parent(hash, "expr", ret);
 		if (dref->next)  add_parent(hash, "next", ret);
+	} else if (TYPE_match(node, CodeDereferenceNode)) {
+		CodeDereferenceNode *dref = dynamic_cast<CodeDereferenceNode *>(node);
+		HV *hash = (HV*)new_Hash();
+		append_common_pointer(aTHX_ hash, dref);
+		add_key(hash, "name", dref->name);
+		add_key(hash, "args", dref->args);
+		ret = bless(aTHX_ hash, "Compiler::Parser::Node::CodeDereference");
+		if (dref->name) add_parent(hash, "name", ret);
+		if (dref->args) add_parent(hash, "args", ret);
+		if (dref->next)  add_parent(hash, "next", ret);
 	} else if (TYPE_match(node, FunctionNode)) {
 		FunctionNode *f = dynamic_cast<FunctionNode *>(node);
 		HV *hash = (HV*)new_Hash();

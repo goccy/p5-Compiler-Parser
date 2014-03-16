@@ -25,6 +25,7 @@ Completer::Completer(void)
 	named_unary_keywords->push_back("die");
 	named_unary_keywords->push_back("ref");
 	named_unary_keywords->push_back("shift");
+	named_unary_keywords->push_back("lc");
 	named_unary_keywords->push_back("write");
 	//named_unary_keywords->push_back("bless");
 	named_unary_keywords->push_back("sqrt");
@@ -78,9 +79,7 @@ void Completer::complete(Token *root)
 	completeFunctionListExpr(root);
 	recoveryFunctionArgument(root);
 	completeBlockArgsFunctionExpr(root);
-
 	completeReturn(root);
-
 	// not, and, or, xor
 	completeAlphabetBitOperatorExpr(root);
 }
@@ -191,6 +190,7 @@ bool Completer::isPointerChain(Token *tk)
 		(stype == SyntaxType::Expr &&
 		 (tk->tks[0]->info.type == LeftBrace ||
 		  tk->tks[0]->info.type == LeftBracket ||
+		  tk->tks[0]->info.type == ScalarDereference  ||
 		  tk->tks[0]->info.type == ArrayDereference)) ||
 		(stype == SyntaxType::Term && tk->tks[0]->info.kind != TokenKind::RegPrefix)) {
 		return true;
@@ -209,6 +209,22 @@ bool Completer::isArrayOrHashExpr(size_t start_idx, size_t idx, Token *tk, Token
 	return false;
 }
 
+bool Completer::notNeedsPointer(Token *tk)
+{
+	using namespace TokenType;
+	Type type = tk->info.type;
+	SyntaxType::Type stype = tk->stype;
+	if (type == Namespace         ||
+		type == GlobalVar         ||
+		type == Var               ||
+		type == ScalarDereference ||
+		type == ArrayDereference) return true;
+	if (stype == SyntaxType::Expr &&
+		(tk->tks[0]->info.type == ArrayDereference ||
+		 tk->tks[0]->info.type == ScalarDereference)) return true;
+	return false;
+}
+
 void Completer::insertPointerToken(Token *root)
 {
 	using namespace TokenType;
@@ -222,18 +238,8 @@ RESTART:;
 			while (i + 1 < tk_n && isPointerChain(tks[i+1])) {
 				tk = tks[i];
 				Token *next_tk = tks[i+1];
-				if (tk->stype == SyntaxType::Expr &&
-					(next_tk->info.type == GlobalVar ||
-					 next_tk->info.type == Var ||
-					 next_tk->info.type == ArrayDereference)) {
-				} else if ((tk->info.type == Namespace ||
-							tk->info.type == Var ||
-							tk->info.type == GlobalVar ||
-							tk->info.type == ArrayDereference) &&
-						   (next_tk->info.type == GlobalVar ||
-							next_tk->info.type == Var ||
-							next_tk->info.type == ArrayDereference ||
-							next_tk->info.type == Namespace)) {
+				if ((tk->stype == SyntaxType::Expr && notNeedsPointer(next_tk)) ||
+					(notNeedsPointer(tk) && notNeedsPointer(next_tk))) {
 				} else if (tk->info.type != Pointer && !isArrayOrHashExpr(start_idx, i, tks[i], next_tk) &&
 					!(next_tk->stype == SyntaxType::Term && next_tk->tks[0]->info.type == BuiltinFunc) &&
 					next_tk->info.type != Pointer) {
@@ -290,6 +296,7 @@ void Completer::completeHighPriorityDoubleOperatorExpr(Token *root)
 	completeExprFromLeft(root, TokenType::Div);
 	completeExprFromLeft(root, TokenType::Mod);
 	completeExprFromLeft(root, TokenType::StringMul);
+	completeExprFromLeft(root, TokenType::Slice);
 }
 
 void Completer::completeLowPriorityDoubleOperatorExpr(Token *root)
@@ -432,7 +439,9 @@ RESTART:;
 		Token *tk = tks[i];
 		if (tk_n > 2 && tk_n > i+1 &&
 			tk->stype == SyntaxType::Expr && isUnaryKeyword(tk->tks[tk->token_num-1]->data) &&
-			(tks[i+1]->stype == SyntaxType::Expr || tks[i+1]->stype == SyntaxType::Term || tks[i+1]->info.kind == TokenKind::Term)) {
+			(tks[i+1]->stype == SyntaxType::Expr ||
+			 tks[i+1]->stype == SyntaxType::Term ||
+			 tks[i+1]->info.kind == TokenKind::Term)) {
 			Token *expr = tks[i+1];
 			Token *function_argument = expr;
 			Token **new_tks = (Token **)realloc(tk->tks, (tk->token_num + 1) * PTR_SIZE);

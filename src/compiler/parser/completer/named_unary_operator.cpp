@@ -15,6 +15,7 @@ NamedUnaryOperatorCompleter::NamedUnaryOperatorCompleter(void)
 	named_unary_keywords->push_back("die");
 	named_unary_keywords->push_back("ref");
 	named_unary_keywords->push_back("shift");
+	named_unary_keywords->push_back("lc");
 	named_unary_keywords->push_back("write");
 	//named_unary_keywords->push_back("bless");
 	named_unary_keywords->push_back("sqrt");
@@ -53,6 +54,7 @@ bool NamedUnaryOperatorCompleter::isNamedUnaryFunction(Token *tk, size_t current
 	if (isUnaryOperator(tk, current_idx) &&
 		(next_tk->stype == SyntaxType::Expr ||
 		 next_tk->stype == SyntaxType::Term ||
+		 kind(next_tk)  == TokenKind::Function ||
 		 kind(next_tk)  == TokenKind::Term)) return true;
 	return false;
 }
@@ -64,7 +66,6 @@ bool NamedUnaryOperatorCompleter::isUnaryOperator(Token *tk, size_t current_idx)
 	Token *first_tk = tks[0];
 	Token *current_tk = tks[current_idx];
 	if (type(current_tk) == BuiltinFunc && isUnaryKeyword(current_tk->data)) return true;
-	if (first_tk && type(first_tk) != UseDecl && type(current_tk) == Namespace) return true;
 	return false;
 }
 

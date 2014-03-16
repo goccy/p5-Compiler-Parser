@@ -59,7 +59,9 @@ sub print_block_start_with_branch {
     my $node_name = decamelize($name);
     $node_name = 'Test::Compiler::Parser::package' if ($node_name eq 'package');
     $node_name = 'Test::Compiler::Parser::return'  if ($node_name eq 'return');
-    if ($node_name eq 'leaf') {
+    if ($node_name eq 'leaf' && $multiple) {
+        $body .= indent($depth) . sprintf("%s => [\n%s%s '%s',\n", $branch_name, indent($depth+1), $node_name, $node->data);
+    } elsif ($node_name eq 'leaf') {
         $body .= indent($depth) . sprintf("%s => %s '%s',\n", $branch_name, $node_name, $node->data);
     } elsif ($multiple) {
         $body .= indent($depth) . sprintf("%s => [\n%s%s { '%s',\n", $branch_name, indent($depth+1), $node_name, $node->data);
@@ -121,7 +123,7 @@ sub __generate {
         $body .= indent($depth) . "],\n";
     } else {
         print_node($branch_name, $node, $depth);
-     }
+    }
 }
 
 foreach my $filename (@ARGV) {

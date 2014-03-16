@@ -11,6 +11,7 @@ our @EXPORT = qw/
     leaf
     list
     dereference
+    code_dereference
     array
     array_ref
     hash
@@ -31,6 +32,7 @@ our @EXPORT = qw/
     reg_replace
     three_term_operator
     handle
+    handle_read
 /;
 
 sub node_child_ok {
@@ -117,6 +119,13 @@ sub dereference(&) {
     my $property = get_property(@_);
     check_property($property, qw/expr/);
     return bless $property, 'Compiler::Parser::Node::Dereference';
+}
+
+sub code_dereference(&) {
+    my $property = get_property(@_);
+    check_property($property, qw/name/);
+    check_property($property, qw/args/);
+    return bless $property, 'Compiler::Parser::Node::CodeDereference';
 }
 
 sub array(&) {
@@ -240,11 +249,14 @@ sub handle(&) {
     return bless $property, 'Compiler::Parser::Node::Handle';
 }
 
-sub control_stmt($) {
-    my $token_data = shift;
-    return bless {
-        token_data => $token_data
-    }, 'Compiler::Parser::Node::ControlStmt';
+sub handle_read(&) {
+    my $property = get_property(@_);
+    return bless $property, 'Compiler::Parser::Node::HandleRead';
+}
+
+sub control_stmt(&) {
+    my $property = get_property(@_);
+    return bless $property, 'Compiler::Parser::Node::ControlStmt';
 }
 
 1;

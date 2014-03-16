@@ -441,6 +441,19 @@ void DereferenceNode::dump(size_t depth)
 	Node_dump(expr, "expr  : ", depth+1);
 }
 
+CodeDereferenceNode::CodeDereferenceNode(Token *tk) : Node(tk)
+{
+	this->name = NULL;
+	this->args = NULL;
+}
+
+void CodeDereferenceNode::dump(size_t depth)
+{
+	fprintf(stdout, "%s(%s) |\n", tk->info.name, cstr(tk->data));
+	Node_dump(name, "name  : ", depth+1);
+	Node_dump(args, "args  : ", depth+1);
+}
+
 ThreeTermOperatorNode::ThreeTermOperatorNode(Token *tk) : Node(tk)
 {
 	this->cond = NULL;
