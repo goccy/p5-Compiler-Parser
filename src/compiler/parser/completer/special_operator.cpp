@@ -21,9 +21,6 @@ bool SpecialOperatorCompleter::complete(Token *tk, size_t current_idx)
 	} else if (isRightIncDecExpr(tk, current_idx)) {
 		insertExpr(tk, current_idx - 1, 2);
 		return true;
-	} else if (isGlobExpr(tk, current_idx)) {
-		insertExpr(tk, current_idx, 2);
-		return true;
 	}
 	return false;
 }
@@ -59,23 +56,5 @@ bool SpecialOperatorCompleter::isRightIncDecExpr(Token *tk, size_t current_idx)
 	if (isIncDecType(current_tk) &&
 		(kind(prev_tk) == TokenKind::Term ||
 		 prev_tk->stype == SyntaxType::Expr)) return true;
-	return false;
-}
-
-bool SpecialOperatorCompleter::isGlobExpr(Token *tk, size_t current_idx)
-{
-	using namespace TokenType;
-	if (tk->token_num <= 2) return false;
-	Token *current_tk = tk->tks[current_idx];
-	Token *next_tk    = tk->tks[current_idx + 1];
-	if (type(current_tk) == Glob &&
-		(type(next_tk) == Key ||
-		 kind(next_tk) == TokenKind::Term ||
-		 next_tk->stype == SyntaxType::Expr)) return true;
-	if (current_idx != 0) return false;
-	if (type(current_tk) == Mul && type(next_tk) == Key) {
-		current_tk->info.type = Glob;
-		return true;
-	}
 	return false;
 }

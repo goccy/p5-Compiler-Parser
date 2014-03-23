@@ -315,6 +315,7 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 			prev_type = (prev) ? prev->info.type : Undefined;
 			pos++;
 			Token *syntax = parseSyntax(t, tokens);
+			//end_pos = tokens->end();
 			if (isExpr(syntax, prev_syntax, prev_type, prev_kind)) {
 				syntax->stype = SyntaxType::Expr;
 			} else if (prev_type == FunctionDecl || prev_kind == TokenKind::Do) {
@@ -1013,7 +1014,7 @@ void Parser::parseHandle(ParseContext *pctx, Token *tk)
 		BranchNode *node = dynamic_cast<BranchNode *>(pctx->lastNode());
 		return (!node) ? pctx->pushNode(handle) : node->link(handle);
 	} else {
-		handle->expr = new LeafNode(target_tk);
+		if (target_tk) handle->expr = _parse(target_tk);
 		pctx->next();
 		FunctionCallNode *node = dynamic_cast<FunctionCallNode *>(pctx->lastNode());
 		return (!node) ? pctx->pushNode(handle) : node->setArgs(handle);
@@ -1135,6 +1136,11 @@ void Parser::parseRegReplace(ParseContext *pctx, Token *tk)
 		Parser_exception("replace expression", tk->finfo.start_line_num);
 	}
 	pctx->next();
+	Token *replace_to_or_middle_delim = pctx->nextToken();
+	if (replace_to_or_middle_delim->info.type == TokenType::RegMiddleDelim) {
+		//double middle delimiter
+		pctx->next();
+	}
 	Token *replace_to = pctx->nextToken();
 	if (!(replace_to && replace_to->info.type == TokenType::RegReplaceTo)) {
 		Parser_exception("replace expression", tk->finfo.start_line_num);
@@ -1245,7 +1251,8 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 		Node *expr_node = _parse(pctx->token(tk, 1))->getRoot();
 		cur_stype = SyntaxType::Value;
 		Token *block_or_stmt_end_node = pctx->token(tk, 2);
-		if (block_or_stmt_end_node->info.type != TokenType::SemiColon) {
+		if (block_or_stmt_end_node->info.type != TokenType::SemiColon &&
+			block_or_stmt_end_node->info.type != TokenType::RightBrace) {
 			Node *block_node = _parse(pctx->token(tk, 2));
 			if_stmt->true_stmt = (block_node) ? block_node->getRoot() : NULL;
 			_prev_stmt = if_stmt;
@@ -1565,7 +1572,8 @@ void Parser::parseFunctionCall(ParseContext *pctx, Token *tk)
 bool Parser::isIrregularFunction(ParseContext *pctx, Token *tk)
 {
 	if (tk->info.type == TokenType::Method) return false;
-	if (tk->data == "map" || tk->data == "grep" || tk->data == "sort") return true;
+	if (tk->data == "map"  || tk->data == "grep" ||
+		tk->data == "sort"/* || tk->data == "print"*/) return true;
 	Token *next_tk = pctx->nextToken();
 	if (next_tk && next_tk->stype == SyntaxType::Expr &&
 		next_tk->tks[0]->info.type == TokenType::LeftBrace) return true;

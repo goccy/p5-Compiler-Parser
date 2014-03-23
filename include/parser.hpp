@@ -391,11 +391,13 @@ public:
 	bool isRegexTerm(Token *tk, size_t current_idx);
 	bool isRegexWithoutPrefixTerm(Token *tk, size_t current_idx);
 	bool isRegexReplaceTerm(Token *tk, size_t current_idx);
+	bool isRegexReplaceTermWithDoubleMiddleDelim(Token *tk, size_t current_idx);
 	bool isHandleTerm(Token *tk, size_t current_idx);
 	bool isAnonymousFunctionTerm(Token *tk, size_t current_idx);
 	bool isCodeRefTerm(Token *tk, size_t current_idx);
 	bool isFunctionCallWithParenthesis(Token *tk, size_t current_idx);
 	bool isVariableDecl(Token *tk, size_t current_idx);
+	bool isGlobTerm(Token *tk, size_t current_idx);
 };
 
 class ReturnCompleter : public SyntaxCompleter {
@@ -417,6 +419,8 @@ public:
 	bool isStatementController(Token *tk, size_t current_idx);
 	bool isStatementControlKeyword(Token *tk);
 	bool isHandle(Token *tk, size_t current_idx);
+	bool isPrintFunction(Token *tk);
+	bool isFunctionCallWithoutParenthesis(Token *tk, size_t current_idx);
 };
 
 class SpecialOperatorCompleter : public SyntaxCompleter {
@@ -426,7 +430,6 @@ public:
 	bool isIncDecType(Token *tk);
 	bool isLeftIncDecExpr(Token *tk, size_t current_idx);
 	bool isRightIncDecExpr(Token *tk, size_t current_idx);
-	bool isGlobExpr(Token *tk, size_t current_idx);
 };
 
 class SingleTermOperatorCompleter : public SyntaxCompleter {

@@ -1400,9 +1400,8 @@ subtest 'parse Plack/Runner.pm' => sub {
                                         },
                                         function_call { 'print',
                                             args => [
-                                                handle { 'STDERR',
-                                                    expr => leaf '$name: Accepting connections at $proto://$host:$args->{port}/\n',
-                                                },
+                                                handle { 'STDERR' },
+                                                leaf '$name: Accepting connections at $proto://$host:$args->{port}/\n',
                                             ],
                                         },
                                     ],

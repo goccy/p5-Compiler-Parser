@@ -103,14 +103,14 @@ SCRIPT
                 data => leaf 'piyo'
             }
         },
-        single_term_operator { '*',
-            expr => branch { '->',
-                left  => hash_ref { '{}',
+        branch { '->',
+            left => single_term_operator { '*',
+                expr => hash_ref { '{}',
                     data => leaf '$fh'
                 },
-                right => hash_ref { '{}',
-                    data => leaf 'IO'
-                }
+            },
+            right => hash_ref { '{}',
+                data => leaf 'IO'
             }
         }
     ]);

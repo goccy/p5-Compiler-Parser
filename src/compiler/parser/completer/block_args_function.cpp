@@ -13,6 +13,7 @@ BlockArgsFunctionCompleter::BlockArgsFunctionCompleter(void)
 	block_args_function_keywords = new vector<string>();
 	block_args_function_keywords->push_back("map");
 	block_args_function_keywords->push_back("sort");
+	//block_args_function_keywords->push_back("print");
 	block_args_function_keywords->push_back("grep");
 }
 

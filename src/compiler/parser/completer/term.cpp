@@ -44,6 +44,13 @@ bool TermCompleter::complete(Token *root, size_t current_idx)
 			insertTerm(root, current_idx, 6);
 		}
 		return true;
+	} else if (isRegexReplaceTermWithDoubleMiddleDelim(root, current_idx)) {
+		if (root->token_num > current_idx + 7 && type(tks[current_idx+7]) == RegOpt) {
+			insertTerm(root, current_idx, 8);
+		} else {
+			insertTerm(root, current_idx, 7);
+		}
+		return true;
 	} else if (isHandleTerm(root, current_idx)) {
 		insertTerm(root, current_idx, 3);
 		return true;
@@ -63,6 +70,30 @@ bool TermCompleter::complete(Token *root, size_t current_idx)
 		return true;
 	} else if (isVariableDecl(root, current_idx)) {
 		insertTerm(root, current_idx, 2);
+		return true;
+	} else if (isGlobTerm(root, current_idx)) {
+		insertTerm(root, current_idx, 2);
+		return true;
+	}
+	return false;
+}
+
+bool TermCompleter::isGlobTerm(Token *tk, size_t current_idx)
+{
+	using namespace TokenType;
+	if (tk->token_num <= 2) return false;
+	Token *current_tk = tk->tks[current_idx];
+	Token *next_tk    = tk->tks[current_idx + 1];
+	if (type(current_tk) == Glob &&
+		(type(next_tk) == Key ||
+		 type(next_tk) == STDIN  ||
+		 type(next_tk) == STDOUT ||
+		 type(next_tk) == STDERR ||
+		 kind(next_tk) == TokenKind::Term ||
+		 next_tk->stype == SyntaxType::Expr)) return true;
+	if (current_idx != 0) return false;
+	if (type(current_tk) == Mul && type(next_tk) == Key) {
+		current_tk->info.type = Glob;
 		return true;
 	}
 	return false;
@@ -167,7 +198,7 @@ bool TermCompleter::isRegexWithoutPrefixTerm(Token *tk, size_t current_idx)
 
 bool TermCompleter::isRegexReplaceTerm(Token *tk, size_t current_idx)
 {
-	/* s{ ... }{ ... } */
+	/* s/ ... / ... / */
 	using namespace TokenType;
 	if (current_idx == 0)   return false;
 	if (tk->token_num <= 6) return false;
@@ -179,6 +210,24 @@ bool TermCompleter::isRegexReplaceTerm(Token *tk, size_t current_idx)
 		type(tks[current_idx + 3]) == RegMiddleDelim &&
 		type(tks[current_idx + 4]) == RegReplaceTo &&
 		type(tks[current_idx + 5]) == RegDelim) return true;
+	return false;
+}
+
+bool TermCompleter::isRegexReplaceTermWithDoubleMiddleDelim(Token *tk, size_t current_idx)
+{
+	/* s{ ... }{ ... } */
+	using namespace TokenType;
+	if (current_idx == 0)   return false;
+	if (tk->token_num <= 7) return false;
+	if (tk->token_num <= current_idx + 6) return false;
+	Token **tks = tk->tks;
+	if (kind(tks[current_idx])     == TokenKind::RegReplacePrefix &&
+		type(tks[current_idx + 1]) == RegDelim &&
+		type(tks[current_idx + 2]) == RegReplaceFrom &&
+		type(tks[current_idx + 3]) == RegMiddleDelim &&
+		type(tks[current_idx + 4]) == RegMiddleDelim &&
+		type(tks[current_idx + 5]) == RegReplaceTo &&
+		type(tks[current_idx + 6]) == RegDelim) return true;
 	return false;
 }
 

@@ -22,6 +22,8 @@ Completer::Completer(void)
 {
 	named_unary_keywords = new vector<string>();
 	named_unary_keywords->push_back("defined");
+	named_unary_keywords->push_back("exists");
+	named_unary_keywords->push_back("length");
 	named_unary_keywords->push_back("die");
 	named_unary_keywords->push_back("ref");
 	named_unary_keywords->push_back("shift");
@@ -218,6 +220,8 @@ bool Completer::notNeedsPointer(Token *tk)
 		type == GlobalVar         ||
 		type == Var               ||
 		type == ScalarDereference ||
+		type == Comma             ||
+		type == Arrow             ||
 		type == ArrayDereference) return true;
 	if (stype == SyntaxType::Expr &&
 		(tk->tks[0]->info.type == ArrayDereference ||
@@ -394,8 +398,11 @@ RESTART:;
 			tk->info.type == TokenType::BuiltinFunc &&
 			((tks[i+1]->stype == SyntaxType::Expr &&
 			  tks[i+1]->tks[0]->info.type != TokenType::LeftBrace) ||
-			 tks[i+1]->info.type == ShortHashDereference ||
-			 tks[i+1]->info.type == ShortArrayDereference ||
+			 tks[i+1]->info.type == STDIN  ||
+			 tks[i+1]->info.type == STDOUT ||
+			 tks[i+1]->info.type == STDERR ||
+			 tks[i+1]->info.type == ShortHashDereference   ||
+			 tks[i+1]->info.type == ShortArrayDereference  ||
 			 tks[i+1]->info.type == ShortScalarDereference ||
 			 tks[i+1]->stype     == SyntaxType::Term ||
 			 tks[i+1]->info.kind == TokenKind::Term)) {
