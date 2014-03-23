@@ -333,6 +333,7 @@ public:
 	Node *_parse(Token *root);
 	void link(ParseContext *pctx, Node *from, Node *to);
 	bool isForeach(ParseContext *pctx, Token *tk);
+	bool isPostPositionCase(Token *tk);
 	bool isForStmtPattern(Token *tk, Token *expr);
 	bool isSingleTermOperator(ParseContext *pctx, Token *tk);
 	bool isIrregularFunction(ParseContext *pctx, Token *tk);

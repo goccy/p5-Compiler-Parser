@@ -42,6 +42,7 @@ bool SpecialOperatorCompleter::isLeftIncDecExpr(Token *tk, size_t current_idx)
 	Token *next_tk    = tks[current_idx + 1];
 	if (isIncDecType(current_tk) &&
 		(kind(next_tk) == TokenKind::Term ||
+		 type(next_tk) == ShortScalarDereference ||
 		 next_tk->stype == SyntaxType::Expr)) return true;
 	return false;
 }
@@ -55,6 +56,7 @@ bool SpecialOperatorCompleter::isRightIncDecExpr(Token *tk, size_t current_idx)
 	Token *prev_tk    = tk->tks[current_idx - 1];
 	if (isIncDecType(current_tk) &&
 		(kind(prev_tk) == TokenKind::Term ||
+		 type(prev_tk) == ShortScalarDereference ||
 		 prev_tk->stype == SyntaxType::Expr)) return true;
 	return false;
 }

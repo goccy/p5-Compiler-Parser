@@ -123,6 +123,8 @@ void Parser::grouping(Tokens *tokens)
 		Token *tk = ITER_CAST(Token *, pos);
 		if (!tk) break;
 		switch (tk->info.type) {
+		case NamespaceResolver:
+			ns = "main";
 		case Var: case GlobalVar: case GlobalHashVar:
 		case Namespace: case Class: case CORE: {
 			Token *ns_token = tk;
@@ -140,6 +142,11 @@ void Parser::grouping(Tokens *tokens)
 			pos -= move_count;
 			ns_token->data = ns;
 			ns_token->info.has_warnings = true;
+			if (ns_token->info.type == NamespaceResolver) {
+				ns_token->info.type = Namespace;
+				ns_token->info.kind = TokenKind::Namespace;
+				ns_token->info.data = "Namespace";
+			}
 			ns = "";
 			tokens->erase(start_pos, end_pos);
 			break;
@@ -1227,6 +1234,13 @@ void Parser::parseControlStmt(ParseContext *pctx, Token *tk)
 	pctx->pushNode(new ControlStmtNode(tk));
 }
 
+bool Parser::isPostPositionCase(Token *tk)
+{
+	using namespace TokenType;
+	return (tk->info.type == TokenType::SemiColon ||
+			tk->info.type == TokenType::RightBrace) ? true : false;
+}
+
 void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 {
 	using namespace TokenType;
@@ -1322,21 +1336,45 @@ void Parser::parseSpecificStmt(ParseContext *pctx, Token *tk)
 	}
 	case TokenType::ForeachStmt: {
 		ForeachStmtNode *foreach_stmt = new ForeachStmtNode(tk);
-		Token *next_tk = pctx->nextToken();
-		size_t idx = 1;
-		Node *itr = (next_tk->stype == SyntaxType::Term &&
-					 next_tk->tks[0]->info.type == TokenType::VarDecl) ?
-			new LeafNode(next_tk->tks[1]) : (next_tk->info.type == TokenType::GlobalVar) ?
-			new LeafNode(pctx->token(tk, idx)) : NULL;
-		if (!itr) --idx;
-		Node *expr_node = _parse(pctx->token(tk, ++idx));
-		foreach_stmt->itr = itr;
-		foreach_stmt->cond = expr_node->getRoot();
-		cur_stype = SyntaxType::Value;
-		Node *block_stmt_node = _parse(pctx->token(tk, ++idx));
-		foreach_stmt->true_stmt = block_stmt_node->getRoot();
-		pctx->pushNode(foreach_stmt);
-		pctx->next(idx);
+		if (isPostPositionCase(pctx->token(tk, 2))) {
+			assert(pctx->nodes->size() == 1 && "syntax error! near by postposition for(each) statement");
+			Node *cond = _parse(pctx->token(tk, 1))->getRoot();
+			foreach_stmt->cond = cond;
+			if (pctx->nodes->size() == 1 && pctx->returnToken) {
+				ReturnNode *ret = new ReturnNode(pctx->returnToken);
+				Nodes *nodes = pctx->nodes;
+				nodes->insert(nodes->begin(), ret);
+				pctx->returnToken = NULL;
+			}
+			Node *true_stmt_node = pctx->nodes->at(0);
+			if (pctx->returnToken) {
+				ReturnNode *ret = new ReturnNode(pctx->returnToken);
+				ret->body = true_stmt_node;
+				foreach_stmt->true_stmt = ret;
+				pctx->returnToken = NULL;
+			} else {
+				foreach_stmt->true_stmt = true_stmt_node;
+			}
+			pctx->nodes->clear();
+			pctx->pushNode(foreach_stmt);
+			pctx->next(2);
+		} else {
+			Token *next_tk = pctx->nextToken();
+			size_t idx = 1;
+			Node *itr = (next_tk->stype == SyntaxType::Term &&
+						 next_tk->tks[0]->info.type == TokenType::VarDecl) ?
+				new LeafNode(next_tk->tks[1]) : (next_tk->info.type == TokenType::GlobalVar) ?
+				new LeafNode(pctx->token(tk, idx)) : NULL;
+			if (!itr) --idx;
+			Node *expr_node = _parse(pctx->token(tk, ++idx));
+			foreach_stmt->itr = itr;
+			foreach_stmt->cond = expr_node->getRoot();
+			cur_stype = SyntaxType::Value;
+			Node *block_stmt_node = _parse(pctx->token(tk, ++idx));
+			foreach_stmt->true_stmt = block_stmt_node->getRoot();
+			pctx->pushNode(foreach_stmt);
+			pctx->next(idx);
+		}
 		break;
 	}
 	case TokenType::UntilStmt: case TokenType::WhileStmt: {

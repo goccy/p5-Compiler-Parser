@@ -13,6 +13,7 @@ NamedUnaryOperatorCompleter::NamedUnaryOperatorCompleter(void)
 	named_unary_keywords = new vector<string>();
 	named_unary_keywords->push_back("defined");
 	named_unary_keywords->push_back("exists");
+	named_unary_keywords->push_back("delete");
 	named_unary_keywords->push_back("length");
 	named_unary_keywords->push_back("die");
 	named_unary_keywords->push_back("ref");
