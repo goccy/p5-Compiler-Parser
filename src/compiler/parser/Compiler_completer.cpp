@@ -53,16 +53,6 @@ void Completer::complete(Token *root)
 	completeAlphabetBitOperatorExpr(root);
 }
 
-void Completer::insertExpr(Token *tk, int idx, size_t grouping_num)
-{
-	TokenFactory token_factory;
-	TokenManager token_manager;
-	Token **tks = tk->tks;
-	size_t end_idx = idx + grouping_num;
-	tks[idx] = token_factory.makeExprToken(tks, idx, grouping_num);
-	token_manager.closeToken(tk, idx + 1, end_idx, grouping_num);
-}
-
 void Completer::templateEvaluatedFromLeft(Token *root, SyntaxCompleter *completer)
 {
 RESTART:;
@@ -89,60 +79,6 @@ RESTART:;
 	}
 }
 
-void Completer::completeExprFromLeft(Token *root, TokenType::Type type)
-{
-	using namespace TokenType;
-	Token **tks = root->tks;
-	size_t tk_n = root->token_num;
-	TokenFactory token_factory;
-RESTART:;
-	for (size_t i = 0; i < tk_n; i++) {
-		if (tk_n > 3 && tk_n > i+2 && tks[i+1]->info.type == type) {
-			insertExpr(root, i, 3);
-			tk_n -= 2;
-			goto RESTART;
-		}
-		if (tks[i]->token_num > 0) {
-			completeExprFromLeft(tks[i], type);
-		}
-	}
-}
-
-void Completer::completeExprFromRight(Token *root, TokenType::Type type)
-{
-	using namespace TokenType;
-	Token **tks = root->tks;
-	size_t tk_n = root->token_num;
-RESTART:;
-	for (int i = tk_n - 1; i >= 0; i--) {
-		if (tk_n > 3 && i-2 >= 0 && tks[i-1]->info.type == type) {
-			insertExpr(root, i - 2, 3);
-			tk_n -= 2;
-			goto RESTART;
-		}
-		if (tks[i]->token_num > 0) {
-			completeExprFromRight(tks[i], type);
-		}
-	}
-}
-
-void Completer::completeExprFromRight(Token *root, TokenKind::Kind kind)
-{
-	Token **tks = root->tks;
-	size_t tk_n = root->token_num;
-RESTART:;
-	for (int i = tk_n - 1; i >= 0; i--) {
-		if (tk_n > 3 && i-2 >= 0 && tks[i-1]->info.kind == kind) {
-			insertExpr(root, i - 2, 3);
-			tk_n -= 2;
-			goto RESTART;
-		}
-		if (tks[i]->token_num > 0) {
-			completeExprFromRight(tks[i], kind);
-		}
-	}
-}
-
 void Completer::completePointerExpr(Token *root)
 {
 	PointerCompleter completer;
@@ -164,41 +100,38 @@ void Completer::completeIncDecGlobExpr(Token *root)
 
 void Completer::completePowerExpr(Token *root)
 {
-	completeExprFromRight(root, TokenType::Exp);
+	PowerCompleter completer;
+	templateEvaluatedFromRight(root, &completer);
 }
 
 void Completer::completeSingleTermOperatorExpr(Token *root)
 {
-	// !, ~, \, +, -
 	SingleTermOperatorCompleter completer;
 	templateEvaluatedFromRight(root, &completer);
 }
 
 void Completer::completeRegexpMatchExpr(Token *root)
 {
-	completeExprFromLeft(root, TokenType::RegOK);
-	completeExprFromLeft(root, TokenType::RegNot);
+	RegexpMatchCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
+
 void Completer::completeHighPriorityDoubleOperatorExpr(Token *root)
 {
-	completeExprFromLeft(root, TokenType::Mul);
-	completeExprFromLeft(root, TokenType::Div);
-	completeExprFromLeft(root, TokenType::Mod);
-	completeExprFromLeft(root, TokenType::StringMul);
-	completeExprFromLeft(root, TokenType::Slice);
+	HighPriorityDoubleOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completeLowPriorityDoubleOperatorExpr(Token *root)
 {
-	completeExprFromLeft(root, TokenType::Add);
-	completeExprFromLeft(root, TokenType::Sub);
-	completeExprFromLeft(root, TokenType::StringAdd);
+	LowPriorityDoubleOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completeShiftOperatorExpr(Token *root)
 {
-	completeExprFromLeft(root, TokenType::LeftShift);
-	completeExprFromLeft(root, TokenType::RightShift);
+	ShiftCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completeNamedUnaryOperators(Token *root)
@@ -210,32 +143,20 @@ void Completer::completeNamedUnaryOperators(Token *root)
 
 void Completer::completeHighPriorityCompareOperatorExpr(Token *root)
 {
-	completeExprFromLeft(root, TokenType::Greater);
-	completeExprFromLeft(root, TokenType::Less);
-	completeExprFromLeft(root, TokenType::GreaterEqual);
-	completeExprFromLeft(root, TokenType::LessEqual);
-	completeExprFromLeft(root, TokenType::StringGreater);
-	completeExprFromLeft(root, TokenType::StringLess);
-	completeExprFromLeft(root, TokenType::StringGreaterEqual);
-	completeExprFromLeft(root, TokenType::StringLessEqual);
+	HighPriorityCompareOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completeLowPriorityCompareOperatorExpr(Token *root)
 {
-	completeExprFromLeft(root, TokenType::EqualEqual);
-	completeExprFromLeft(root, TokenType::NotEqual);
-	completeExprFromLeft(root, TokenType::Compare);
-	completeExprFromLeft(root, TokenType::StringEqual);
-	completeExprFromLeft(root, TokenType::StringNotEqual);
-	completeExprFromLeft(root, TokenType::StringCompare);
-	//completeExprFromLeft(root, TokenType::PolymorphicCompare);
+	LowPriorityCompareOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completeBitOperatorExpr(Token *root)
 {
-	completeExprFromLeft(root, TokenType::BitAnd);
-	completeExprFromLeft(root, TokenType::BitOr);
-	completeExprFromLeft(root, TokenType::BitNot);
+	BitOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completeThreeTermOperatorExpr(Token *root)
@@ -246,19 +167,24 @@ void Completer::completeThreeTermOperatorExpr(Token *root)
 
 void Completer::completeAndOrOperatorExpr(Token *root)
 {
-	completeExprFromLeft(root, TokenType::And);
-	completeExprFromLeft(root, TokenType::Or);
+	AndOperatorCompleter and_completer;
+	templateEvaluatedFromLeft(root, &and_completer);
+	OrOperatorCompleter or_completer;
+	templateEvaluatedFromLeft(root, &or_completer);
 }
 
 void Completer::completeAssignExpr(Token *root)
 {
-	completeExprFromRight(root, TokenKind::Assign);
+	AssignCompleter completer;
+	templateEvaluatedFromRight(root, &completer);
 }
 
 void Completer::completeCommaArrowExpr(Token *root)
 {
-	completeExprFromLeft(root, TokenType::Arrow);
-	completeExprFromLeft(root, TokenType::Comma);
+	ArrowCompleter arrow_completer;
+	templateEvaluatedFromLeft(root, &arrow_completer);
+	CommaCompleter comma_completer;
+	templateEvaluatedFromLeft(root, &comma_completer);
 }
 
 void Completer::completeFunctionListExpr(Token *root)
@@ -270,10 +196,8 @@ void Completer::completeFunctionListExpr(Token *root)
 
 void Completer::completeAlphabetBitOperatorExpr(Token *root)
 {
-	completeExprFromRight(root, TokenType::Not);
-	completeExprFromLeft(root, TokenType::AlphabetAnd);
-	completeExprFromLeft(root, TokenType::AlphabetOr);
-	completeExprFromLeft(root, TokenType::AlphabetXOr);
+	AlphabetBitOperatorCompleter completer;
+	templateEvaluatedFromLeft(root, &completer);
 }
 
 void Completer::completeTerm(Token *root)

@@ -3,7 +3,7 @@ use strict;
 use warnings FATAL => 'all';
 use 5.008005;
 use base 'Module::Build::XSUtil';
-use constant DEBUG => 1;
+use constant DEBUG => 0;
 
 sub new {
     my ( $class, %args ) = @_;

@@ -461,6 +461,118 @@ public:
 	bool isRightIncDecExpr(Token *tk, size_t current_idx);
 };
 
+class PowerCompleter : public SyntaxCompleter {
+public:
+	PowerCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isPower(Token *tk, int current_idx);
+};
+
+class RegexpMatchCompleter : public SyntaxCompleter {
+public:
+	RegexpMatchCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isRegexpMatch(Token *tk, int current_idx);
+};
+
+class HighPriorityDoubleOperatorCompleter : public SyntaxCompleter {
+public:
+	HighPriorityDoubleOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isHighPriorityDoubleOperator(Token *tk, size_t current_idx);
+};
+
+class LowPriorityDoubleOperatorCompleter : public SyntaxCompleter {
+public:
+	LowPriorityDoubleOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isLowPriorityDoubleOperator(Token *tk, size_t current_idx);
+};
+
+class ShiftCompleter : public SyntaxCompleter {
+public:
+	ShiftCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isShiftOperator(Token *tk, size_t current_idx);
+};
+
+class HighPriorityCompareOperatorCompleter : public SyntaxCompleter {
+public:
+	HighPriorityCompareOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isHighPriorityCompareOperator(Token *tk, size_t current_idx);
+};
+
+class LowPriorityCompareOperatorCompleter : public SyntaxCompleter {
+public:
+	LowPriorityCompareOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isLowPriorityCompareOperator(Token *tk, size_t current_idx);
+};
+
+class BitOperatorCompleter : public SyntaxCompleter {
+public:
+	BitOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isBitOperator(Token *tk, size_t current_idx);
+};
+
+class AndOperatorCompleter : public SyntaxCompleter {
+public:
+	AndOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isAndOperator(Token *tk, size_t current_idx);
+};
+
+class OrOperatorCompleter : public SyntaxCompleter {
+public:
+	OrOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isOrOperator(Token *tk, size_t current_idx);
+};
+
+class AssignCompleter : public SyntaxCompleter {
+public:
+	AssignCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isAssign(Token *tk, int current_idx);
+};
+
+class ArrowCompleter : public SyntaxCompleter {
+public:
+	ArrowCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isArrow(Token *tk, size_t current_idx);
+};
+
+class CommaCompleter : public SyntaxCompleter {
+public:
+	CommaCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isComma(Token *tk, size_t current_idx);
+};
+
+class AlphabetBitOperatorCompleter : public SyntaxCompleter {
+public:
+	AlphabetBitOperatorCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+private:
+	bool isAlphabetBitOperator(Token *tk, size_t current_idx);
+};
+
 class SingleTermOperatorCompleter : public SyntaxCompleter {
 public:
 	SingleTermOperatorCompleter(void);
@@ -509,12 +621,6 @@ public:
 	void templateEvaluatedFromRight(Token *root, SyntaxCompleter *completer);
 	void complete(Token *root);
 	void completeTerm(Token *root);
-	void insertExpr(Token *syntax, int idx, size_t grouping_num);
-	void completeExprFromLeft(Token *root, Enum::Token::Type::Type type);
-	void completeExprFromRight(Token *root, Enum::Token::Type::Type type);
-	void completeExprFromRight(Token *root, Enum::Token::Kind::Kind kind);
-	void completeWithoutPointerChain(Token *root);
-	void insertPointerToken(Token *root);
 	void completePointerExpr(Token *root);
 	void completeBlockArgsFunctionExpr(Token *root);
 	void completeIncDecGlobExpr(Token *root);
