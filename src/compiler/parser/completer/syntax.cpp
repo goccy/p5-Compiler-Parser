@@ -29,3 +29,14 @@ bool SyntaxCompleter::complete(Token *, size_t)
 {
 	return false;
 }
+
+SyntaxRecoverer::SyntaxRecoverer(void)
+{
+
+}
+
+bool SyntaxRecoverer::recovery(Token *, size_t)
+{
+	return false;
+}
+

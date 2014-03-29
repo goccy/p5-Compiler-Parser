@@ -39,3 +39,12 @@ Token *TokenFactory::makeListToken(Token *tk)
 	ret->info.kind = TokenKind::Symbol;
 	return ret;
 }
+
+Token *TokenFactory::makePointerToken(Token *tk)
+{
+	Token *ret = new Token("->", tk->finfo);
+	ret->info.type = TokenType::Pointer;
+	ret->info.name = "Pointer";
+	ret->info.kind = TokenKind::Operator;
+	return ret;
+}

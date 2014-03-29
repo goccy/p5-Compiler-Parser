@@ -307,6 +307,7 @@ public:
 	Token *makeExprToken(Token **base, size_t start_idx, size_t end_idx);
 	Token *makeTermToken(Token **base, size_t start_idx, size_t end_idx);
 	Token *makeListToken(Token *base);
+	Token *makePointerToken(Token *base);
 };
 
 class Parser {
@@ -380,6 +381,12 @@ public:
 	virtual bool complete(Token *root, size_t current_idx);
 };
 
+class SyntaxRecoverer {
+public:
+	SyntaxRecoverer(void);
+	virtual bool recovery(Token *root, size_t current_idx);
+};
+
 class TermCompleter : public SyntaxCompleter {
 public:
 	TermCompleter(void);
@@ -401,6 +408,23 @@ public:
 	bool isGlobTerm(Token *tk, size_t current_idx);
 };
 
+class PointerCompleter : public SyntaxCompleter {
+public:
+	PointerCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	void insertPointerToken(Token *root);
+private:
+	bool isPointer(Token *tk, size_t current_idx);
+	bool isPointerChainElement(Token *tk);
+	bool isPointerChainElementOfExpr(Token *tk);
+	bool isPointerChainElementOfTerm(Token *tk);
+	size_t _insertPointerToken(Token *tk, size_t current_idx);
+	bool canContinuousPointerChain(Token *tk, Token *next_tk);
+	bool notContinuousPointerChainElement(Token *tk);
+	bool notContinuousPointerChainElementOfExpr(Token *tk);
+	bool isArrayOrHashExpr(Token *tk, Token *next_tk);
+};
+
 class ReturnCompleter : public SyntaxCompleter {
 public:
 	ReturnCompleter(void);
@@ -409,11 +433,13 @@ public:
 	bool isReturnTerm(Token *tk, size_t current_idx);
 };
 
-class NamedUnaryOperatorCompleter : public SyntaxCompleter {
+class NamedUnaryOperatorCompleter : public SyntaxCompleter, public SyntaxRecoverer {
 public:
 	std::vector<std::string> *named_unary_keywords;
 	NamedUnaryOperatorCompleter(void);
 	bool complete(Token *root, size_t current_idx);
+	bool recovery(Token *tk, size_t current_idx);
+private:
 	bool isNamedUnaryFunction(Token *tk, size_t current_idx);
 	bool isUnaryOperator(Token *tk, size_t current_idx);
 	bool isUnaryKeyword(std::string target);
@@ -422,6 +448,8 @@ public:
 	bool isHandle(Token *tk, size_t current_idx);
 	bool isPrintFunction(Token *tk);
 	bool isFunctionCallWithoutParenthesis(Token *tk, size_t current_idx);
+	bool shouldRecovery(Token *tk, size_t current_idx);
+	void recoveryArgument(Token *tk, size_t current_idx);
 };
 
 class SpecialOperatorCompleter : public SyntaxCompleter {
@@ -449,6 +477,19 @@ public:
 	bool isThreeTermOperator(Token *tk, size_t current_idx);
 };
 
+class FunctionListCompleter : public SyntaxCompleter, public SyntaxRecoverer {
+public:
+	FunctionListCompleter(void);
+	bool complete(Token *root, size_t current_idx);
+	bool recovery(Token *root, size_t current_idx);
+private:
+	bool isFunctionList(Token *tk, size_t current_idx);
+	bool shouldRecovery(Token *tk, size_t current_idx);
+	bool shouldRecoveryBaseExpr(Token *tk, Token *next_tk);
+	bool shouldRecoveryBaseTerm(Token *tk, Token *next_tk);
+	void recoveryArgument(Token *tk, size_t current_idx);
+};
+
 class BlockArgsFunctionCompleter : public SyntaxCompleter {
 public:
 	std::vector<std::string> *block_args_function_keywords;
@@ -460,23 +501,12 @@ public:
 	bool isBlockArgsFunctionKeyword(std::string target);
 };
 
-class PointerCompleter : public SyntaxCompleter {
-public:
-	PointerCompleter(void);
-	bool complete(Token *root, size_t current_idx);
-};
-
 class Completer {
 public:
-	std::vector<std::string> *named_unary_keywords;
 
 	Completer(void);
-	bool isUnaryKeyword(std::string target);
 	void templateEvaluatedFromLeft(Token *root, SyntaxCompleter *completer);
 	void templateEvaluatedFromRight(Token *root, SyntaxCompleter *completer);
-	bool isPointerChain(Token *tk);
-	bool notNeedsPointer(Token *tk);
-	bool isArrayOrHashExpr(size_t start_idx, size_t idx, Token *tk, Token *next_tk);
 	void complete(Token *root);
 	void completeTerm(Token *root);
 	void insertExpr(Token *syntax, int idx, size_t grouping_num);
@@ -505,8 +535,8 @@ public:
 	void completeFunctionListExpr(Token *root);
 	void completeReturn(Token *root);
 	void completeAlphabetBitOperatorExpr(Token *root);
-	void recoveryFunctionArgument(Token *root);
-	void recoveryNamedUnaryOperatorsArgument(Token *root);
+	void recoveryFunctionArgument(Token *root, SyntaxRecoverer *recoverer);
+	void recoveryNamedUnaryOperatorsArgument(Token *root, SyntaxRecoverer *recoverer);
 };
 
 #define TYPE_match(ptr, T) typeid(*ptr) == typeid(T)

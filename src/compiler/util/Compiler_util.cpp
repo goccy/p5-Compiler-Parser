@@ -33,3 +33,10 @@ int leaks(void)
 {
 	return memory_leaks;
 }
+
+void *safe_realloc(void *ptr, size_t size)
+{
+	void *new_ptr = realloc(ptr, size);
+	assert(new_ptr && "cannot allocate memory");
+	return new_ptr;
+}

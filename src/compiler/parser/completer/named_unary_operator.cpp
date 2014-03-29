@@ -147,3 +147,47 @@ bool NamedUnaryOperatorCompleter::isHandle(Token *tk, size_t current_idx)
 		 next_type == GlobalVar)) return true;
 	return false;
 }
+
+bool NamedUnaryOperatorCompleter::recovery(Token *tk, size_t current_idx)
+{
+	if (shouldRecovery(tk, current_idx)) {
+		recoveryArgument(tk, current_idx);
+		return true;
+	}
+	return false;
+}
+
+bool NamedUnaryOperatorCompleter::shouldRecovery(Token *tk, size_t current_idx)
+{
+	if (tk->token_num <= 2) return false;
+	if (tk->token_num <= current_idx + 1) return false;
+	Token **tks = tk->tks;
+	Token *current_tk = tks[current_idx];
+	Token *next_tk    = tks[current_idx + 1];
+	if (current_tk->stype == SyntaxType::Expr &&
+		isUnaryKeyword(current_tk->tks[current_tk->token_num-1]->data) &&
+		(next_tk->stype == SyntaxType::Expr ||
+		 next_tk->stype == SyntaxType::Term ||
+		 kind(next_tk)  == TokenKind::Term)) return true;
+	return false;
+}
+
+void NamedUnaryOperatorCompleter::recoveryArgument(Token *tk, size_t current_idx)
+{
+	Token **tks = tk->tks;
+	Token *current_tk = tks[current_idx];
+	Token *next_tk    = tks[current_idx + 1];
+	current_tk->tks = (Token **)safe_realloc(current_tk->tks, (current_tk->token_num + 1) * PTR_SIZE);
+	current_tk->tks[current_tk->token_num++] = next_tk;
+	Tokens *recovery_tks = new Tokens();
+	for (size_t i = 0; i < tk->token_num; i++) {
+		if (i == current_idx + 1) continue;
+		recovery_tks->push_back(tks[i]);
+	}
+	size_t size = recovery_tks->size();
+	tks = (Token **)safe_realloc(tks, size * PTR_SIZE);
+	for (size_t i = 0; i < size; i++) {
+		tks[i] = recovery_tks->at(i);
+	}
+	tk->token_num = size;
+}

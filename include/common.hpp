@@ -45,6 +45,7 @@ typedef std::vector<Module *> Modules;
 typedef std::vector<Token *>::iterator TokenPos;
 extern void *safe_malloc(size_t size);
 extern void safe_free(void *ptr, size_t size);
+extern void *safe_realloc(void *ptr, size_t size);
 #include <gen_token.hpp>
 #include <token.hpp>
 extern TokenInfo getTokenInfo(Enum::Token::Type::Type type);
