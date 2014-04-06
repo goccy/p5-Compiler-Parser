@@ -446,8 +446,6 @@ private:
 	bool isStatementController(Token *tk, size_t current_idx);
 	bool isStatementControlKeyword(Token *tk);
 	bool isHandle(Token *tk, size_t current_idx);
-	bool isPrintFunction(Token *tk);
-	bool isFunctionCallWithoutParenthesis(Token *tk, size_t current_idx);
 	bool shouldRecovery(Token *tk, size_t current_idx);
 	void recoveryArgument(Token *tk, size_t current_idx);
 };
@@ -595,6 +593,8 @@ public:
 	bool complete(Token *root, size_t current_idx);
 	bool recovery(Token *root, size_t current_idx);
 private:
+	bool isPrintFunction(Token *tk);
+	bool isFunctionCallWithoutParenthesis(Token *tk, size_t current_idx);
 	bool isFunctionList(Token *tk, size_t current_idx);
 	bool shouldRecovery(Token *tk, size_t current_idx);
 	bool shouldRecoveryBaseExpr(Token *tk, Token *next_tk);

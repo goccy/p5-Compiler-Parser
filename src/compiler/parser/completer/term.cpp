@@ -105,7 +105,8 @@ bool TermCompleter::isVariable(Token *tk)
 	TokenType::Type type = tk->info.type;
 	if (type == Var            ||
 		type == CodeVar        ||
-		type == ArrayVar       || 
+		type == ArrayVar       ||
+		type == ArgumentArray  ||
 		type == HashVar        ||
 		type == LocalVar       || 
 		type == SpecificValue  ||

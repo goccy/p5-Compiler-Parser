@@ -241,7 +241,7 @@ bool Parser::isExpr(Token *tk, Token *prev_tk, TokenType::Type type, TokenKind::
 bool Parser::isMissingSemicolon(TokenType::Type prev_type, TokenType::Type type, Tokens *tokens)
 {
 	using namespace TokenType;
-	if (type == RightBrace && prev_type != LeftBrace && prev_type != SemiColon) {
+	if (type == RightBrace && prev_type != SemiColon) {
 		size_t size = tokens->size();
 		for (size_t i = 0; i < size; i++) {
 			if (tokens->at(i)->stype == SyntaxType::Stmt) {
@@ -322,7 +322,7 @@ Token *Parser::parseSyntax(Token *start_token, Tokens *tokens)
 			prev_type = (prev) ? prev->info.type : Undefined;
 			pos++;
 			Token *syntax = parseSyntax(t, tokens);
-			//end_pos = tokens->end();
+			end_pos = tokens->end();
 			if (isExpr(syntax, prev_syntax, prev_type, prev_kind)) {
 				syntax->stype = SyntaxType::Expr;
 			} else if (prev_type == FunctionDecl || prev_kind == TokenKind::Do) {

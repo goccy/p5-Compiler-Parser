@@ -32,42 +32,9 @@ NamedUnaryOperatorCompleter::NamedUnaryOperatorCompleter(void)
 	named_unary_keywords->push_back("close");
 }
 
-bool NamedUnaryOperatorCompleter::isPrintFunction(Token *tk)
-{
-	if (!tk) return false;
-	if (type(tk) != TokenType::BuiltinFunc) return false;
-	if (tk->data != "print") return false;
-	return true;
-}
-
-bool NamedUnaryOperatorCompleter::isFunctionCallWithoutParenthesis(Token *tk, size_t current_idx)
-{
-	/* key ... */
-	using namespace TokenType;
-	if (tk->token_num <= 2) return false;
-	if (tk->token_num <= current_idx + 1) return false;
-	Token **tks = tk->tks;
-	Token *prev_tk    = (current_idx > 0) ? tks[current_idx - 1] : NULL;
-	Token *current_tk = tks[current_idx];
-	Token *next_tk    = tks[current_idx + 1];
-	if (!isPrintFunction(prev_tk) &&
-		type(current_tk) == TokenType::Key &&
-		(kind(next_tk) == TokenKind::Term ||
-		 next_tk->stype == SyntaxType::Expr)) return true;
-	return false;
-}
-
 bool NamedUnaryOperatorCompleter::complete(Token *tk, size_t current_idx)
 {
-	if (isFunctionCallWithoutParenthesis(tk, current_idx)) {
-		Token *current_tk = tk->tks[current_idx];
-		if (type(current_tk) == TokenType::Key) {
-			type(current_tk) = TokenType::Call;
-			kind(current_tk) = TokenKind::Function;
-		}
-		insertExpr(tk, current_idx, 2);
-		return true;
-	} else if (isNamedUnaryFunction(tk, current_idx)) {
+	if (isNamedUnaryFunction(tk, current_idx)) {
 		insertExpr(tk, current_idx, 2);
 		return true;
 	} else if (isStatementController(tk, current_idx)) {

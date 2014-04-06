@@ -1,10 +1,5 @@
 #include <parser.hpp>
 
-using namespace std;
-namespace TokenType = Enum::Token::Type;
-namespace SyntaxType = Enum::Parser::Syntax;
-namespace TokenKind = Enum::Token::Kind;
-
 Completer::Completer(void)
 {
 }
@@ -46,7 +41,6 @@ void Completer::complete(Token *root)
 	completeCommaArrowExpr(root);
 	// function args ....
 	completeFunctionListExpr(root);
-	//recoveryFunctionArgument(root);
 	completeBlockArgsFunctionExpr(root);
 	completeReturn(root);
 	// not, and, or, xor
