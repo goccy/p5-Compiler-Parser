@@ -9,7 +9,7 @@ Compiler::Parser - Create Abstract Syntax Tree for Perl5
     use Compiler::Parser::AST::Renderer;
 
     my $filename = $ARGV[0];
-    open(my $fh, "<", $filename) or die("Cannot find $filename: $!");
+    open(my $fh, "<", $filename) or die("Cannot open $filename: $!");
     my $script = do { local $/; <$fh> };
     my $lexer  = Compiler::Lexer->new($filename);
     my $tokens = $lexer->tokenize($script);
@@ -28,7 +28,7 @@ Compiler::Parser creates abstract syntax tree for perl5.
         Create new instance of Compiler::Parser.
 - my $ast = $parser->parse($tokens);
 
-        Get array reference includes abstract syntax tree each statement.
+        Get blessed object of Compiler::Parser::AST.
         This method requires $tokens from Compiler::Lexer::tokenize.
 - my $renderer = Compiler::Parser::AST::Renderer->new();
 

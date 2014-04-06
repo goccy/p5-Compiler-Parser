@@ -2,6 +2,12 @@ Revision history for Perl extension Compiler-Parser.
 
 {{$NEXT}}
 
+0.09 2014-04-06T09:07:42Z
+    - support 'walk/remove/find' methods for Compiler::Parser::AST.
+    - improve testing codes by gen/testcode_generator.pl and t/inc/Test/Compiler/Parser.pm
+    - add pod for some files
+    - fix many parsing bugs
+
 0.08 2013-11-21T16:12:49Z
     - modify for Compiler::Lexer's update.
 

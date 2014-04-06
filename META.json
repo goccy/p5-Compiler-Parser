@@ -52,7 +52,7 @@
       },
       "test" : {
          "requires" : {
-            "Compiler::Lexer" : "0.13",
+            "Compiler::Lexer" : "0.17",
             "Test::More" : "0"
          }
       }
@@ -69,9 +69,9 @@
          "web" : "https://github.com/goccy/p5-Compiler-Parser"
       }
    },
-   "version" : "0.08",
+   "version" : "0.09",
    "x_contributors" : [
-      "masaaki.goshima <masaaki.goshima@mixi.co.jp>",
-      "Syohei YOSHIDA <syohex@gmail.com>"
+      "Syohei YOSHIDA <syohex@gmail.com>",
+      "Masaaki Goshima <masaaki.goshima@mixi.co.jp>"
    ]
 }

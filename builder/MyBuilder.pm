@@ -21,6 +21,7 @@ sub new {
             'lib/Compiler/Parser/*.xs',
         ],
     );
+    unshift @INC, 't/inc';
     $self->{config}->set('optimize' => '-O0') if (DEBUG);
     return $self;
 }
