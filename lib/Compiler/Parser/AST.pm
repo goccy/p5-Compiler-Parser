@@ -69,7 +69,7 @@ Compiler::Parser::AST
 
 =head1 METHODS
 
-=over 1
+=over 6
 
 =item my $ast = Compiler::Parser->new->parse($tokens);
 

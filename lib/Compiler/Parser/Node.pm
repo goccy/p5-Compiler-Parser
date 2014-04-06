@@ -124,9 +124,9 @@ Compiler::Parser::Node
 
 =over 1
 
-=item my $find_nodes = $node->find(type => 'Int');
+=item my $found_nodes = $node->find(type => 'Int');
 
-    $array_node is created by Compiler::Parser::parse.
+    $node is created by Compiler::Parser::parse.
     Find node from 'node' or 'kind' or 'type' or 'data' parameter.
     This method imported by Compiler::Parser::Node.
 

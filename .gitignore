@@ -25,3 +25,4 @@ GTAGS
 GRTAGS
 GPATH
 src/compiler/parser/deparser
+workdir
