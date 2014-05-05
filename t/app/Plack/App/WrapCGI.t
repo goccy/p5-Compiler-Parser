@@ -435,7 +435,10 @@ subtest 'parse Plack/App/WrapCGI.pm' => sub {
                 branch { '->',
                     left => branch { '->',
                         left => leaf '$self',
-                        right => leaf '_app',
+                        right => function_call { '_app',
+                            args => [
+                            ],
+                        },
                     },
                     right => list { '()',
                         data => leaf '$env',
@@ -443,6 +446,7 @@ subtest 'parse Plack/App/WrapCGI.pm' => sub {
                 },
             ],
         },
+        leaf '1',
     ]);
 };
 

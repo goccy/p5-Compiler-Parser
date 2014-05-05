@@ -604,7 +604,10 @@ subtest 'parse Plack/Response.pm' => sub {
                                 },
                                 right => branch { '->',
                                     left => leaf '$self',
-                                    right => leaf '_body',
+                                    right => function_call { '_body',
+                                        args => [
+                                        ],
+                                    },
                                 },
                             },
                         },

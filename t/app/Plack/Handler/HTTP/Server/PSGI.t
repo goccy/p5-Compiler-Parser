@@ -58,7 +58,10 @@ subtest 'parse Plack/Handler/HTTP/Server/PSGI.pm' => sub {
                 branch { '->',
                     left => branch { '->',
                         left => leaf '$self',
-                        right => leaf '_server',
+                        right => function_call { '_server',
+                            args => [
+                            ],
+                        },
                     },
                     right => function_call { 'run',
                         args => [
