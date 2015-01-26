@@ -176,7 +176,9 @@ void Parser::replaceHereDocument(Tokens *tokens)
 	while (it != tokens->end()) {
 		Token *t = ITER_CAST(Token *, it);
 		switch (t->info.type) {
-		case TokenType::HereDocumentTag: case TokenType::HereDocumentRawTag:
+		case TokenType::HereDocumentTag:
+		case TokenType::HereDocumentRawTag:
+		case TokenType::HereDocumentBareTag:
 			tag_pos = it;
 			break;
 		case TokenType::HereDocument:
@@ -190,6 +192,10 @@ void Parser::replaceHereDocument(Tokens *tokens)
 					tag->info = getTokenInfo(TokenType::String);
 					break;
 				case TokenType::HereDocumentRawTag:
+					tag->data = t->data;
+					tag->info = getTokenInfo(TokenType::RawString);
+					break;
+				case TokenType::HereDocumentBareTag:
 					tag->data = t->data;
 					tag->info = getTokenInfo(TokenType::RawString);
 					break;
@@ -739,7 +745,7 @@ AST *Parser::parse(Tokens *tokens)
 		//dumpSyntax(root, 0);
 		Completer completer;
 		completer.complete(root);
-		//dumpSyntax(root, 0);
+		dumpSyntax(root, 0);
 		Node *last_stmt = _parse(root);
 		if (!last_stmt) Parser_exception("", 1);
 		return new AST(last_stmt->getRoot());
