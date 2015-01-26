@@ -2,6 +2,9 @@ Revision history for Perl extension Compiler-Parser.
 
 {{$NEXT}}
 
+0.10 2015-01-26T03:19:47Z
+    - support HereDocumentBareTag (e.g. <<BARE)
+
 0.09 2014-04-06T09:07:42Z
     - support 'walk/remove/find' methods for Compiler::Parser::AST.
     - improve testing codes by gen/testcode_generator.pl and t/inc/Test/Compiler/Parser.pm

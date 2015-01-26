@@ -26,13 +26,16 @@ Compiler::Parser creates abstract syntax tree for perl5.
 - my $parser = Compiler::Parser->new();
 
         Create new instance of Compiler::Parser.
+
 - my $ast = $parser->parse($tokens);
 
         Get blessed object of Compiler::Parser::AST.
         This method requires $tokens from Compiler::Lexer::tokenize.
+
 - my $renderer = Compiler::Parser::AST::Renderer->new();
 
         Create new instance of Compiler::Parser::AST::Renderer.
+
 - $renderer->render($ast)
 
         Render abstract syntax tree.
