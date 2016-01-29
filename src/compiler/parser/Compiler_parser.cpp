@@ -745,7 +745,7 @@ AST *Parser::parse(Tokens *tokens)
 		//dumpSyntax(root, 0);
 		Completer completer;
 		completer.complete(root);
-		dumpSyntax(root, 0);
+		//dumpSyntax(root, 0);
 		Node *last_stmt = _parse(root);
 		if (!last_stmt) Parser_exception("", 1);
 		return new AST(last_stmt->getRoot());
