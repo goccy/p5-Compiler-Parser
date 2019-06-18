@@ -23,7 +23,7 @@ sub render {
 sub __render {
     my ($self, $nodes, $depth) = @_;
     my @names = keys %$nodes;
-    my @sorted_names = grep { $_ !~ /next/ } @names;
+    my @sorted_names = sort grep { $_ !~ /next/ } @names;
     push @sorted_names, 'next';
     foreach my $name (@sorted_names) {
         my $node = $nodes->{$name};
